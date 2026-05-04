@@ -1,0 +1,3125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharmasave Escarpment Metrics</title>
+<!-- Firebase compat SDK (no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#1B3A6B; --teal:#1D9E75; --red:#E05252; --amber:#BA7517;
+  --bg:#f0f3f8; --border:#dde2ea; --text:#1a2640; --light:#5a6b84;
+  --shadow:0 2px 10px rgba(27,58,107,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* HEADER */
+header{background:var(--navy);color:#fff;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,0.25)}
+header h1{font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+.data-badge{font-size:0.78rem;opacity:.85;white-space:nowrap}
+@media(max-width:768px){
+  header{height:auto;padding:10px 16px;flex-direction:column;align-items:flex-start;gap:4px}
+  header h1{width:100%;text-align:center}
+  .hdr-suffix{display:none}
+  .hdr-meta{width:100%;gap:10px;justify-content:space-between}
+  .hdr-meta .data-badge{font-size:0.7rem}
+  .hdr-meta #userDisplay{font-size:0.7rem!important;max-width:120px!important}
+  #signOutBtn{min-height:44px!important;padding:2px 14px!important;font-size:0.73rem!important}
+}
+
+/* NAV */
+nav{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav::-webkit-scrollbar{height:0}
+.nav-btn{padding:13px 18px;border:none;background:none;cursor:pointer;font-size:.85rem;color:var(--light);border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;font-weight:500}
+.nav-btn:hover{color:var(--navy)}
+.nav-btn.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:700}
+
+/* PAGES */
+.page{display:none;padding:24px;max-width:1240px;margin:0 auto}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:#fff;border-radius:12px;padding:22px;box-shadow:var(--shadow);margin-bottom:20px}
+.card-title{font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:18px;text-transform:uppercase;letter-spacing:.05em}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px;align-items:stretch}
+.kpi-card{background:#fff;border-radius:12px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.kpi-card.kpi-std{align-items:center;text-align:center}
+.kpi-label{font-size:.71rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em}
+.kpi-card.kpi-std .kpi-label{min-height:2.8em;display:flex;align-items:flex-start;justify-content:center}
+.kpi-val-wrap{flex:1;display:flex;align-items:center;justify-content:center}
+.kpi-value{font-size:1.7rem;font-weight:800;color:var(--navy);line-height:1}
+.kpi-value.pos{color:var(--teal)} .kpi-value.neg{color:var(--red)}
+.kpi-sub{font-size:.72rem;color:var(--light);margin-top:auto}
+
+/* TOGGLE SWITCH (pill style) */
+.pill-toggle{display:inline-flex;background:var(--border);border-radius:10px;padding:3px;gap:3px}
+.pill-opt{padding:7px 15px;border:none;background:none;border-radius:8px;cursor:pointer;font-size:.81rem;font-weight:600;color:var(--light);transition:all .18s;white-space:nowrap}
+.pill-opt.active{background:#fff;color:var(--navy);box-shadow:0 1px 5px rgba(0,0,0,.13)}
+
+/* FORMS */
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:5px}
+.form-row .hint{font-size:.72rem;color:var(--light);margin-top:3px}
+input[type=text],input[type=number],input[type=month]{width:100%;padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;color:var(--text);outline:none;transition:border-color .15s}
+input:focus{border-color:var(--navy)}
+.input-prefix{position:relative}
+.input-prefix span{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--light);font-size:.875rem;pointer-events:none}
+.input-prefix input{padding-left:22px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{opacity:.88}
+.btn-success{background:var(--teal);color:#fff}.btn-success:hover{opacity:.88}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{opacity:.88}
+.btn-ghost{background:var(--border);color:var(--text)}.btn-ghost:hover{opacity:.8}
+.btn-sm{padding:6px 12px;font-size:.78rem}
+.btn-xs{padding:4px 9px;font-size:.74rem}
+
+/* ALERTS */
+.alert{padding:11px 15px;border-radius:8px;font-size:.84rem;margin-bottom:14px}
+.alert-success{background:#edfaf4;border:1px solid var(--teal);color:#0e6647}
+.alert-warning{background:#fff8e6;border:1px solid var(--amber);color:#7a4d10}
+
+/* GP SUMMARY BOX */
+.gp-summary{background:var(--bg);border-radius:10px;padding:16px;margin-top:14px}
+.gp-row{display:flex;justify-content:space-between;font-size:.85rem;padding:4px 0}
+.gp-divider{border-top:1px solid var(--border);margin:8px 0}
+.gp-total{font-weight:800;font-size:.95rem;color:var(--navy)}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.data-tbl{width:100%;border-collapse:collapse;font-size:.84rem}
+.data-tbl th{background:var(--navy);color:#fff;padding:11px 13px;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.data-tbl td{padding:10px 13px;border-bottom:1px solid var(--border);white-space:nowrap}
+.data-tbl tbody tr:hover td{background:#f7f9fc}
+.data-tbl .tot-row td{font-weight:700;border-top:2px solid var(--border);background:#f7f9fc}
+.pos{color:var(--teal);font-weight:600} .neg{color:var(--red);font-weight:600}
+
+/* EXPENSE TABLE */
+.exp-tbl{width:100%;border-collapse:collapse}
+.exp-tbl th{text-align:left;padding:8px 12px;font-size:.72rem;color:var(--light);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);font-weight:600}
+.exp-tbl td{padding:7px 12px;border-bottom:1px solid var(--border)}
+.exp-tbl td input[type=text]{width:180px} .exp-tbl td input[type=number]{width:120px}
+.exp-tbl .foot td{font-weight:700;padding-top:12px;border-top:2px solid var(--border);border-bottom:none}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.28)}
+.modal-head{position:sticky;top:0;background:#fff;padding:20px 24px 16px;border-bottom:1px solid var(--border);z-index:1;border-radius:16px 16px 0 0}
+.modal-head h2{font-size:1.05rem;color:var(--navy)}
+.modal-body{padding:20px 24px}
+.modal-foot{position:sticky;bottom:0;background:#fff;padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;border-radius:0 0 16px 16px}
+.section-divider{border:none;border-top:1px solid var(--border);margin:18px 0}
+.sub-fields{background:var(--bg);border-radius:8px;padding:12px 14px;margin-top:8px}
+
+/* FORECAST PANELS */
+.fc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.fc-panel{border-radius:12px;padding:20px}
+.fc-panel.pess{background:#fff5f5;border:1.5px solid #fecaca}
+.fc-panel.real{background:#fffbf0;border:1.5px solid #fde68a}
+.fc-panel.opti{background:#f0faf6;border:1.5px solid #a7f3d0}
+.fc-panel h3{font-size:.95rem;font-weight:700;margin-bottom:14px}
+.fc-panel.pess h3{color:var(--red)} .fc-panel.real h3{color:var(--amber)} .fc-panel.opti h3{color:var(--teal)}
+.fc-stat{margin-top:10px}
+.fc-stat-label{font-size:.7rem;color:var(--light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.fc-stat-value{font-size:1rem;font-weight:700}
+.fc-stat-value.pos{color:var(--teal)}
+
+/* CHART */
+.chart-wrap{position:relative}
+
+/* SETTINGS */
+.setting-block{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.setting-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.setting-label{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:10px}
+
+/* SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* WEEKLY METRICS */
+.wk-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:var(--teal);color:#fff;border:none;font-size:1.8rem;line-height:1;cursor:pointer;box-shadow:0 4px 20px rgba(29,158,117,.45);z-index:300;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.wk-fab:hover{transform:scale(1.08)}
+.wk-prog-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--light);margin-bottom:3px}
+.wk-prog-bar{background:#e0e4ea;border-radius:6px;height:10px;overflow:hidden;margin-bottom:4px}
+.wk-prog-fill{height:100%;border-radius:6px;transition:width .4s}
+.wk-tip{background:linear-gradient(135deg,#eef4ff,#e8f7f2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:.84rem;color:var(--navy)}
+.wk-hit{display:inline-block;background:var(--teal);color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle}
+.wk-src-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+@media(max-width:520px){.wk-src-grid{grid-template-columns:1fr}}
+
+/* EHC MISSION HEADER */
+.ehc-mission{background:var(--navy);border-radius:12px;padding:28px 28px 24px;margin-bottom:20px;color:#fff}
+.ehc-mission-headline{font-size:1.35rem;font-weight:800;line-height:1.3;margin-bottom:20px;letter-spacing:-.01em}
+.ehc-cd-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ehc-cd-box{background:rgba(255,255,255,.12);border-radius:10px;padding:16px 18px}
+.ehc-cd-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.65);margin-bottom:8px}
+.ehc-cd-num{font-size:2.6rem;font-weight:900;color:#FFB74D;line-height:1;margin-bottom:4px}
+.ehc-cd-sub{font-size:.82rem;color:rgba(255,255,255,.85);line-height:1.35}
+.ehc-note-card{border-left:4px solid var(--teal)}
+@media(max-width:520px){
+  .ehc-mission{padding:20px 16px}
+  .ehc-mission-headline{font-size:1.05rem}
+  .ehc-cd-num{font-size:1.9rem}
+  .ehc-cd-box{padding:12px 14px}
+}
+
+/* CELEBRATION */
+.celeb-overlay{position:fixed;inset:0;background:rgba(27,58,107,.72);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.celeb-box{background:#fff;border-radius:20px;padding:32px 40px;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,.3);max-width:360px;animation:celebPop .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes celebPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes confettiFall{from{transform:translateY(0) rotate(0deg);opacity:.9}to{transform:translateY(95vh) rotate(450deg);opacity:0}}
+#confettiContainer{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
+
+/* WEEK MODAL */
+.week-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:none;align-items:center;justify-content:center;padding:16px}
+.week-modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.28)}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.fc-grid{grid-template-columns:1fr}.charts-row-2{grid-template-columns:1fr!important}.rx-tgt-grid{grid-template-columns:1fr!important}.rx-tgt-divider{display:none!important}.weekly-pb-grid{grid-template-columns:1fr!important}}
+@media(max-width:520px){.kpi-grid{grid-template-columns:1fr}.page{padding:14px}}
+
+/* UTILS */
+.flex{display:flex}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.items-center{align-items:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
+.text-sm{font-size:.84rem}.text-xs{font-size:.72rem}.text-light{color:var(--light)}.font-bold{font-weight:700}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Pharmasave Escarpment Metrics</h1>
+  <div class="hdr-meta" style="display:flex;align-items:center;gap:14px">
+    <span class="data-badge" id="dataBadge">0 months of data</span>
+    <span id="userDisplay" style="font-size:0.72rem;opacity:.65;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis"></span>
+    <button id="signOutBtn" onclick="doSignOut()" style="display:none;font-size:0.72rem;background:none;border:1px solid rgba(255,255,255,.35);color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;white-space:nowrap">Sign out</button>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" data-page="dashboard"  onclick="navigate('dashboard')">Dashboard</button>
+  <button class="nav-btn"        data-page="ehc"        onclick="navigate('ehc')">EHC</button>
+  <button class="nav-btn"        data-page="forecast"   onclick="navigate('forecast')">Forecast</button>
+  <button class="nav-btn"        data-page="weekly"     onclick="navigate('weekly')">Weekly Metrics</button>
+  <button class="nav-btn"        data-page="monthly"    onclick="navigate('monthly')">Monthly Data</button>
+  <button class="nav-btn"        data-page="expenses"   onclick="navigate('expenses')">Expenses</button>
+  <button class="nav-btn"        data-page="settings"   onclick="navigate('settings')">Settings</button>
+</nav>
+
+<!-- ── AUTH GATE ─────────────────────────────────────────────────── -->
+<div id="authGate" style="position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:24px">
+  <div style="text-align:center">
+    <div style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">Pharmasave Escarpment Metrics</div>
+    <div style="font-size:0.88rem;color:rgba(255,255,255,.65)">Private Access</div>
+  </div>
+  <button id="signInBtn" onclick="doSignIn()" style="display:flex;align-items:center;gap:10px;background:#fff;color:#1a2640;border:none;padding:13px 28px;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25)">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.5 33.5 29.7 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.1-2.7-.5-4z"/></svg>
+    Sign in with Google
+  </button>
+  <div id="authError" style="color:#fca5a5;font-size:0.82rem;text-align:center;max-width:320px"></div>
+  <div id="authLoading" style="display:none;color:rgba(255,255,255,.6);font-size:0.85rem">
+    <span class="spinner" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></span>
+    Loading data…
+  </div>
+</div>
+
+<div id="page-dashboard" class="page active"></div>
+<div id="page-monthly"   class="page"></div>
+<div id="page-expenses"  class="page"></div>
+<div id="page-forecast"  class="page"></div>
+<div id="page-settings"  class="page"></div>
+<div id="page-weekly"   class="page"></div>
+<div id="page-ehc"      class="page"></div>
+
+<!-- ── WEEK ENTRY MODAL ───────────────────────────────────────── -->
+<div class="week-modal-overlay" id="weekModalOverlay" onclick="weekOverlayClick(event)">
+  <div class="week-modal" id="weekModalBox"></div>
+</div>
+
+<!-- ── CELEBRATION OVERLAY ───────────────────────────────────── -->
+<div id="confettiContainer"></div>
+<div class="celeb-overlay" id="celebrationOverlay">
+  <div class="celeb-box">
+    <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
+    <div style="font-size:1.1rem;font-weight:800;color:var(--navy);margin-bottom:12px">Target Hit!</div>
+    <div id="celebrationHits" style="font-size:.88rem;color:var(--teal);font-weight:600;margin-bottom:20px"></div>
+    <button onclick="dismissCelebration()" class="btn btn-primary">Awesome!</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="overlayClick(event)" style="display:none">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+// ================================================================
+// FIREBASE INIT
+// ================================================================
+const firebaseConfig = {
+  apiKey:            'AIzaSyDx-JUS4Esrs6Xo36ZfyMXnMCIEp3tU110',
+  authDomain:        'escarpment-financials.firebaseapp.com',
+  projectId:         'escarpment-financials',
+  storageBucket:     'escarpment-financials.firebasestorage.app',
+  messagingSenderId: '476280747619',
+  appId:             '1:476280747619:web:a1300c97b5d9637ea76a56',
+};
+firebase.initializeApp(firebaseConfig);
+const auth     = firebase.auth();
+const db       = firebase.firestore();
+const provider = new firebase.auth.GoogleAuthProvider();
+
+// ── Optional: restrict to one Google account ──────────────────────
+// Leave blank to allow any Google sign-in (Firestore rules are the
+// real gate). Set to your Gmail address to add a client-side check.
+const ALLOWED_EMAIL = '';
+
+// ── Firestore document paths ──────────────────────────────────────
+const FS_COL             = 'pharmasave'; // top-level collection
+const FS_SETTINGS        = 'settings';
+const FS_MONTHS          = 'months';
+const FS_WEEKLY_DATA     = 'weeklyData';
+const FS_WEEKLY_TARGETS  = 'weeklyTargets';
+
+// ================================================================
+// KEYS & DEFAULTS (kept for reference / export format)
+// ================================================================
+
+const DEFAULT_SETTINGS = {
+  rxGPMethod:    'fee_markup',  // 'fee_markup' | 'pct'
+  rxGPPct:       13.5,
+  frontGPMethod: 'pct',         // 'pct' | 'actual'
+  frontGPPct:    25,
+  rebateMethod:  'manual',      // 'manual' | 'pct'
+  rebatePct:     4,
+  expenseMethod: 'itemized',    // 'lump' | 'itemized'
+  lumpExpenses:  18000,
+  itemizedExpenses: [
+    {id:1,name:'Rent',           amount:3500},
+    {id:2,name:'Salaries',       amount:9000},
+    {id:3,name:'Utilities',      amount:600},
+    {id:4,name:'Insurance',      amount:450},
+    {id:5,name:'Loan Repayment', amount:1500},
+    {id:6,name:'Owner Draw',     amount:3000},
+  ],
+  useCOGS:   false,
+  cogsPct:   55,
+  growthRates: {pessimistic:1, realistic:3, optimistic:6},
+  realisticIsAuto: true,
+  sCurve: {
+    pessimistic: { ceiling: 80000,  monthsToCeiling: 24 },
+    realistic:   { ceiling: 110000, monthsToCeiling: 18 },
+    optimistic:  { ceiling: 150000, monthsToCeiling: 12 },
+  },
+  valuationMultiple: 3,
+  // Weekly Metrics targets
+  transfersWeeklyTarget:    5,
+  blisterPacksWeeklyTarget: 3,
+  rxWeeklyTarget:           150,
+  bpAbsoluteTarget:         120,
+  bpGoalMethod:             'date',  // 'date' | 'weeks'
+  bpGoalDate:               '',
+  bpGoalWeeks:              26,
+  ehcMissionEndDate:        '',
+  transferSources: ['MERIT Trial','Neighbourhood','New Attachment','Doctor Referral','Marketing','Purolator'],
+};
+
+const SAMPLE_MONTHS = [
+  {id:'s1',monthKey:'2024-07',rxSales:82000,rxGP_fees:9800, rxGP_markup:1400,rxGP_pct:13.7,frontSales:9200, frontGP_pct:25,frontGP_actual:2300,rebate:3200,expenses:17800},
+  {id:'s2',monthKey:'2024-08',rxSales:85000,rxGP_fees:10200,rxGP_markup:1500,rxGP_pct:13.8,frontSales:10100,frontGP_pct:25,frontGP_actual:2525,rebate:3400,expenses:17800},
+  {id:'s3',monthKey:'2024-09',rxSales:88000,rxGP_fees:10600,rxGP_markup:1600,rxGP_pct:13.8,frontSales:9800, frontGP_pct:25,frontGP_actual:2450,rebate:3600,expenses:17800},
+  {id:'s4',monthKey:'2024-10',rxSales:91000,rxGP_fees:10900,rxGP_markup:1700,rxGP_pct:13.8,frontSales:11200,frontGP_pct:25,frontGP_actual:2800,rebate:3800,expenses:17800},
+  {id:'s5',monthKey:'2024-11',rxSales:89000,rxGP_fees:10700,rxGP_markup:1600,rxGP_pct:13.8,frontSales:12000,frontGP_pct:25,frontGP_actual:3000,rebate:3500,expenses:17800},
+  {id:'s6',monthKey:'2024-12',rxSales:94000,rxGP_fees:11300,rxGP_markup:1800,rxGP_pct:13.9,frontSales:11500,frontGP_pct:25,frontGP_actual:2875,rebate:4200,expenses:17800},
+];
+
+// ================================================================
+// STATE
+// ================================================================
+let settings      = {};
+let months        = [];
+let charts        = {};
+let currentPage   = 'dashboard';
+let _srcChartView = 'stacked'; // 'stacked' | 'trend' — persists across Weekly Metrics renders
+
+// Fixed color palette for transfer sources (assigned by index, consistent per session)
+const SOURCE_PALETTE = [
+  '#4C72B0','#DD8452','#55A868','#C44E52','#8172B3',
+  '#937860','#DA8BC3','#8C8C8C','#CCB974','#64B5CD',
+];
+const UNTAGGED_COLOR = '#94A3B8'; // neutral grey for legacy entries with no source breakdown
+let nextId        = Date.now();
+let weeklyEntries = [];  // { id, weekStart, transfers, blisterPacks, rxCount, enteredAt }
+let weeklyTargets = [];  // { metric, value, effectiveFrom }  — target history
+
+function uid() { return 'm' + (nextId++); }
+
+// ================================================================
+// LOAD / SAVE  (Firestore)
+// ================================================================
+async function loadState() {
+  const [sDoc, mDoc, wDoc, wtDoc] = await Promise.all([
+    db.collection(FS_COL).doc(FS_SETTINGS).get(),
+    db.collection(FS_COL).doc(FS_MONTHS).get(),
+    db.collection(FS_COL).doc(FS_WEEKLY_DATA).get(),
+    db.collection(FS_COL).doc(FS_WEEKLY_TARGETS).get(),
+  ]);
+  const s  = sDoc.exists  ? sDoc.data()  : null;
+  const m  = mDoc.exists  ? mDoc.data()  : null;
+  const w  = wDoc.exists  ? wDoc.data()  : null;
+  const wt = wtDoc.exists ? wtDoc.data() : null;
+  settings      = s  ? mergeDeep(DEFAULT_SETTINGS, s) : deepClone(DEFAULT_SETTINGS);
+  months        = m  ? m.months    : SAMPLE_MONTHS.map(x => ({...x}));
+  weeklyEntries = w  ? w.weeks     : [];
+  weeklyTargets = wt ? wt.targets  : [];
+  months.sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+}
+
+function saveSettings() {
+  db.collection(FS_COL).doc(FS_SETTINGS).set(settings).catch(console.error);
+}
+
+function saveMonths() {
+  months.sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+  db.collection(FS_COL).doc(FS_MONTHS).set({ months }).catch(console.error);
+}
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+function mergeDeep(def, saved) {
+  const out = deepClone(def);
+  for (const k of Object.keys(saved)) {
+    if (k in out && typeof out[k] === 'object' && !Array.isArray(out[k])) {
+      out[k] = mergeDeep(out[k], saved[k]);
+    } else {
+      out[k] = saved[k];
+    }
+  }
+  return out;
+}
+
+// ================================================================
+// CALCULATIONS
+// ================================================================
+function calcTotalExpenses() {
+  if (settings.expenseMethod === 'lump') return parseFloat(settings.lumpExpenses) || 0;
+  return (settings.itemizedExpenses||[]).reduce((s,e)=>s+(parseFloat(e.amount)||0), 0);
+}
+
+function calcMonthData(m) {
+  // Rx GP
+  let rxGP;
+  if (settings.rxGPMethod === 'fee_markup') {
+    rxGP = (parseFloat(m.rxGP_fees)||0) + (parseFloat(m.rxGP_markup)||0);
+  } else {
+    const pct = (m.rxGP_pct !== undefined ? parseFloat(m.rxGP_pct) : settings.rxGPPct) || 0;
+    rxGP = (parseFloat(m.rxSales)||0) * pct / 100;
+  }
+
+  // Front Store GP
+  let frontGP;
+  if (settings.frontGPMethod === 'pct') {
+    const pct = (m.frontGP_pct !== undefined ? parseFloat(m.frontGP_pct) : settings.frontGPPct) || 0;
+    frontGP = (parseFloat(m.frontSales)||0) * pct / 100;
+  } else {
+    frontGP = parseFloat(m.frontGP_actual) || 0;
+  }
+
+  const rebate   = settings.rebateMethod === 'pct'
+    ? (parseFloat(m.rxSales)||0) * settings.rebatePct / 100
+    : parseFloat(m.rebate) || 0;
+  const totalGP  = rxGP + frontGP + rebate;
+  const totalExp = parseFloat(m.expenses) || 0;
+  const netProfit = totalGP - totalExp;
+
+  return { rxGP, frontGP, rebate, totalGP, totalExp, netProfit };
+}
+
+function latestMonth() {
+  return months.length ? months[months.length - 1] : null;
+}
+
+function calcRollingAvgGrowth() {
+  const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+  const slice  = sorted.slice(-6);
+
+  if (slice.length < 2) return {rate: null, count: slice.length, trend: null, rates: []};
+
+  const rates = [];
+  for (let i = 1; i < slice.length; i++) {
+    const prevGP = calcMonthData(slice[i-1]).totalGP;
+    const currGP = calcMonthData(slice[i]).totalGP;
+    if (prevGP <= 0) continue; // skip division by zero
+    rates.push((currGP - prevGP) / prevGP * 100);
+  }
+
+  if (rates.length === 0) return {rate: null, count: slice.length, trend: null, rates: []};
+
+  const avg = rates.reduce((s,r) => s + r, 0) / rates.length;
+
+  // Trend: compare first-half avg vs second-half avg of the growth rates
+  let trend = 'stable';
+  if (rates.length >= 2) {
+    const mid      = Math.ceil(rates.length / 2);
+    const firstAvg = rates.slice(0, mid).reduce((s,r)=>s+r,0) / mid;
+    const lastAvg  = rates.slice(-mid).reduce((s,r)=>s+r,0) / mid;
+    const diff = lastAvg - firstAvg;
+    if      (diff >  0.5) trend = 'accelerating';
+    else if (diff < -0.5) trend = 'decelerating';
+  }
+
+  return {rate: parseFloat(avg.toFixed(1)), count: slice.length, trend, rates};
+}
+
+// If realisticIsAuto is true, keep the Realistic rate synced to the rolling average.
+function syncRealisticRate() {
+  if (settings.realisticIsAuto === false) return;
+  const avg = calcRollingAvgGrowth();
+  if (avg.rate !== null) {
+    settings.growthRates.realistic = avg.rate;
+    saveSettings();
+  }
+}
+
+function calcBreakEven(growthPct) {
+  if (!months.length) return null;
+  const last = months.slice(-3);
+  const avgNP = last.reduce((s,m) => s + calcMonthData(m).netProfit, 0) / last.length;
+  if (avgNP >= 0) return { already: true, netProfit: avgNP };
+
+  const lm = latestMonth();
+  const startGP = calcMonthData(lm).totalGP;
+  const expTotal = calcTotalExpenses();
+  const rate = growthPct / 100;
+  let gp = startGP;
+  for (let mo = 1; mo <= 120; mo++) {
+    gp *= (1 + rate);
+    const np = gp - expTotal;
+    if (np >= 0) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + mo);
+      const annProj = (() => {
+        let g2 = gp, tot = 0;
+        for (let i = 0; i < 12; i++) { g2 *= (1+rate); tot += g2 - expTotal; }
+        return tot;
+      })();
+      return {
+        already: false, months: mo,
+        date: d.toLocaleDateString('en-CA',{month:'long',year:'numeric'}),
+        netProfit: np, annualProfit: annProj,
+      };
+    }
+  }
+  return null;
+}
+
+// ================================================================
+// S-CURVE HELPERS
+// ================================================================
+
+// Logistic formula: Rx(t) = ceiling / (1 + e^(-k*(t-6)))
+// k is derived so Rx(monthsToCeiling) ≈ 95% of ceiling:  k = ln(19)/(monthsToCeiling-6)
+function sCurveK(monthsToCeiling) {
+  const inflection = 6;
+  return monthsToCeiling > inflection
+    ? Math.log(19) / (monthsToCeiling - inflection)
+    : 0.8; // fallback for edge cases
+}
+
+// Returns net profit derived from S-curve Rx(t) using latest-month GP rates
+function sCurveNPRates() {
+  const lm       = latestMonth();
+  if (!lm) return null;
+  const lmData   = calcMonthData(lm);
+  const lmRx     = parseFloat(lm.rxSales) || 1;
+  return {
+    rxGPRate:  lmData.rxGP   / lmRx,  // rxGP per $1 of Rx Sales
+    rebRate:   lmData.rebate  / lmRx,  // rebate per $1 of Rx Sales
+    frontGP:   lmData.frontGP,         // front-store GP (assumed constant)
+    expenses:  calcTotalExpenses(),
+  };
+}
+
+function calcBreakEvenSCurve(ceiling, monthsToCeiling) {
+  if (!months.length) return null;
+  const last3 = months.slice(-3);
+  const avgNP = last3.reduce((s, m) => s + calcMonthData(m).netProfit, 0) / last3.length;
+  if (avgNP >= 0) return { already: true, netProfit: avgNP };
+
+  const rates = sCurveNPRates();
+  if (!rates) return null;
+  const {rxGPRate, rebRate, frontGP, expenses} = rates;
+  const k = sCurveK(monthsToCeiling);
+
+  // Anchor to last reported Rx Sales with offset correction (same formula as chart)
+  const lm       = latestMonth();
+  const baseline = parseFloat(lm.rxSales) || 0;
+  const rxRange  = Math.max(0, ceiling - baseline);
+  const offset   = rxRange / (1 + Math.exp(-k * (0 - 6))); // RxGrowth at t=0
+
+  for (let mo = 1; mo <= 120; mo++) {
+    const rxGrowth = rxRange / (1 + Math.exp(-k * (mo - 6))) - offset;
+    const rx       = baseline + rxGrowth;
+    const np = rx * (rxGPRate + rebRate) + frontGP - expenses;
+    if (np >= 0) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + mo);
+      let annProj = 0;
+      for (let i = 1; i <= 12; i++) {
+        const rxGrowth2 = rxRange / (1 + Math.exp(-k * ((mo + i) - 6))) - offset;
+        const rx2       = baseline + rxGrowth2;
+        annProj += rx2 * (rxGPRate + rebRate) + frontGP - expenses;
+      }
+      return {
+        already: false, months: mo,
+        date: d.toLocaleDateString('en-CA', {month:'long', year:'numeric'}),
+        netProfit: np, annualProfit: annProj,
+      };
+    }
+  }
+  return null;
+}
+
+function updSCurve(scenario, field, rawVal) {
+  if (!settings.sCurve) settings.sCurve = {};
+  if (!settings.sCurve[scenario]) settings.sCurve[scenario] = {};
+  settings.sCurve[scenario][field] = field === 'ceiling'
+    ? (parseFloat(rawVal) || 0)
+    : Math.max(7, parseInt(rawVal) || 7); // min 7 so monthsToCeiling > inflection(6)
+  saveSettings();
+  renderForecast();
+}
+
+// ================================================================
+// FORMATTING
+// ================================================================
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '$0';
+  const a = Math.abs(n);
+  return (n < 0 ? '-' : '') + '$' + a.toLocaleString('en-CA', {minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtPct(n) { return (parseFloat(n)||0).toFixed(1) + '%'; }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function parseDollar(s) { return parseFloat(String(s||'').replace(/[$,\s]/g,'')) || 0; }
+function monthKeyToLabel(key) {
+  if (!key) return '';
+  const [y, m] = key.split('-').map(Number);
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return names[m-1] + ' ' + y;
+}
+function monthKeyToFull(key) {
+  if (!key) return '';
+  const [y, m] = key.split('-').map(Number);
+  const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return names[m-1] + ' ' + y;
+}
+function currentMonthKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const btn = document.querySelector('.nav-btn[data-page="' + page + '"]');
+  if (btn) btn.classList.add('active');
+  currentPage = page;
+  renderPage(page);
+  updateBadge();
+}
+
+function updateBadge() {
+  const el = document.getElementById('dataBadge');
+  if (el) el.textContent = months.length + ' month' + (months.length !== 1 ? 's' : '') + ' of data';
+}
+
+function renderPage(page) {
+  switch(page) {
+    case 'dashboard': renderDashboard(); break;
+    case 'monthly':   renderMonthly();   break;
+    case 'expenses':  renderExpenses();  break;
+    case 'forecast':  renderForecast();  break;
+    case 'weekly':    renderWeekly();    break;
+    case 'ehc':       renderEHC();       break;
+    case 'settings':  renderSettings();  break;
+  }
+}
+
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+
+// ================================================================
+// GAP LABEL PLUGIN
+// ================================================================
+const gapLabelPlugin = {
+  id: 'gapLabels',
+  afterDatasetsDraw(chart) {
+    const npIdx = chart.data.datasets.findIndex(d => d.label === 'Net Profit');
+    if (npIdx < 0) return;
+    const meta = chart.getDatasetMeta(npIdx);
+    const data = chart.data.datasets[npIdx].data;
+    const ctx  = chart.ctx;
+    ctx.save();
+    ctx.font = 'bold 9px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    data.forEach((val, i) => {
+      const bar = meta.data[i];
+      if (!bar) return;
+      const label = (val >= 0 ? '+' : '') + fmt(val);
+      ctx.fillStyle = val >= 0 ? '#1D9E75' : '#E05252';
+      ctx.fillText(label, bar.x, bar.y - 4);
+    });
+    ctx.restore();
+  },
+};
+
+// ================================================================
+// PAGE: DASHBOARD
+// ================================================================
+function renderDashboard() {
+  syncRealisticRate();
+
+  const el = document.getElementById('page-dashboard');
+  const lm = latestMonth();
+  const lmData = lm ? calcMonthData(lm) : null;
+  const expTotal = calcTotalExpenses();
+  const be = calcBreakEven(settings.growthRates.realistic);
+
+  const lGP = lmData ? lmData.totalGP : 0;
+  const lNP = lmData ? lmData.netProfit : 0;
+
+  const avg = calcRollingAvgGrowth();
+  const avgDisplay = avg.rate !== null
+    ? (avg.rate >= 0 ? '+' : '') + avg.rate + '% / mo'
+    : 'Not enough data';
+  const avgClass = avg.rate === null ? '' : avg.rate >= 0 ? 'pos' : 'neg';
+  const trendHtml = avg.trend === 'accelerating'
+    ? '<span style="color:var(--teal)">↑ Accelerating</span>'
+    : avg.trend === 'decelerating'
+    ? '<span style="color:var(--amber)">↓ Slowing</span>'
+    : avg.trend === 'stable'
+    ? '<span style="color:var(--light)">→ Stable</span>'
+    : '';
+
+  // ── Pharmacy Value KPI ──────────────────────────────────────────
+  const vm = settings.valuationMultiple || 3;
+  const sortedM = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+  let pharmValueNum = null, pharmValueStr, pharmBadge, pharmBadgeColor, pharmSub;
+
+  if (!months.length) {
+    pharmValueStr = '—';
+    pharmBadge    = 'No data';
+    pharmBadgeColor = 'var(--light)';
+    pharmSub      = 'Add monthly data to calculate';
+  } else if (lmData && lmData.netProfit < 0) {
+    const beMonths = be && !be.already ? be.months : null;
+    pharmValueStr  = beMonths ? `~${beMonths} mo` : 'N/A';
+    pharmBadge     = 'Not Yet Profitable';
+    pharmBadgeColor = 'var(--red)';
+    pharmSub       = 'Break-even estimate';
+  } else if (sortedM.length >= 12) {
+    const annualGP = sortedM.slice(-12).reduce((s,mo) => s + calcMonthData(mo).totalGP, 0);
+    pharmValueNum  = annualGP * vm;
+    pharmValueStr  = fmt(pharmValueNum);
+    pharmBadge     = 'Actual Annual Data';
+    pharmBadgeColor = 'var(--teal)';
+    pharmSub       = `${fmt(annualGP)} annual GP × ${vm}×`;
+  } else {
+    const last3    = sortedM.slice(-Math.min(3, sortedM.length));
+    const avg3GP   = last3.reduce((s,mo) => s + calcMonthData(mo).totalGP, 0) / last3.length;
+    pharmValueNum  = avg3GP * 12 * vm;
+    pharmValueStr  = fmt(pharmValueNum);
+    pharmBadge     = 'Projection';
+    pharmBadgeColor = 'var(--amber)';
+    pharmSub       = `${fmt(avg3GP)}/mo avg × 12 × ${vm}×`;
+  }
+
+  // ── $1M Valuation Tracker ────────────────────────────────────────
+  const targetValue    = 1000000;
+  let currentPharmValue = pharmValueNum !== null ? pharmValueNum : 0;
+  const progressPct    = Math.min(100, Math.max(0, (currentPharmValue / targetValue) * 100));
+  const progressColor  = progressPct >= 100 ? 'var(--teal)' : progressPct >= 60 ? 'var(--amber)' : 'var(--navy)';
+
+  let monthsTo1M = null;
+  let beyond24Months = false;
+  // Only declare "already there" if the pharmacy is profitable AND the valuation is ≥ $1M
+  if (pharmValueNum !== null && pharmValueNum >= targetValue && lmData && lmData.netProfit >= 0) {
+    monthsTo1M = 0;
+  } else if (avg.rate !== null && avg.rate > 0 && lmData && lmData.totalGP > 0) {
+    let gp = lmData.totalGP;
+    // Use net profit × valuation multiple — not gross profit.
+    // projNP must be positive before the threshold is considered, so the loop
+    // never fires while the pharmacy is still losing money.
+    for (let i = 1; i <= 24; i++) {
+      gp *= (1 + avg.rate / 100);
+      const projNP = gp - expTotal;
+      if (projNP >= 0 && projNP * 12 * vm >= targetValue) { monthsTo1M = i; break; }
+    }
+    if (monthsTo1M === null) beyond24Months = true;
+  }
+
+  // ── Last MoM growth (for merged Growth card) ────────────────────
+  const sortedForMoM = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+  let lastMoM = null, prevMonthLabel = null;
+  if (sortedForMoM.length >= 2) {
+    const prevM = sortedForMoM[sortedForMoM.length - 2];
+    const currM = sortedForMoM[sortedForMoM.length - 1];
+    const prevGP = calcMonthData(prevM).totalGP;
+    const currGP = calcMonthData(currM).totalGP;
+    if (prevGP > 0) {
+      lastMoM = parseFloat(((currGP - prevGP) / prevGP * 100).toFixed(1));
+      prevMonthLabel = monthKeyToLabel(prevM.monthKey);
+    }
+  }
+
+  // ── Est. arrival date for $1M (based on last data month) ────────
+  let arrivalDate = null;
+  if (monthsTo1M !== null && monthsTo1M > 0 && lm) {
+    const [yr, mo] = lm.monthKey.split('-').map(Number);
+    const d = new Date(yr, mo - 1 + monthsTo1M, 1);
+    arrivalDate = d.toLocaleString('en-CA', {month:'short', year:'numeric'});
+  }
+
+  // ── Next Month Rx Sales Target ───────────────────────────────────
+  const growthForTarget = avg.rate !== null ? avg.rate : settings.growthRates.realistic;
+  let nextRxTarget = null, nextGPVal = null, nextNPVal = null;
+  if (lm) {
+    nextRxTarget = (parseFloat(lm.rxSales)||0) * (1 + growthForTarget / 100);
+    const nextM  = {...lm, rxSales: nextRxTarget};
+    const nextD  = calcMonthData(nextM);
+    nextGPVal    = nextD.totalGP;
+    nextNPVal    = nextD.netProfit;
+  }
+  const motivational = nextNPVal === null ? ''
+    : nextNPVal >= 5000  ? 'Great trajectory — keep pushing!'
+    : nextNPVal >= 0     ? 'Almost there — you\'re at break-even range.'
+    : nextNPVal >= -3000 ? 'Close to break-even — one strong month can flip it.'
+    : 'Focus on Rx volume growth to close the gap.';
+
+  // ── Rx Sales Targets calculation ─────────────────────────────────
+  const canCalcRxTargets = lm && settings.rxGPMethod === 'pct';
+  let rxTargetsHtml = '';
+  if (!months.length) {
+    rxTargetsHtml = `<div style="color:var(--light);font-size:0.88rem;padding:8px 0">Add monthly data to calculate targets.</div>`;
+  } else if (!canCalcRxTargets) {
+    rxTargetsHtml = `<div style="color:var(--amber);font-size:0.88rem;padding:8px 0">Set Rx GP method to <strong>% of Rx Sales</strong> in Settings to unlock these targets.</div>`;
+  } else {
+    const rxGPRate     = settings.rxGPPct || 0;
+    const rebateRate   = settings.rebateMethod === 'pct' ? (settings.rebatePct || 0) : 0;
+    const combinedRate = (rxGPRate + rebateRate) / 100;
+    const frontGPFixed = lmData ? lmData.frontGP : 0;
+    const lastRxSales  = parseFloat(lm.rxSales) || 0;
+
+    // Target 1 — Break-even
+    const beRxSales = combinedRate > 0 ? (expTotal - frontGPFixed) / combinedRate : null;
+    const beGap     = beRxSales !== null ? lastRxSales - beRxSales : null;
+
+    // Target 2 — $1M Valuation
+    const reqMonthlyNP  = (1000000 / vm) / 12;
+    const reqTotalGP    = reqMonthlyNP + expTotal;
+    const valRxSales    = combinedRate > 0 ? (reqTotalGP - frontGPFixed) / combinedRate : null;
+    const valGap        = valRxSales !== null ? lastRxSales - valRxSales : null;
+
+    const beCol = beRxSales !== null ? `
+      <div>
+        <div style="font-size:0.72rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Rx Sales to Break Even</div>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--amber);margin-bottom:4px">${fmt(Math.max(0, beRxSales))}</div>
+        <div style="font-size:0.78rem;color:var(--light);margin-bottom:10px">GP at this level covers all ${fmt(expTotal)} in monthly expenses</div>
+        ${beGap >= 0
+          ? `<div style="font-size:0.8rem;color:var(--teal);font-weight:600">✅ Already above break-even Rx level</div>`
+          : `<div style="font-size:0.8rem;color:var(--red);font-weight:600">You need ${fmt(Math.abs(beGap))} more in Rx sales</div>`}
+      </div>` : '';
+
+    const valCol = valRxSales !== null ? `
+      <div>
+        <div style="font-size:0.72rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Rx Sales for $1M Valuation</div>
+        <div style="font-size:1.5rem;font-weight:700;color:#BA7517;margin-bottom:4px">${fmt(Math.max(0, valRxSales))}</div>
+        <div style="font-size:0.78rem;color:var(--light);margin-bottom:10px">Generates the net profit needed for a $1M pharmacy value</div>
+        ${valGap >= 0
+          ? `<div style="font-size:0.8rem;color:var(--teal);font-weight:600">🎉 Already at $1M valuation Rx level</div>`
+          : `<div style="font-size:0.8rem;color:var(--amber);font-weight:600">You are ${fmt(Math.abs(valGap))} away in monthly Rx sales</div>`}
+      </div>` : '';
+
+    const assumptions = `Assumes front store GP of ${fmt(frontGPFixed)}/month (last month) | Rx GP: ${rxGPRate}% | Rebate: ${rebateRate}% | Expenses: ${fmt(expTotal)}/month`;
+
+    rxTargetsHtml = `
+      <div class="rx-tgt-grid" style="display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-bottom:14px">
+        <div style="padding-right:20px">${beCol}</div>
+        <div class="rx-tgt-divider" style="background:var(--border)"></div>
+        <div style="padding-left:20px">${valCol}</div>
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--border);font-size:0.73rem;color:var(--light)">${assumptions}</div>`;
+  }
+
+  el.innerHTML = `
+    ${!months.length ? '<div class="alert alert-warning">No data yet — go to <strong>Monthly Data</strong> to add your first month.</div>' : ''}
+
+    <div class="kpi-grid mb-20" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Rx Sales</div>
+        <div class="kpi-val-wrap">
+          <div class="kpi-value" style="color:#1B3A6B">${lm ? fmt(parseFloat(lm.rxSales)||0) : '$0'}</div>
+        </div>
+        <div class="kpi-sub">${lm ? monthKeyToLabel(lm.monthKey) + ' — most recent month' : 'no data yet'}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Latest Month Gross Profit</div>
+        <div class="kpi-val-wrap">
+          <div class="kpi-value">${fmt(lGP)}</div>
+        </div>
+        <div class="kpi-sub">${lm ? monthKeyToLabel(lm.monthKey) : '—'}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Latest Month Net Profit</div>
+        <div class="kpi-val-wrap">
+          <div class="kpi-value ${lNP>=0?'pos':'neg'}">${fmt(lNP)}</div>
+        </div>
+        <div class="kpi-sub">Gross Profit minus Expenses</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Monthly Expenses</div>
+        <div class="kpi-val-wrap">
+          <div class="kpi-value">${fmt(expTotal)}</div>
+        </div>
+        <div class="kpi-sub">${settings.expenseMethod === 'lump' ? 'Lump sum' : 'Itemized total'}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Months to Break-even</div>
+        <div class="kpi-val-wrap">
+          <div class="kpi-value ${lNP>=0?'pos':''}">${
+            lNP >= 0 ? '✓ Profitable' :
+            (be && !be.already ? be.months + ' mo.' : 'N/A')
+          }</div>
+        </div>
+        <div class="kpi-sub">Realistic (${settings.growthRates.realistic}%/mo growth)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Growth</div>
+        <div style="font-size:0.7rem;color:var(--light);margin-bottom:2px">6-Month Avg</div>
+        <div class="kpi-value ${avgClass}" style="font-size:1.3rem;${avg.rate===null?'color:var(--light)':''};margin-bottom:2px">${avgDisplay}</div>
+        <div style="font-size:0.75rem;margin-bottom:10px">${trendHtml || '<span style="color:var(--light)">—</span>'}</div>
+        <div style="border-top:1px solid #e2e8f0;margin:8px 0"></div>
+        <div style="font-size:0.7rem;color:var(--light);margin-bottom:3px">Last Month</div>
+        <div style="font-size:0.95rem;font-weight:700" class="${lastMoM===null?'':lastMoM>=0?'pos':'neg'}">
+          ${lastMoM === null ? '<span style="color:var(--light)">—</span>' : (lastMoM >= 0 ? '+' : '') + lastMoM.toFixed(1) + '% vs ' + prevMonthLabel}
+        </div>
+      </div>
+    </div>
+
+    ${lm && nextRxTarget !== null ? `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Next Month Rx Sales Target</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px">
+        <div style="background:var(--bg);border-radius:8px;padding:14px">
+          <div style="font-size:0.75rem;color:var(--light);margin-bottom:4px">Rx Sales Target</div>
+          <div style="font-size:1.4rem;font-weight:700;color:var(--navy)">${fmt(nextRxTarget)}</div>
+          <div style="font-size:0.78rem;color:var(--light)">Last: ${fmt(parseFloat(lm.rxSales)||0)} + ${(avg.rate!==null?avg.rate:settings.growthRates.realistic).toFixed(1)}% growth</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:14px">
+          <div style="font-size:0.75rem;color:var(--light);margin-bottom:4px">Projected Total GP</div>
+          <div style="font-size:1.4rem;font-weight:700;color:var(--teal)">${fmt(nextGPVal)}</div>
+          <div style="font-size:0.78rem;color:var(--light)">All streams at target</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:14px">
+          <div style="font-size:0.75rem;color:var(--light);margin-bottom:4px">Projected Net Profit</div>
+          <div style="font-size:1.4rem;font-weight:700" class="${nextNPVal>=0?'pos':'neg'}">${fmt(nextNPVal)}</div>
+          <div style="font-size:0.78rem;color:var(--light)">After ${fmt(expTotal)} expenses</div>
+        </div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--navy);letter-spacing:.07em;margin-bottom:14px">RX SALES TARGETS</div>
+        ${rxTargetsHtml}
+      </div>
+      <div style="font-size:0.88rem;color:var(--navy);font-style:italic;padding:10px 14px;background:var(--bg);border-radius:8px;border-left:3px solid var(--teal)">${motivational}</div>
+    </div>
+    ` : ''}
+
+    ${months.length ? `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0;align-items:center">
+
+        <div style="padding:4px 24px 4px 4px">
+          <div style="font-size:0.68rem;font-weight:700;color:var(--light);letter-spacing:.07em;margin-bottom:8px">PHARMACY VALUE</div>
+          <div style="margin-bottom:8px">
+            <span style="background:${pharmBadgeColor};color:#fff;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700">${pharmBadge}</span>
+          </div>
+          <div style="font-size:1.9rem;font-weight:700;color:${pharmBadgeColor};line-height:1.1;margin-bottom:6px">${pharmValueStr}</div>
+          <div style="font-size:0.78rem;color:var(--light)">${pharmSub}</div>
+        </div>
+
+        <div style="background:var(--border);height:80%;align-self:stretch"></div>
+
+        <div style="padding:4px 24px">
+          <div style="font-size:0.68rem;font-weight:700;color:var(--light);letter-spacing:.07em;margin-bottom:8px">ROAD TO $1M</div>
+          <div style="background:#e0e4ea;border-radius:6px;height:10px;overflow:hidden;margin-bottom:8px">
+            <div style="width:${progressPct.toFixed(1)}%;height:100%;background:${progressColor};border-radius:6px;transition:width .4s"></div>
+          </div>
+          <div style="font-size:0.85rem;color:var(--navy);font-weight:600;margin-bottom:4px">${fmt(currentPharmValue)} of $1M</div>
+          <div style="font-size:0.78rem;color:var(--light)">${progressPct.toFixed(1)}% of target</div>
+        </div>
+
+        <div style="background:var(--border);height:80%;align-self:stretch"></div>
+
+        <div style="padding:4px 4px 4px 24px">
+          <div style="font-size:0.68rem;font-weight:700;color:var(--light);letter-spacing:.07em;margin-bottom:8px">ESTIMATED ARRIVAL</div>
+          ${monthsTo1M === 0
+            ? `<div style="font-size:1.6rem;font-weight:700" class="pos">🎉 You're there!</div>`
+            : beyond24Months
+            ? `<div style="font-size:1rem;font-weight:600;color:var(--light)">Beyond 24 months</div>
+               <div style="font-size:0.75rem;color:var(--light);margin-top:4px">Grow faster to reach $1M sooner</div>`
+            : arrivalDate
+            ? `<div style="font-size:1.9rem;font-weight:700;color:var(--navy);line-height:1.1;margin-bottom:6px">${arrivalDate}</div>
+               <div style="font-size:0.78rem;color:var(--light)">Based on ${avg.rate !== null ? avg.rate + '%' : settings.growthRates.realistic + '%'} 6-month avg growth</div>`
+            : `<div style="font-size:1rem;font-weight:600;color:var(--light)">Need more data</div>`}
+        </div>
+
+      </div>
+    </div>
+    ` : ''}
+
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="charts-row-2">
+      <div class="card">
+        <div class="card-title">GP Trends by Stream</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="gpTrendsChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">GP Breakdown — ${lm ? monthKeyToLabel(lm.monthKey) : 'Latest Month'}</div>
+        <div style="max-width:340px;margin:0 auto;padding:8px 0"><canvas id="pieChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Monthly Performance — Last ${Math.min(months.length,12)} Months</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="perfChart"></canvas></div>
+    </div>`;
+
+  if (months.length) {
+    renderPerfChart();
+    renderGPTrendsChart();
+    renderPieChart();
+  }
+}
+
+function renderPerfChart() {
+  destroyChart('perf');
+  const canvas = document.getElementById('perfChart');
+  if (!canvas) return;
+  const data12 = months.slice(-12);
+  const labels  = data12.map(m => monthKeyToLabel(m.monthKey));
+  const gps     = data12.map(m => calcMonthData(m).totalGP);
+  const exps    = data12.map(m => calcMonthData(m).totalExp);
+  const profits = data12.map(m => calcMonthData(m).netProfit);
+  const expLine = data12.map(() => calcTotalExpenses());
+
+  charts.perf = new Chart(canvas, {
+    type: 'bar',
+    plugins: [gapLabelPlugin],
+    data: {
+      labels,
+      datasets: [
+        {label:'Gross Profit', data:gps,     backgroundColor:'rgba(27,58,107,.78)',  borderRadius:4},
+        {label:'Expenses',     data:exps,    backgroundColor:'rgba(224,82,82,.75)',  borderRadius:4},
+        {label:'Net Profit',   data:profits,
+          backgroundColor: profits.map(v => v>=0 ? 'rgba(29,158,117,.85)' : 'rgba(224,82,82,.5)'),
+          borderRadius:4},
+        {label:'Expense Threshold', type:'line',
+          data:expLine, borderColor:'#BA7517', borderDash:[7,4], borderWidth:2,
+          pointRadius:0, fill:false, tension:0, order:0},
+      ],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:22}},
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},
+      },
+      scales:{
+        x:{grid:{display:false}},
+        y:{ticks:{callback:v=>(Math.abs(v)>=1000?(v<0?'-':'')+Math.abs(v/1000).toFixed(0)+'k':v)}},
+      },
+    },
+  });
+}
+
+function renderPieChart() {
+  destroyChart('pie');
+  const canvas = document.getElementById('pieChart');
+  if (!canvas) return;
+  const lm = latestMonth();
+  if (!lm) return;
+  const d = calcMonthData(lm);
+  const cats = [
+    {label:'Rx Gross Profit',         value:d.rxGP,    color:'#1B3A6B'},
+    {label:'Front Store Gross Profit', value:d.frontGP, color:'#1D9E75'},
+    {label:'Rebates',                  value:d.rebate,  color:'#BA7517'},
+  ].filter(c => c.value > 0);
+
+  charts.pie = new Chart(canvas, {
+    type:'pie',
+    data:{
+      labels: cats.map(c=>c.label),
+      datasets:[{data:cats.map(c=>c.value), backgroundColor:cats.map(c=>c.color), borderWidth:2, borderColor:'#fff'}],
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'right'},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${((ctx.raw/d.totalGP)*100).toFixed(1)}%)`}},
+      },
+    },
+  });
+}
+
+function renderGPTrendsChart() {
+  destroyChart('gpTrends');
+  const canvas = document.getElementById('gpTrendsChart');
+  if (!canvas) return;
+  const data12   = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey)).slice(-12);
+  const labels   = data12.map(m => monthKeyToLabel(m.monthKey));
+  const rxGPs    = data12.map(m => calcMonthData(m).rxGP);
+  const frontGPs = data12.map(m => calcMonthData(m).frontGP);
+  const rebates  = data12.map(m => calcMonthData(m).rebate);
+  const totalGPs = data12.map(m => calcMonthData(m).totalGP);
+  const expLine  = data12.map(() => calcTotalExpenses());
+
+  // Fix: $1M target = monthly NP needed + expenses
+  // monthly NP needed = ($1M ÷ multiple) ÷ 12
+  const vm             = settings.valuationMultiple || 3;
+  const monthlyNP      = (1000000 / vm) / 12;
+  const targetMonthlyGP = monthlyNP + calcTotalExpenses();
+  const targetLine     = data12.map(() => targetMonthlyGP);
+
+  charts.gpTrends = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'Rx GP',          data:rxGPs,    borderColor:'#1B3A6B', backgroundColor:'rgba(27,58,107,.10)',
+          borderWidth:2.5, pointRadius:4, fill:true, tension:0.3},
+        {label:'Front Store GP', data:frontGPs, borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,.08)',
+          borderWidth:2.5, pointRadius:4, fill:true, tension:0.3},
+        {label:'Rebates',        data:rebates,  borderColor:'#BA7517', backgroundColor:'rgba(186,117,23,.08)',
+          borderWidth:2.5, pointRadius:4, fill:true, tension:0.3},
+        {label:'Total GP',       data:totalGPs, borderColor:'#6B9FD4', backgroundColor:'rgba(107,159,212,.06)',
+          borderWidth:2.5, pointRadius:4, fill:false, tension:0.3},
+        {label:'Break-even',     data:expLine,  borderColor:'#E05252', borderDash:[6,4],
+          borderWidth:1.5, pointRadius:0, fill:false, tension:0},
+        {label:`$1M Target (${fmt(Math.round(targetMonthlyGP))}/mo)`, data:targetLine, borderColor:'#7B5EA7', borderDash:[4,4],
+          borderWidth:1.5, pointRadius:0, fill:false, tension:0},
+      ],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top', labels:{boxWidth:12, font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},
+      },
+      scales:{
+        x:{grid:{display:false}},
+        y:{ticks:{callback:v=>(Math.abs(v)>=1000?(v<0?'-':'')+Math.abs(v/1000).toFixed(0)+'k':v)}},
+      },
+    },
+  });
+}
+
+// ================================================================
+// PAGE: MONTHLY DATA
+// ================================================================
+function renderMonthly() {
+  const el = document.getElementById('page-monthly');
+
+  // Build MoM growth map keyed by monthKey.
+  // Requires chronological order to compare consecutive months.
+  const chron = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+  const momMap = {};  // monthKey -> growth % | null
+  chron.forEach((m, i) => {
+    if (i === 0) { momMap[m.monthKey] = null; return; }
+    const prevGP = calcMonthData(chron[i-1]).totalGP;
+    const currGP = calcMonthData(m).totalGP;
+    momMap[m.monthKey] = prevGP > 0
+      ? parseFloat(((currGP - prevGP) / prevGP * 100).toFixed(1))
+      : null;
+  });
+
+  function momCell(pct) {
+    if (pct === null) return `<td style="color:var(--light)">—</td>`;
+    if (pct > 0)  return `<td class="pos">↑ ${pct.toFixed(1)}%</td>`;
+    if (pct < 0)  return `<td class="neg">↓ ${Math.abs(pct).toFixed(1)}%</td>`;
+    return `<td style="color:var(--light)">→ 0.0%</td>`;
+  }
+
+  // Display order: newest first
+  const sorted = [...months].sort((a,b) => b.monthKey.localeCompare(a.monthKey));
+
+  const rows = sorted.map(m => {
+    const d = calcMonthData(m);
+    return `
+      <tr>
+        <td><strong>${monthKeyToLabel(m.monthKey)}</strong></td>
+        <td>${fmt(m.rxSales)}</td>
+        <td>${fmt(m.frontSales)}</td>
+        <td>${fmt(m.rebate)}</td>
+        <td>${fmt(d.totalGP)}</td>
+        ${momCell(momMap[m.monthKey])}
+        <td>${fmt(d.totalExp)}</td>
+        <td class="${d.netProfit>=0?'pos':'neg'}">${fmt(d.netProfit)}</td>
+        <td>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost btn-xs" onclick="openEditModal('${esc(m.id)}')">Edit</button>
+            <button class="btn btn-danger btn-xs" onclick="deleteMonth('${esc(m.id)}')">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // Totals
+  const tot = months.reduce((acc, m) => {
+    const d = calcMonthData(m);
+    return {gp: acc.gp + d.totalGP, exp: acc.exp + d.totalExp, np: acc.np + d.netProfit};
+  }, {gp:0, exp:0, np:0});
+
+  // Average MoM growth across all months that have a prior month to compare
+  const momValues = Object.values(momMap).filter(v => v !== null);
+  const momAvg = momValues.length
+    ? parseFloat((momValues.reduce((s,v)=>s+v,0) / momValues.length).toFixed(1))
+    : null;
+  const momAvgCell = momAvg === null
+    ? `<td style="color:var(--light)">—</td>`
+    : `<td style="color:${momAvg>=0?'var(--teal)':'var(--red)'}"><strong>Avg: ${momAvg>=0?'+':''}${momAvg.toFixed(1)}%</strong></td>`;
+
+  el.innerHTML = `
+    <div class="flex justify-between items-center wrap gap-8 mb-16">
+      <div class="text-sm text-light">${months.length} month${months.length!==1?'s':''} entered</div>
+      <div class="flex gap-8">
+        <button class="btn btn-success btn-sm" onclick="downloadCSV()">⬇ CSV</button>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Month</button>
+      </div>
+    </div>
+
+    ${!months.length ? '<div class="alert alert-warning">No months added yet. Click <strong>+ Add Month</strong> to get started.</div>' : ''}
+
+    ${months.length ? `
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="tbl-wrap">
+        <table class="data-tbl">
+          <thead><tr>
+            <th>Month</th><th>Rx Sales</th><th>Front Store</th><th>Rebate</th>
+            <th>Total GP</th><th>MoM Growth</th><th>Expenses</th><th>Net Profit</th><th></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr class="tot-row">
+            <td colspan="4"><strong>TOTALS (${months.length} months)</strong></td>
+            <td><strong>${fmt(tot.gp)}</strong></td>
+            ${momAvgCell}
+            <td><strong>${fmt(tot.exp)}</strong></td>
+            <td class="${tot.np>=0?'pos':'neg'}"><strong>${fmt(tot.np)}</strong></td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>` : ''}`;
+}
+
+function deleteMonth(id) {
+  if (!confirm('Delete this month? This cannot be undone.')) return;
+  months = months.filter(m => m.id !== id);
+  saveMonths();
+  syncRealisticRate();
+  renderMonthly();
+  updateBadge();
+}
+
+function downloadCSV() {
+  const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+  const headers = ['Month','Rx Sales','Front Store Sales','Rebate','Total GP','Expenses','Net Profit'];
+  const rows = sorted.map(m => {
+    const d = calcMonthData(m);
+    return [monthKeyToLabel(m.monthKey), m.rxSales, m.frontSales, m.rebate, d.totalGP.toFixed(2), d.totalExp.toFixed(2), d.netProfit.toFixed(2)];
+  });
+  const csv = [headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'pharmasave-monthly.csv';
+  a.click();
+}
+
+// ================================================================
+// PAGE: EXPENSES
+// ================================================================
+function renderExpenses() {
+  const el = document.getElementById('page-expenses');
+  const isLump = settings.expenseMethod === 'lump';
+  const total  = calcTotalExpenses();
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">Expense Entry Method</div>
+      <div class="pill-toggle mb-16">
+        <button class="pill-opt ${isLump?'active':''}" onclick="setExpMethod('lump')">Lump Sum</button>
+        <button class="pill-opt ${!isLump?'active':''}" onclick="setExpMethod('itemized')">Itemized Breakdown</button>
+      </div>
+
+      ${isLump ? `
+        <div class="form-row">
+          <label>Total Monthly Expenses ($)</label>
+          <div class="input-prefix"><span>$</span>
+            <input type="text" id="lumpInput" class="dollar-input" value="${(settings.lumpExpenses||0).toLocaleString('en-CA')}"
+              oninput="onLumpInput(this.value)">
+          </div>
+          <div class="hint">This amount is used for all months as the default expense figure.</div>
+        </div>
+        <div class="gp-summary" style="margin-top:16px">
+          <div class="gp-row"><span>Total Monthly Expenses</span><strong>${fmt(total)}</strong></div>
+        </div>
+      ` : `
+        <div id="expAlertArea"></div>
+        <div class="tbl-wrap mb-12">
+          <table class="exp-tbl" id="expTable">
+            <thead><tr><th>Expense Name</th><th>Monthly Amount ($)</th><th></th></tr></thead>
+            <tbody id="expRows"></tbody>
+            <tfoot><tr class="foot">
+              <td><strong>Total Monthly Expenses</strong></td>
+              <td><strong id="expTotal" style="color:var(--navy)">${fmt(total)}</strong></td>
+              <td></td>
+            </tr></tfoot>
+          </table>
+        </div>
+        <div class="flex gap-8 wrap">
+          <button class="btn btn-primary btn-sm" onclick="addExpLine()">+ Add Expense</button>
+          <button class="btn btn-success btn-sm" onclick="saveExpenses()">Save Expenses</button>
+        </div>
+      `}
+    </div>`;
+
+  if (!isLump) renderExpRows();
+  setupDollarInputs(el);
+}
+
+function setExpMethod(method) {
+  settings.expenseMethod = method;
+  saveSettings();
+  renderExpenses();
+}
+
+function onLumpInput(val) {
+  settings.lumpExpenses = parseDollar(val);
+  saveSettings();
+}
+
+function renderExpRows() {
+  const tbody = document.getElementById('expRows');
+  if (!tbody) return;
+  tbody.innerHTML = (settings.itemizedExpenses||[]).map((e,i) => `
+    <tr>
+      <td><input type="text" value="${esc(e.name)}" oninput="updExpLine(${i},'name',this.value)" placeholder="Expense name"></td>
+      <td><input type="text" class="dollar-input" value="${(e.amount||0).toLocaleString('en-CA')}" oninput="updExpLine(${i},'amount',this.value)" placeholder="0"></td>
+      <td><button class="btn btn-danger btn-xs" onclick="delExpLine(${i})">Delete</button></td>
+    </tr>`).join('');
+  setupDollarInputs(document.getElementById('expTable'));
+}
+
+function updExpLine(i, field, val) {
+  if (field === 'amount') settings.itemizedExpenses[i].amount = parseDollar(val);
+  else settings.itemizedExpenses[i].name = val;
+  const el = document.getElementById('expTotal');
+  if (el) el.textContent = fmt(calcTotalExpenses());
+}
+function delExpLine(i) {
+  settings.itemizedExpenses.splice(i, 1);
+  renderExpRows();
+  const el = document.getElementById('expTotal');
+  if (el) el.textContent = fmt(calcTotalExpenses());
+}
+function addExpLine() {
+  settings.itemizedExpenses.push({id: uid(), name:'', amount:0});
+  renderExpRows();
+}
+function saveExpenses() {
+  saveSettings();
+  const a = document.getElementById('expAlertArea');
+  if (a) { a.innerHTML = '<div class="alert alert-success">Expenses saved!</div>'; setTimeout(()=>{if(a)a.innerHTML='';},3000); }
+}
+
+// ================================================================
+// PAGE: FORECAST
+// ================================================================
+function renderForecast() {
+  syncRealisticRate(); // kept for dashboard use
+
+  const sc = settings.sCurve || {};
+  const DEFAULT_SC = {
+    pessimistic: {ceiling:80000,  monthsToCeiling:24},
+    realistic:   {ceiling:110000, monthsToCeiling:18},
+    optimistic:  {ceiling:150000, monthsToCeiling:12},
+  };
+  const scenarios = [
+    {key:'pessimistic', label:'Pessimistic', cls:'pess'},
+    {key:'realistic',   label:'Realistic',   cls:'real'},
+    {key:'optimistic',  label:'Optimistic',  cls:'opti'},
+  ];
+
+  const panels = scenarios.map(s => {
+    const cfg          = {...DEFAULT_SC[s.key], ...(sc[s.key]||{})};
+    const ceiling      = cfg.ceiling;
+    const monthsToCeil = cfg.monthsToCeiling;
+    const be           = calcBreakEvenSCurve(ceiling, monthsToCeil);
+    const lm           = latestMonth();
+    const lnp          = lm ? calcMonthData(lm).netProfit : -Infinity;
+
+    let moText, dateText, npText, annText;
+    if (!months.length) {
+      moText = 'No data'; dateText = '—'; npText = '—'; annText = '—';
+    } else if (lnp >= 0 || (be && be.already)) {
+      moText = 'Already profitable!'; dateText = 'Right now';
+      npText = fmt(lnp); annText = fmt(lnp * 12);
+    } else if (be) {
+      moText   = be.months + ' month' + (be.months !== 1 ? 's' : '');
+      dateText = be.date; npText = fmt(be.netProfit); annText = fmt(be.annualProfit);
+    } else {
+      moText = 'Not within 10 years'; dateText = '—'; npText = '—'; annText = '—';
+    }
+
+    return `
+      <div class="fc-panel ${s.cls}">
+        <h3>${s.label}</h3>
+        <div class="form-row" style="margin-bottom:10px">
+          <label style="font-size:.72rem">Rx Sales Ceiling ($/mo)</label>
+          <input type="number" value="${ceiling}" min="0" step="1000" style="margin-top:4px"
+            oninput="updSCurve('${s.key}','ceiling',this.value)">
+          <div class="hint">Mature independent pharmacies typically $80k–$150k/month</div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <label style="font-size:.72rem">Months to reach ceiling</label>
+          <input type="number" value="${monthsToCeil}" min="7" max="120" step="1" style="margin-top:4px"
+            oninput="updSCurve('${s.key}','monthsToCeiling',this.value)">
+          <div class="hint">How many months until growth naturally plateaus</div>
+        </div>
+        <div style="border-top:1px solid rgba(0,0,0,.08);padding-top:12px">
+          <div class="fc-stat"><div class="fc-stat-label">Months to break-even</div><div class="fc-stat-value">${moText}</div></div>
+          <div class="fc-stat"><div class="fc-stat-label">Projected date</div><div class="fc-stat-value">${dateText}</div></div>
+          <div class="fc-stat"><div class="fc-stat-label">Profit at break-even</div><div class="fc-stat-value pos">${npText}</div></div>
+          <div class="fc-stat"><div class="fc-stat-label">Annual profit (12mo post)</div><div class="fc-stat-value pos">${annText}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('page-forecast').innerHTML = `
+    <div class="fc-grid">${panels}</div>
+    <div class="card">
+      <div class="card-title">24-Month Net Profit Forecast — S-Curve (Logistic) Model</div>
+      <div class="chart-wrap" style="height:380px"><canvas id="fcChart"></canvas></div>
+    </div>`;
+
+  renderForecastChart();
+}
+
+// updGrowth / resetRealisticRate kept — used by dashboard break-even KPI
+function updGrowth(key, val) {
+  settings.growthRates[key] = parseFloat(val) || 0;
+  if (key === 'realistic') settings.realisticIsAuto = false;
+  saveSettings();
+}
+
+function resetRealisticRate() {
+  settings.realisticIsAuto = true;
+  syncRealisticRate();
+}
+
+function renderForecastChart() {
+  destroyChart('forecast');
+  const canvas = document.getElementById('fcChart');
+  if (!canvas || !months.length) return;
+
+  const N   = 24;
+  const now = new Date();
+  const rates = sCurveNPRates();
+  if (!rates) return;
+  const {rxGPRate, rebRate, frontGP, expenses} = rates;
+
+  const sc = settings.sCurve || {};
+  const DEFAULT_SC = {
+    pessimistic: {ceiling:80000,  monthsToCeiling:24},
+    realistic:   {ceiling:110000, monthsToCeiling:18},
+    optimistic:  {ceiling:150000, monthsToCeiling:12},
+  };
+  const pcfg = {...DEFAULT_SC.pessimistic, ...(sc.pessimistic||{})};
+  const rcfg = {...DEFAULT_SC.realistic,   ...(sc.realistic  ||{})};
+  const ocfg = {...DEFAULT_SC.optimistic,  ...(sc.optimistic ||{})};
+
+  // Logistic NP projection anchored exactly to the last reported Rx Sales baseline.
+  //
+  // Offset correction ensures RxGrowth(0) = 0 for every scenario:
+  //   offset      = (ceiling - baseline) / (1 + e^(-k*(0-6)))
+  //   RxGrowth(t) = (ceiling - baseline) / (1 + e^(-k*(t-6))) - offset
+  //   Rx(t)       = baseline + RxGrowth(t)
+  //
+  // → All three lines start at the identical baseline NP at t=0 (month 1 on chart).
+  // → S-curve shape is fully preserved; each line flattens toward its own ceiling.
+  const lm       = latestMonth();
+  const baseline = parseFloat(lm.rxSales) || 0;
+
+  function scurveNP(ceiling, monthsToCeiling) {
+    const k       = sCurveK(monthsToCeiling);
+    const rxRange = Math.max(0, ceiling - baseline);
+    const offset  = rxRange / (1 + Math.exp(-k * (0 - 6))); // RxGrowth at t=0
+    return Array.from({length:N}, (_, i) => {
+      const t        = i + 1;
+      const rxGrowth = rxRange / (1 + Math.exp(-k * (t - 6))) - offset;
+      const rx       = baseline + rxGrowth;
+      return rx * (rxGPRate + rebRate) + frontGP - expenses;
+    });
+  }
+
+  // Net profit at ceiling (horizontal asymptote of each S-curve)
+  function npAtCeiling(ceiling) {
+    return ceiling * (rxGPRate + rebRate) + frontGP - expenses;
+  }
+
+  const pessNP = npAtCeiling(pcfg.ceiling);
+  const realNP = npAtCeiling(rcfg.ceiling);
+  const optiNP = npAtCeiling(ocfg.ceiling);
+
+  const fmtK = v => (Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + (Math.abs(v) / 1000).toFixed(0) + 'k' : String(Math.round(v)));
+
+  const labels = Array.from({length:N}, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + i + 1, 1);
+    return d.toLocaleDateString('en-CA', {month:'short', year:'numeric'});
+  });
+
+  // afterDraw plugin: vertical line at month 6 + right-edge ceiling labels
+  const annotPlugin = {
+    id: 'fcAnnotations',
+    afterDraw(chart) {
+      const {ctx, scales:{x, y}, chartArea} = chart;
+      if (!x || !y || !chartArea) return;
+
+      // ── Vertical dashed line at month 6 (0-indexed: tick 5) ──
+      const vIdx = 5;
+      if (vIdx < x.ticks.length) {
+        const xPx = x.getPixelForTick(vIdx);
+        ctx.save();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = 'rgba(100,116,139,.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(xPx, y.top);
+        ctx.lineTo(xPx, y.bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(100,116,139,.72)';
+        ctx.font = '10px -apple-system,BlinkMacSystemFont,sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Growth starts slowing', xPx + 4, y.top + 13);
+        ctx.restore();
+      }
+
+      // ── Right-edge labels for ceiling lines ──
+      const ceilings = [
+        {np: pessNP, color:'rgba(224,82,82,.75)',  label:`Pessimistic ceiling ($${fmtK(pcfg.ceiling)} Rx)`},
+        {np: realNP, color:'rgba(186,117,23,.75)', label:`Realistic ceiling ($${fmtK(rcfg.ceiling)} Rx)`},
+        {np: optiNP, color:'rgba(29,158,117,.75)', label:`Optimistic ceiling ($${fmtK(ocfg.ceiling)} Rx)`},
+      ];
+      ctx.save();
+      ctx.font = '9px -apple-system,BlinkMacSystemFont,sans-serif';
+      ctx.textAlign = 'right';
+      ceilings.forEach(({np, color, label}) => {
+        const yPx = y.getPixelForValue(np);
+        if (yPx >= y.top && yPx <= y.bottom) {
+          ctx.fillStyle = color;
+          ctx.fillText(label, chartArea.right - 2, yPx - 3);
+        }
+      });
+      ctx.restore();
+    },
+  };
+
+  charts.forecast = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        // ── Main S-curve scenarios ──
+        {label:'Pessimistic', data:scurveNP(pcfg.ceiling, pcfg.monthsToCeiling),
+          borderColor:'#E05252', backgroundColor:'rgba(224,82,82,.07)', fill:true, tension:.35, pointRadius:2, order:1},
+        {label:'Realistic',   data:scurveNP(rcfg.ceiling, rcfg.monthsToCeiling),
+          borderColor:'#BA7517', backgroundColor:'rgba(186,117,23,.07)', fill:true, tension:.35, pointRadius:2, order:1},
+        {label:'Optimistic',  data:scurveNP(ocfg.ceiling, ocfg.monthsToCeiling),
+          borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,.07)', fill:true, tension:.35, pointRadius:2, order:1},
+        // ── Break-even reference ──
+        {label:'Break-even ($0)', data:Array(N).fill(0),
+          borderColor:'rgba(0,0,0,.28)', borderDash:[8,5], borderWidth:1.5, pointRadius:0, fill:false, tension:0, order:2},
+        // ── Ceiling reference lines (hidden from legend, labeled by plugin) ──
+        {label:'_pessCeil', data:Array(N).fill(pessNP),
+          borderColor:'rgba(224,82,82,.28)', borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false, tension:0, order:3},
+        {label:'_realCeil', data:Array(N).fill(realNP),
+          borderColor:'rgba(186,117,23,.28)', borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false, tension:0, order:3},
+        {label:'_optiCeil', data:Array(N).fill(optiNP),
+          borderColor:'rgba(29,158,117,.28)', borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false, tension:0, order:3},
+      ],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      layout: {padding: {right: 8}},
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {filter: item => !item.text.startsWith('_')}, // hide ceiling datasets
+        },
+        tooltip: {
+          filter: item => !item.dataset.label.startsWith('_'),
+          callbacks: {label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}`},
+        },
+      },
+      scales: {
+        x: {grid:{display:false}},
+        y: {
+          ticks: {callback: v => fmtK(v)},
+          grid:  {color: ctx => ctx.tick.value === 0 ? 'rgba(0,0,0,.25)' : 'rgba(0,0,0,.05)'},
+        },
+      },
+    },
+    plugins: [annotPlugin],
+  });
+}
+
+// ================================================================
+// PAGE: SETTINGS
+// ================================================================
+function renderSettings() {
+  const s = settings;
+  const isRxFee   = s.rxGPMethod    === 'fee_markup';
+  const isFrontPct = s.frontGPMethod === 'pct';
+  const isRebMan  = s.rebateMethod   === 'manual';
+
+  document.getElementById('page-settings').innerHTML = `
+    <div class="card">
+      <div class="card-title">Gross Profit Calculation Methods</div>
+
+      <div class="setting-block">
+        <div class="setting-label">Rx Sales — Gross Profit Method</div>
+        <div class="pill-toggle mb-12">
+          <button class="pill-opt ${isRxFee?'active':''}"  onclick="setSetting('rxGPMethod','fee_markup');renderSettings()">Dispensing Fee + Markup</button>
+          <button class="pill-opt ${!isRxFee?'active':''}" onclick="setSetting('rxGPMethod','pct');renderSettings()">% of Rx Sales</button>
+        </div>
+        ${!isRxFee ? `
+          <div class="form-row">
+            <label>Default Rx Gross Profit %</label>
+            <input type="number" value="${s.rxGPPct}" min="0" max="100" step="0.1" style="max-width:160px"
+              oninput="setSetting('rxGPPct',parseFloat(this.value))">
+            <div class="hint">Used as default when adding new months. Can be overridden per month.</div>
+          </div>` : '<p class="text-sm text-light">Uses Dispensing Fees + Markup entered per month.</p>'}
+      </div>
+
+      <div class="setting-block">
+        <div class="setting-label">Front Store Sales — Gross Profit Method</div>
+        <div class="pill-toggle mb-12">
+          <button class="pill-opt ${isFrontPct?'active':''}"  onclick="setSetting('frontGPMethod','pct');renderSettings()">% of Front Store Sales</button>
+          <button class="pill-opt ${!isFrontPct?'active':''}" onclick="setSetting('frontGPMethod','actual');renderSettings()">Enter Actual Profit</button>
+        </div>
+        ${isFrontPct ? `
+          <div class="form-row">
+            <label>Default Front Store Gross Profit %</label>
+            <input type="number" value="${s.frontGPPct}" min="0" max="100" step="0.1" style="max-width:160px"
+              oninput="setSetting('frontGPPct',parseFloat(this.value))">
+          </div>` : '<p class="text-sm text-light">Enter actual gross profit directly when adding each month.</p>'}
+      </div>
+
+      <div class="setting-block">
+        <div class="setting-label">Rebates — Default Method</div>
+        <div class="pill-toggle mb-12">
+          <button class="pill-opt ${isRebMan?'active':''}"  onclick="setSetting('rebateMethod','manual');renderSettings()">Enter Manually</button>
+          <button class="pill-opt ${!isRebMan?'active':''}" onclick="setSetting('rebateMethod','pct');renderSettings()">% of Rx Sales</button>
+        </div>
+        ${!isRebMan ? `
+          <div class="form-row">
+            <label>Default Rebate %</label>
+            <input type="number" value="${s.rebatePct}" min="0" max="20" step="0.1" style="max-width:160px"
+              oninput="setSetting('rebatePct',parseFloat(this.value))">
+            <div class="hint">Used to pre-fill the rebate field when adding a new month. Always editable.</div>
+          </div>` : '<p class="text-sm text-light">Enter rebate dollar amount directly for each month.</p>'}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Optional — COGS Adjustment</div>
+      <div class="setting-block">
+        <p class="text-sm text-light mb-12">Since GP methods already account for drug costs, COGS is usually not needed. Enable only if you want an additional gross-margin adjustment on top of your entered GP figures.</p>
+        <div class="flex items-center gap-12 mb-12">
+          <label class="flex items-center gap-8 text-sm">
+            <input type="checkbox" ${s.useCOGS?'checked':''} onchange="setSetting('useCOGS',this.checked);renderSettings()">
+            Apply additional COGS deduction
+          </label>
+        </div>
+        ${s.useCOGS ? `
+          <div class="form-row">
+            <label>COGS % of total sales</label>
+            <input type="range" min="0" max="80" step="0.5" value="${s.cogsPct}"
+              oninput="setSetting('cogsPct',parseFloat(this.value));document.getElementById('cogsPctLbl').textContent=this.value+'%'">
+            <span id="cogsPctLbl" style="font-weight:700">${s.cogsPct}%</span>
+          </div>` : ''}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pharmacy Valuation</div>
+      <div class="setting-block">
+        <p class="text-sm text-light mb-12">The valuation multiple is used to estimate your pharmacy's market value from annual gross profit. A multiple of 3 is typical for community pharmacies.</p>
+        <div class="form-row">
+          <label>Valuation Multiple</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <input type="number" value="${s.valuationMultiple||3}" min="1" max="10" step="0.1" style="max-width:120px"
+              oninput="setSetting('valuationMultiple',parseFloat(this.value)||3);renderDashboard()">
+            <span class="text-sm text-light">× Annual GP = Pharmacy Value</span>
+          </div>
+          <div class="hint">Example: ${fmt((s.valuationMultiple||3) * 12 * 30000)} estimated value at $30k/mo GP with ${s.valuationMultiple||3}× multiple</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Weekly Metrics Targets</div>
+      <p class="text-sm text-light mb-12" style="margin-bottom:16px">Changes are stored with an effective date so historical charts always reflect the correct target for each past week.</p>
+
+      <div class="setting-block">
+        <div class="setting-label">Transfers</div>
+        <div class="form-row">
+          <label>Weekly target (patients transferred in)</label>
+          <input type="number" min="0" step="1" style="max-width:140px" value="${s.transfersWeeklyTarget||0}"
+            oninput="updateWeeklyTarget('transfers',parseInt(this.value)||0)">
+          <div class="hint">Monthly target auto-calculated: ${Math.round((s.transfersWeeklyTarget||0)*4.33)} transfers/month</div>
+        </div>
+      </div>
+
+      <div class="setting-block">
+        <div class="setting-label">Blister Packs</div>
+        <div class="form-row">
+          <label>Weekly target (packs added per week)</label>
+          <input type="number" min="0" step="1" style="max-width:140px" value="${s.blisterPacksWeeklyTarget||0}"
+            oninput="updateWeeklyTarget('blisterPacks',parseInt(this.value)||0)">
+          <div class="hint">Monthly target auto-calculated: ${Math.round((s.blisterPacksWeeklyTarget||0)*4.33)} packs/month</div>
+        </div>
+        <div class="setting-label" style="margin-top:16px">Absolute Blister Pack Goal</div>
+        <div class="form-row">
+          <label>Target total packs (all-time goal)</label>
+          <input type="number" min="0" step="1" style="max-width:140px" value="${s.bpAbsoluteTarget||0}"
+            oninput="setSetting('bpAbsoluteTarget',parseInt(this.value)||0)">
+        </div>
+        <div class="form-row">
+          <label>Timeframe method</label>
+          <div class="pill-toggle mb-12">
+            <button class="pill-opt ${s.bpGoalMethod==='date'?'active':''}"  onclick="setSetting('bpGoalMethod','date');renderSettings()">Target Date</button>
+            <button class="pill-opt ${s.bpGoalMethod==='weeks'?'active':''}" onclick="setSetting('bpGoalMethod','weeks');renderSettings()">Number of Weeks</button>
+          </div>
+        </div>
+        ${s.bpGoalMethod === 'weeks' ? `
+          <div class="form-row">
+            <label>Weeks remaining to hit goal</label>
+            <input type="number" min="1" step="1" style="max-width:140px" value="${s.bpGoalWeeks||26}"
+              oninput="setSetting('bpGoalWeeks',parseInt(this.value)||26)">
+          </div>` : `
+          <div class="form-row">
+            <label>Target date</label>
+            <input type="date" style="max-width:200px" value="${s.bpGoalDate||''}"
+              oninput="setSetting('bpGoalDate',this.value)">
+          </div>`}
+        <div class="hint">Implied weekly pace to hit goal: <strong>${impliedBPWeeklyTarget()} packs/week</strong></div>
+      </div>
+
+      <div class="setting-block">
+        <div class="setting-label">Rx Count</div>
+        <div class="form-row">
+          <label>Weekly target (prescriptions filled)</label>
+          <input type="number" min="0" step="1" style="max-width:140px" value="${s.rxWeeklyTarget||0}"
+            oninput="updateWeeklyTarget('rxCount',parseInt(this.value)||0)">
+          <div class="hint">Monthly target auto-calculated: ${Math.round((s.rxWeeklyTarget||0)*4.33)} Rx/month</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Transfer Sources</div>
+      <p class="text-sm text-light" style="margin-bottom:16px">Define where patients are transferred from. Each source appears as its own input in the weekly entry modal. Deleting a source hides it from charts but preserves its historical data.</p>
+      <div id="srcListContainer">
+        ${(s.transferSources||[]).map((src, i) => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <input type="text" value="${esc(src)}" style="flex:1"
+              oninput="renameTransferSource(${i},this.value)"
+              placeholder="Source name">
+            <button class="btn btn-danger btn-xs" onclick="deleteTransferSource(${i})">✕</button>
+          </div>`).join('')}
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addTransferSource()">+ Add Source</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">EHC — Mission Settings</div>
+      <div class="setting-block">
+        <div class="setting-label">EHC Mission End Date</div>
+        <div class="form-row">
+          <label>Mission end date — drives the "Mission ends in X days" countdown on the EHC page</label>
+          <input type="date" style="max-width:200px" value="${s.ehcMissionEndDate||''}"
+            oninput="setSetting('ehcMissionEndDate',this.value)">
+          <div class="hint">${s.ehcMissionEndDate ? (() => {
+            const end = new Date(s.ehcMissionEndDate + 'T00:00:00');
+            const now2 = new Date(); const today = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate());
+            const d = Math.ceil((end - today) / 86400000);
+            return d > 0 ? `${d} day${d===1?'':'s'} remaining` : d === 0 ? 'Mission ends today' : 'Mission date has passed';
+          })() : 'No mission end date set'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Data Management</div>
+      <div class="flex gap-8 wrap">
+        <button class="btn btn-primary" onclick="exportData()">Export JSON</button>
+        <button class="btn btn-ghost" onclick="importData()">Import JSON</button>
+        <button class="btn btn-danger" onclick="resetData()">Reset All Data</button>
+      </div>
+      <p class="text-xs text-light" style="margin-top:12px">Export creates a JSON backup of all monthly data and settings. Import restores from a previously exported file.</p>
+    </div>`;
+}
+
+function setSetting(key, val) {
+  settings[key] = val;
+  saveSettings();
+}
+
+// Transfer source management
+function addTransferSource() {
+  if (!settings.transferSources) settings.transferSources = [];
+  settings.transferSources.push('New Source');
+  saveSettings();
+  renderSettings();
+}
+function renameTransferSource(i, name) {
+  if (!settings.transferSources) return;
+  settings.transferSources[i] = name;
+  saveSettings();
+}
+function deleteTransferSource(i) {
+  if (!settings.transferSources) return;
+  const name = settings.transferSources[i];
+  if (!confirm(`Remove "${name}"?\n\nHistorical data for this source is preserved in storage but will be hidden from charts.`)) return;
+  settings.transferSources.splice(i, 1);
+  saveSettings();
+  renderSettings();
+}
+
+// ================================================================
+// EXPORT / IMPORT / RESET
+// ================================================================
+function exportData() {
+  const payload = {version:2, exportedAt: new Date().toISOString(), settings, months, weeklyEntries, weeklyTargets};
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'}));
+  a.download = 'pharmasave-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data.months || !data.settings) throw new Error('Invalid backup file');
+        if (!confirm(`Import ${data.months.length} months of data? This will replace all current data.`)) return;
+        settings      = mergeDeep(DEFAULT_SETTINGS, data.settings);
+        months        = data.months;
+        weeklyEntries = data.weeklyEntries || [];
+        weeklyTargets = data.weeklyTargets || [];
+        saveSettings(); saveMonths(); saveWeeklyEntries(); saveWeeklyTargets();
+        navigate(currentPage);
+        alert('Import successful!');
+      } catch(e) {
+        alert('Import failed: ' + e.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+async function resetData() {
+  if (!confirm('Reset ALL data? This will delete all monthly entries and restore default settings. This cannot be undone.')) return;
+  await Promise.all([
+    db.collection(FS_COL).doc(FS_SETTINGS).delete(),
+    db.collection(FS_COL).doc(FS_MONTHS).delete(),
+    db.collection(FS_COL).doc(FS_WEEKLY_DATA).delete(),
+    db.collection(FS_COL).doc(FS_WEEKLY_TARGETS).delete(),
+  ]);
+  await loadState();
+  navigate(currentPage);
+  alert('All data has been reset to defaults.');
+}
+
+// ================================================================
+// MODAL — ADD / EDIT MONTH
+// ================================================================
+function openAddModal() {
+  const defaultExp = calcTotalExpenses();
+  // Pre-fill rebate from % if that method is selected
+  const lastRx = months.length ? months[months.length-1].rxSales : 0;
+  const defaultRebate = settings.rebateMethod === 'pct'
+    ? Math.round(lastRx * settings.rebatePct / 100)
+    : 0;
+
+  const m = {
+    id: uid(),
+    monthKey: currentMonthKey(),
+    rxSales:      0,
+    rxGP_fees:    0,
+    rxGP_markup:  0,
+    rxGP_pct:     settings.rxGPPct,
+    frontSales:   0,
+    frontGP_pct:  settings.frontGPPct,
+    frontGP_actual: 0,
+    rebate:       defaultRebate,
+    expenses:     defaultExp,
+    _isNew:       true,
+  };
+  showModal(m);
+}
+
+function openEditModal(id) {
+  const m = months.find(x => x.id === id);
+  if (!m) return;
+  showModal({...m, _isNew: false});
+}
+
+function showModal(m) {
+  const overlay = document.getElementById('modalOverlay');
+  overlay.style.display = 'flex';
+  renderModal(m);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function renderModal(m) {
+  const isRxFee   = settings.rxGPMethod    === 'fee_markup';
+  const isFrontPct = settings.frontGPMethod === 'pct';
+  const d = calcMonthData(m);
+
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-head">
+      <h2>${m._isNew ? 'Add Month' : 'Edit — ' + monthKeyToFull(m.monthKey)}</h2>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-row">
+        <label>Month</label>
+        <input type="month" id="mMonth" value="${esc(m.monthKey)}" onchange="modalUpdate()">
+      </div>
+
+      <hr class="section-divider">
+      <div class="font-bold text-sm mb-8" style="color:var(--navy)">Rx Sales</div>
+
+      <div class="form-row">
+        <label>Rx Sales — Total ($)</label>
+        <div class="input-prefix"><span>$</span>
+          <input type="text" id="mRxSales" class="dollar-input" value="${numFmt(m.rxSales)}" oninput="modalUpdate()">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Gross Profit Method</label>
+        <div class="pill-toggle">
+          <button class="pill-opt ${isRxFee?'active':''}"  onclick="setSetting('rxGPMethod','fee_markup');renderModal(collectModal())">Fee + Markup</button>
+          <button class="pill-opt ${!isRxFee?'active':''}" onclick="setSetting('rxGPMethod','pct');renderModal(collectModal())">% of Sales</button>
+        </div>
+      </div>
+
+      ${isRxFee ? `
+        <div class="sub-fields">
+          <div class="form-row mb-8">
+            <label>Total Dispensing Fees ($)</label>
+            <div class="input-prefix"><span>$</span>
+              <input type="text" id="mRxFees" class="dollar-input" value="${numFmt(m.rxGP_fees)}" oninput="modalUpdate()">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <label>Total Markup ($)</label>
+            <div class="input-prefix"><span>$</span>
+              <input type="text" id="mRxMarkup" class="dollar-input" value="${numFmt(m.rxGP_markup)}" oninput="modalUpdate()">
+            </div>
+          </div>
+        </div>
+      ` : `
+        <div class="sub-fields">
+          <div class="form-row" style="margin-bottom:0">
+            <label>Gross Profit % of Rx Sales</label>
+            <input type="number" id="mRxPct" value="${m.rxGP_pct||settings.rxGPPct}" min="0" max="100" step="0.1" oninput="modalUpdate()">
+          </div>
+        </div>
+      `}
+      <div class="text-sm" style="margin-top:8px;color:var(--teal);font-weight:600">
+        Rx Gross Profit: <span id="mRxGP">${fmt(d.rxGP)}</span>
+      </div>
+
+      <hr class="section-divider">
+      <div class="font-bold text-sm mb-8" style="color:var(--navy)">Front Store Sales</div>
+
+      <div class="form-row">
+        <label>Front Store Sales — Total ($)</label>
+        <div class="input-prefix"><span>$</span>
+          <input type="text" id="mFrontSales" class="dollar-input" value="${numFmt(m.frontSales)}" oninput="modalUpdate()">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Gross Profit Method</label>
+        <div class="pill-toggle">
+          <button class="pill-opt ${isFrontPct?'active':''}"  onclick="setSetting('frontGPMethod','pct');renderModal(collectModal())">% of Sales</button>
+          <button class="pill-opt ${!isFrontPct?'active':''}" onclick="setSetting('frontGPMethod','actual');renderModal(collectModal())">Actual Profit</button>
+        </div>
+      </div>
+
+      ${isFrontPct ? `
+        <div class="sub-fields">
+          <div class="form-row" style="margin-bottom:0">
+            <label>Gross Profit % of Front Store Sales</label>
+            <input type="number" id="mFrontPct" value="${m.frontGP_pct||settings.frontGPPct}" min="0" max="100" step="0.1" oninput="modalUpdate()">
+          </div>
+        </div>
+      ` : `
+        <div class="sub-fields">
+          <div class="form-row" style="margin-bottom:0">
+            <label>Actual Front Store Gross Profit ($)</label>
+            <div class="input-prefix"><span>$</span>
+              <input type="text" id="mFrontActual" class="dollar-input" value="${numFmt(m.frontGP_actual)}" oninput="modalUpdate()">
+            </div>
+          </div>
+        </div>
+      `}
+      <div class="text-sm" style="margin-top:8px;color:var(--teal);font-weight:600">
+        Front Store Gross Profit: <span id="mFrontGP">${fmt(d.frontGP)}</span>
+      </div>
+
+      <hr class="section-divider">
+      <div class="font-bold text-sm mb-8" style="color:var(--navy)">Rebates</div>
+      <div class="form-row">
+        <label>Rebate Amount This Month ($)
+          ${settings.rebateMethod === 'pct'
+            ? `<span class="text-xs" style="color:var(--teal)">Auto: Rx Sales × ${settings.rebatePct}%</span>`
+            : `<span class="text-xs text-light">(pure profit)</span>`}
+        </label>
+        <div class="input-prefix"><span>$</span>
+          <input type="text" id="mRebate" class="dollar-input"
+            value="${numFmt(settings.rebateMethod === 'pct' ? (parseFloat(m.rxSales)||0) * settings.rebatePct / 100 : m.rebate)}"
+            ${settings.rebateMethod === 'pct' ? 'readonly style="background:var(--bg);color:var(--teal);cursor:default"' : 'oninput="modalUpdate()"'}>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+      <div class="font-bold text-sm mb-8" style="color:var(--navy)">Expenses</div>
+      <div class="form-row">
+        <label>Total Monthly Expenses ($) <span class="text-xs text-light">(${settings.expenseMethod === 'lump' ? 'from lump sum setting' : 'from itemized total'})</span></label>
+        <div class="input-prefix"><span>$</span>
+          <input type="text" id="mExpenses" class="dollar-input" value="${numFmt(m.expenses || calcTotalExpenses())}" oninput="modalUpdate()">
+        </div>
+      </div>
+
+      <hr class="section-divider">
+      <div class="gp-summary">
+        <div class="gp-row"><span>Rx Gross Profit</span><span id="sumRxGP">${fmt(d.rxGP)}</span></div>
+        <div class="gp-row"><span>Front Store Gross Profit</span><span id="sumFrontGP">${fmt(d.frontGP)}</span></div>
+        <div class="gp-row"><span>Rebates</span><span id="sumRebate">${fmt(d.rebate)}</span></div>
+        <div class="gp-divider"></div>
+        <div class="gp-row gp-total"><span>Total Gross Profit</span><span id="sumTotalGP">${fmt(d.totalGP)}</span></div>
+        <div class="gp-row"><span style="color:var(--light)">Total Expenses</span><span id="sumExp" style="color:var(--red)">${fmt(d.totalExp)}</span></div>
+        <div class="gp-divider"></div>
+        <div class="gp-row gp-total"><span>Net Profit</span>
+          <span id="sumNP" class="${d.netProfit>=0?'pos':'neg'}">${fmt(d.netProfit)}</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-success" onclick="saveModal('${esc(m.id)}', ${m._isNew})">
+        ${m._isNew ? 'Add Month' : 'Save Changes'}
+      </button>
+    </div>`;
+
+  setupDollarInputs(document.getElementById('modalBox'));
+}
+
+// Collect current modal field values into a month-like object for live preview
+function collectModal() {
+  const get = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  return {
+    id:            get('mMonth') || currentMonthKey(),
+    monthKey:      get('mMonth') || currentMonthKey(),
+    rxSales:       parseDollar(get('mRxSales')),
+    rxGP_fees:     parseDollar(get('mRxFees')),
+    rxGP_markup:   parseDollar(get('mRxMarkup')),
+    rxGP_pct:      parseFloat(get('mRxPct'))  || settings.rxGPPct,
+    frontSales:    parseDollar(get('mFrontSales')),
+    frontGP_pct:   parseFloat(get('mFrontPct'))    || settings.frontGPPct,
+    frontGP_actual: parseDollar(get('mFrontActual')),
+    rebate:        parseDollar(get('mRebate')),
+    expenses:      parseDollar(get('mExpenses')),
+    _isNew:        true,
+  };
+}
+
+function modalUpdate() {
+  // When rebate method is %, auto-fill the rebate field from current Rx Sales
+  if (settings.rebateMethod === 'pct') {
+    const rxSalesEl = document.getElementById('mRxSales');
+    const rebateEl  = document.getElementById('mRebate');
+    if (rxSalesEl && rebateEl) {
+      const rxSales = parseDollar(rxSalesEl.value);
+      const computed = rxSales * settings.rebatePct / 100;
+      rebateEl.value = numFmt(computed);
+    }
+  }
+  const m = collectModal();
+  const d = calcMonthData(m);
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  set('mRxGP',    fmt(d.rxGP));
+  set('mFrontGP', fmt(d.frontGP));
+  set('sumRxGP',    fmt(d.rxGP));
+  set('sumFrontGP', fmt(d.frontGP));
+  set('sumRebate',  fmt(d.rebate));
+  set('sumTotalGP', fmt(d.totalGP));
+  set('sumExp',     fmt(d.totalExp));
+  set('sumNP',      fmt(d.netProfit));
+  const npEl = document.getElementById('sumNP');
+  if (npEl) npEl.className = d.netProfit >= 0 ? 'pos' : 'neg';
+}
+
+function saveModal(id, isNew) {
+  const m = collectModal();
+  const monthKey = document.getElementById('mMonth')?.value || currentMonthKey();
+  if (!monthKey) { alert('Please select a month.'); return; }
+
+  const record = {
+    id:             isNew ? uid() : id,
+    monthKey,
+    rxSales:        m.rxSales,
+    rxGP_fees:      m.rxGP_fees,
+    rxGP_markup:    m.rxGP_markup,
+    rxGP_pct:       m.rxGP_pct,
+    frontSales:     m.frontSales,
+    frontGP_pct:    m.frontGP_pct,
+    frontGP_actual: m.frontGP_actual,
+    rebate:         m.rebate,
+    expenses:       m.expenses,
+  };
+
+  if (isNew) {
+    // Check for duplicate month
+    if (months.find(x => x.monthKey === monthKey)) {
+      if (!confirm(`A record for ${monthKeyToFull(monthKey)} already exists. Replace it?`)) return;
+      months = months.filter(x => x.monthKey !== monthKey);
+    }
+    months.push(record);
+  } else {
+    const idx = months.findIndex(x => x.id === id);
+    if (idx >= 0) months[idx] = record;
+  }
+
+  saveMonths();
+  syncRealisticRate();
+  closeModal();
+  navigate('monthly');
+  updateBadge();
+}
+
+// ================================================================
+// DOLLAR INPUT HELPERS
+// ================================================================
+function numFmt(n) {
+  const v = parseFloat(n) || 0;
+  return v ? Math.round(v).toLocaleString('en-CA') : '';
+}
+
+function setupDollarInputs(container) {
+  if (!container) return;
+  container.querySelectorAll('input.dollar-input').forEach(inp => {
+    inp.addEventListener('blur', function() {
+      const v = parseDollar(this.value);
+      this.value = v ? Math.round(v).toLocaleString('en-CA') : '';
+    });
+    inp.addEventListener('focus', function() {
+      const v = parseDollar(this.value);
+      this.value = v ? String(Math.round(v)) : '';
+    });
+  });
+}
+
+// ================================================================
+// WEEKLY METRICS — PERSISTENCE
+// ================================================================
+function saveWeeklyEntries() {
+  db.collection(FS_COL).doc(FS_WEEKLY_DATA).set({ weeks: weeklyEntries }).catch(console.error);
+}
+function saveWeeklyTargets() {
+  db.collection(FS_COL).doc(FS_WEEKLY_TARGETS).set({ targets: weeklyTargets }).catch(console.error);
+}
+
+// Called from Settings when a target input changes
+function updateWeeklyTarget(metric, value) {
+  // Update live setting for immediate UI use
+  const key = metric === 'transfers' ? 'transfersWeeklyTarget'
+            : metric === 'blisterPacks' ? 'blisterPacksWeeklyTarget'
+            : 'rxWeeklyTarget';
+  settings[key] = value;
+  saveSettings();
+
+  // Record the change with today's date so historical charts stay accurate
+  const today = new Date().toISOString().slice(0, 10);
+  const idx = weeklyTargets.findIndex(t => t.metric === metric && t.effectiveFrom === today);
+  if (idx >= 0) weeklyTargets[idx].value = value;
+  else weeklyTargets.push({ metric, value, effectiveFrom: today });
+  saveWeeklyTargets();
+}
+
+// Look up what target was active for a given week
+function getTargetForWeek(metric, weekStart) {
+  const key = metric === 'transfers' ? 'transfersWeeklyTarget'
+            : metric === 'blisterPacks' ? 'blisterPacksWeeklyTarget'
+            : 'rxWeeklyTarget';
+  const history = weeklyTargets
+    .filter(t => t.metric === metric && t.effectiveFrom <= weekStart)
+    .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom));
+  return history.length ? history[0].value : (settings[key] || 0);
+}
+
+// ================================================================
+// WEEKLY METRICS — DATE UTILITIES
+// ================================================================
+function getMondayISO(dateInput) {
+  const d = new Date(typeof dateInput === 'string' ? dateInput + 'T12:00:00' : dateInput);
+  const day = d.getDay();                  // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day;  // shift to Monday
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+function getCurrentMondayISO() { return getMondayISO(new Date()); }
+
+function weekLabel(weekStart) {
+  const d   = new Date(weekStart + 'T12:00:00');
+  const sun = new Date(d);
+  sun.setDate(d.getDate() + 6);
+  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getMonth() === sun.getMonth()
+    ? `${mo[d.getMonth()]} ${d.getDate()}–${sun.getDate()}`
+    : `${mo[d.getMonth()]} ${d.getDate()}–${mo[sun.getMonth()]} ${sun.getDate()}`;
+}
+
+// ================================================================
+// WEEKLY METRICS — AGGREGATION
+// ================================================================
+function weeksInMonth(year, month) {
+  return weeklyEntries.filter(w => {
+    const d = new Date(w.weekStart + 'T12:00:00');
+    return d.getFullYear() === year && (d.getMonth() + 1) === month;
+  });
+}
+function monthlyTotal(metric, year, month) {
+  return weeksInMonth(year, month).reduce((s, w) => s + (Number(w[metric]) || 0), 0);
+}
+function allTimeBP() {
+  return weeklyEntries.reduce((s, w) => s + (Number(w.blisterPacks) || 0), 0);
+}
+
+function impliedBPWeeklyTarget() {
+  const current  = allTimeBP();
+  const absolute = settings.bpAbsoluteTarget || 0;
+  const needed   = Math.max(0, absolute - current);
+  let weeks = 26;
+  if (settings.bpGoalMethod === 'weeks') {
+    weeks = Math.max(1, parseFloat(settings.bpGoalWeeks) || 26);
+  } else if (settings.bpGoalDate) {
+    const ms = new Date(settings.bpGoalDate) - new Date();
+    weeks = Math.max(1, Math.ceil(ms / (7 * 864e5)));
+  }
+  return needed > 0 ? Math.ceil(needed / weeks) : 0;
+}
+
+// ================================================================
+// WEEKLY METRICS — MOTIVATIONAL TIP
+// ================================================================
+const WEEKLY_TIPS = [
+  '💡 Blister pack patients fill 5–6× more prescriptions per year than regular patients.',
+  '📈 A 10% increase in weekly Rx count compounds to 160%+ growth over 5 years.',
+  '🤝 Transfers are your highest-leverage metric — one patient can bring their whole family.',
+  '📊 Tracking weekly keeps you ahead. Monthly data hides 3 bad weeks inside one good average.',
+  '💊 Each blister pack patient you add is worth ~$2,000–$4,000 in annual dispensing revenue.',
+  '🏆 Consistency compounds — every week you hit target is progress that stacks.',
+  '🚀 Set the target, track it weekly, review monthly. That\'s the whole growth system.',
+];
+
+function getWeeklyTip() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1;
+  const atBP    = allTimeBP();
+  const bpGoal  = settings.bpAbsoluteTarget || 0;
+  const bpLeft  = Math.max(0, bpGoal - atBP);
+  const mTrans  = monthlyTotal('transfers', y, m);
+  const wTT     = settings.transfersWeeklyTarget || 0;
+  const mTGoal  = Math.round(wTT * 4.33);
+
+  if (bpGoal > 0 && bpLeft > 0 && bpLeft <= 10)
+    return `🎯 Only ${bpLeft} more blister packs to hit your ${bpGoal}-pack all-time goal!`;
+  if (bpGoal > 0 && atBP >= bpGoal)
+    return `🎉 You've hit your all-time blister pack goal of ${bpGoal}! Time to set a new one.`;
+  if (wTT > 0 && mTrans > 0 && mTrans < mTGoal)
+    return `📈 ${mTrans} transfers this month — only ${mTGoal - mTrans} away from your monthly target of ${mTGoal}.`;
+
+  return WEEKLY_TIPS[Math.floor(now.getDate() / 4) % WEEKLY_TIPS.length];
+}
+
+// ================================================================
+// PAGE: WEEKLY METRICS
+// ================================================================
+function renderWeekly() {
+  const el     = document.getElementById('page-weekly');
+  const sorted = [...weeklyEntries].sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+  const last12 = sorted.slice(-12);
+  const now    = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1;
+
+  // Targets
+  const wTT  = settings.transfersWeeklyTarget    || 0;
+  const wBPT = settings.blisterPacksWeeklyTarget  || 0;
+  const wRxT = settings.rxWeeklyTarget            || 0;
+  const mTT  = Math.round(wTT  * 4.33);
+  const mBPT = Math.round(wBPT * 4.33);
+  const bpAbs = settings.bpAbsoluteTarget || 0;
+
+  // Actuals
+  const mT   = monthlyTotal('transfers',    y, m);
+  const mBP  = monthlyTotal('blisterPacks', y, m);
+  const atBP = allTimeBP();
+
+  // Progress pcts
+  function pct(val, tgt) { return tgt > 0 ? Math.min(100, (val / tgt) * 100) : 0; }
+  const tPct  = pct(mT,   mTT);
+  const bPct  = pct(mBP,  mBPT);
+  const atPct = pct(atBP, bpAbs);
+
+  function progBar(pcnt, color) {
+    return `<div class="wk-prog-bar"><div class="wk-prog-fill" style="width:${pcnt.toFixed(1)}%;background:${color}"></div></div>`;
+  }
+
+  el.innerHTML = `
+    <div class="wk-tip">${getWeeklyTip()}</div>
+
+    <!-- Rolling avg summary cards -->
+    ${(() => {
+      const last13 = sorted.slice(-13);
+
+      function rollingAvg(metric) {
+        if (!last13.length) return null;
+        return last13.reduce((s, w) => s + (Number(w[metric]) || 0), 0) / last13.length;
+      }
+
+      function avgCard(title, avg, target) {
+        if (avg === null) return `
+          <div class="card" style="padding:18px 20px">
+            <div class="card-title" style="margin-bottom:12px">${title}</div>
+            <div style="color:var(--light);font-size:.84rem">Not enough data yet</div>
+          </div>`;
+
+        const onTarget = target > 0 ? avg >= target : null;
+        const indColor = onTarget === null ? 'var(--light)'
+                       : onTarget        ? 'var(--teal)'
+                       :                   'var(--red)';
+        const indLabel = onTarget === null ? '—'
+                       : onTarget        ? '✓ At or above target'
+                       :                   '↓ Below target';
+
+        return `
+          <div class="card" style="padding:18px 20px">
+            <div class="card-title" style="margin-bottom:14px">${title}</div>
+            <div style="font-size:.7rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">3-Month Rolling Avg</div>
+            <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+              <span style="font-size:2rem;font-weight:800;color:var(--navy);line-height:1">${avg.toFixed(1)}</span>
+              <span style="font-size:.85rem;font-weight:400;color:var(--light)">/week</span>
+              <span style="font-size:.78rem;font-weight:700;color:${indColor};white-space:nowrap">${indLabel}</span>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:12px">
+              <div style="font-size:.7rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Weekly Target</div>
+              <div style="font-size:1.25rem;font-weight:700;color:var(--navy);line-height:1">${target > 0 ? target : '—'}</div>
+            </div>
+          </div>`;
+      }
+
+      const tAvg  = rollingAvg('transfers');
+      const bpAvg = rollingAvg('blisterPacks');
+      const tTgt  = settings.transfersWeeklyTarget    || 0;
+      const bpTgt = settings.blisterPacksWeeklyTarget  || 0;
+
+      return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="weekly-pb-grid">
+        ${avgCard('Transfers — Rolling Avg vs Target', tAvg, tTgt)}
+        ${avgCard('Blister Packs — Rolling Avg vs Target', bpAvg, bpTgt)}
+      </div>`;
+    })()}
+
+    <!-- Charts -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-bottom:16px">
+      <div class="card" style="padding:16px 18px">
+        <div class="card-title">Transfers — Last 12 Weeks</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="wkChartTransfers"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px 18px">
+        <div class="card-title">Blister Packs — Last 12 Weeks</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="wkChartBP"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px 18px">
+        <div class="card-title">Rx Count — Last 12 Weeks</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="wkChartRx"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Transfer Source Insight -->
+    <div class="card" style="padding:16px 18px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin:0">Transfer Sources — Last 12 Weeks</div>
+        <button id="srcChartToggleBtn" onclick="toggleSourceChartView()"
+          style="font-size:.72rem;padding:4px 12px;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--navy);font-weight:600">
+          ${_srcChartView === 'stacked' ? 'Trend' : 'Stacked'}
+        </button>
+      </div>
+      <div class="chart-wrap" style="height:220px"><canvas id="wkChartSrc"></canvas></div>
+    </div>
+
+    <!-- Progress bars -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="weekly-pb-grid">
+
+      <div class="card">
+        <div class="card-title">Transfers — ${now.toLocaleString('en-CA',{month:'long'})} Progress</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:1.8rem;font-weight:800;color:var(--navy)">${mT}</span>
+          <span class="text-xs text-light">of ${mTT} monthly target</span>
+        </div>
+        ${progBar(tPct, tPct >= 100 ? 'var(--teal)' : 'var(--navy)')}
+        <div class="text-xs text-light" style="margin-top:5px">${tPct.toFixed(0)}% complete · weekly target: ${wTT}</div>
+        ${tPct >= 100 ? '<div style="color:var(--teal);font-size:.8rem;font-weight:700;margin-top:6px">✓ Monthly target reached!</div>' : ''}
+      </div>
+
+      <div class="card">
+        <div class="card-title">Blister Packs</div>
+
+        <div style="margin-bottom:16px">
+          <div class="wk-prog-label">${now.toLocaleString('en-CA',{month:'long'})} — Monthly</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+            <span style="font-size:1.4rem;font-weight:800;color:var(--navy)">${mBP}</span>
+            <span class="text-xs text-light">of ${mBPT} target</span>
+          </div>
+          ${progBar(bPct, bPct >= 100 ? 'var(--teal)' : 'var(--navy)')}
+          <div class="text-xs text-light" style="margin-top:4px">${bPct.toFixed(0)}% · weekly target: ${wBPT}</div>
+        </div>
+
+        <div>
+          <div class="wk-prog-label">All-time Cumulative</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+            <span style="font-size:1.4rem;font-weight:800;color:var(--amber)">${atBP}</span>
+            <span class="text-xs text-light">of ${bpAbs} goal</span>
+          </div>
+          ${progBar(atPct, atPct >= 100 ? 'var(--teal)' : 'var(--amber)')}
+          <div class="text-xs text-light" style="margin-top:4px">${atPct.toFixed(0)}% · ${Math.max(0, bpAbs - atBP)} packs remaining</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly log table -->
+    ${sorted.length ? `
+    <div class="card">
+      <div class="card-title">Weekly Log</div>
+      <div class="tbl-wrap">
+        <table class="data-tbl">
+          <thead><tr>
+            <th>Week</th>
+            <th>Transfers</th>
+            <th>Blister Packs</th>
+            <th>Rx Count</th>
+            <th style="width:100px"></th>
+          </tr></thead>
+          <tbody>
+            ${[...sorted].reverse().map(w => {
+              const tT  = getTargetForWeek('transfers',    w.weekStart);
+              const bT  = getTargetForWeek('blisterPacks', w.weekStart);
+              const rT  = getTargetForWeek('rxCount',      w.weekStart);
+              const hit = (v, t) => t > 0 && v >= t ? '<span class="wk-hit">✓</span>' : '';
+              const bpVal = w.blisterPacks < 0
+                ? `<span class="neg">${w.blisterPacks}</span>`
+                : String(w.blisterPacks);
+              return `<tr>
+                <td style="font-weight:600">${weekLabel(w.weekStart)}</td>
+                <td>${w.transfers}${hit(w.transfers, tT)}</td>
+                <td>${bpVal}${hit(w.blisterPacks, bT)}</td>
+                <td>${w.rxCount}${hit(w.rxCount, rT)}</td>
+                <td>
+                  <button class="btn btn-xs btn-ghost" onclick="openWeekModal('${w.id}')">Edit</button>
+                  <button class="btn btn-xs btn-danger" onclick="deleteWeekEntry('${w.id}')">✕</button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ` : `<div class="card" style="text-align:center;padding:48px 20px;color:var(--light)">
+      No data yet — press <strong style="color:var(--teal)">+</strong> to add your first week.
+    </div>`}
+
+    <!-- Floating action button -->
+    <button class="wk-fab" onclick="openWeekModal()">+</button>
+  `;
+
+  // Render all charts after DOM is written
+  if (last12.length) {
+    renderWeeklyChart('wkChartTransfers', last12, 'transfers',    'Transfers');
+    renderWeeklyChart('wkChartBP',        last12, 'blisterPacks', 'Blister Packs');
+    renderWeeklyChart('wkChartRx',        last12, 'rxCount',      'Rx Count');
+  }
+  renderSourceChart('wkChartSrc', last12);
+}
+
+// ================================================================
+// TRANSFER SOURCE INSIGHT CHART
+// ================================================================
+
+function toggleSourceChartView() {
+  _srcChartView = _srcChartView === 'stacked' ? 'trend' : 'stacked';
+  const sorted = [...weeklyEntries].sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+  destroyChart('wk_srcInsight');
+  renderSourceChart('wkChartSrc', sorted.slice(-12));
+  const btn = document.getElementById('srcChartToggleBtn');
+  if (btn) btn.textContent = _srcChartView === 'stacked' ? 'Trend' : 'Stacked';
+}
+
+function renderSourceChart(canvasId, weeks) {
+  destroyChart('wk_srcInsight');
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const srcs      = settings.transferSources || [];
+  const wkLabels  = weeks.map(w => weekLabel(w.weekStart));
+
+  // Per-source data arrays
+  const sourceDatasets = srcs.map((src, i) => ({
+    label: src,
+    color: SOURCE_PALETTE[i % SOURCE_PALETTE.length],
+    data:  weeks.map(w => (w.sources ? (Number(w.sources[src]) || 0) : 0)),
+  }));
+
+  // "Untagged" for backward-compat entries that only have a total (no sources object)
+  const untaggedData = weeks.map(w => (!w.sources || !Object.keys(w.sources).length) ? (Number(w.transfers) || 0) : 0);
+  const hasUntagged  = untaggedData.some(v => v > 0);
+
+  const commonOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font:{size:10}, boxWidth:12, padding:10 } },
+      tooltip: { mode:'index', intersect:false },
+    },
+  };
+
+  if (_srcChartView === 'stacked') {
+    const datasets = [
+      ...sourceDatasets.map(({label, color, data}) => ({
+        label, data,
+        backgroundColor: color,
+        stack: 'transfers',
+        borderRadius: 2,
+        borderWidth: 0,
+      })),
+      ...(hasUntagged ? [{
+        label: 'Untagged', data: untaggedData,
+        backgroundColor: UNTAGGED_COLOR,
+        stack: 'transfers',
+        borderRadius: 2, borderWidth: 0,
+      }] : []),
+    ];
+    charts.wk_srcInsight = new Chart(canvas, {
+      type: 'bar',
+      data: { labels: wkLabels, datasets },
+      options: {
+        ...commonOpts,
+        scales: {
+          x: { grid:{display:false}, ticks:{font:{size:10}}, stacked:true },
+          y: { beginAtZero:true, stacked:true, ticks:{precision:0, font:{size:10}} },
+        },
+      },
+    });
+  } else {
+    const datasets = [
+      ...sourceDatasets.map(({label, color, data}) => ({
+        label, data,
+        borderColor: color,
+        backgroundColor: color + '22',
+        pointRadius: 3, fill: false, tension: 0.3,
+      })),
+      ...(hasUntagged ? [{
+        label: 'Untagged', data: untaggedData,
+        borderColor: UNTAGGED_COLOR,
+        backgroundColor: UNTAGGED_COLOR + '22',
+        pointRadius: 3, fill: false, tension: 0.3,
+      }] : []),
+    ];
+    charts.wk_srcInsight = new Chart(canvas, {
+      type: 'line',
+      data: { labels: wkLabels, datasets },
+      options: {
+        ...commonOpts,
+        scales: {
+          x: { grid:{display:false}, ticks:{font:{size:10}} },
+          y: { beginAtZero:true, ticks:{precision:0, font:{size:10}} },
+        },
+      },
+    });
+  }
+}
+
+function renderEHC() {
+  const el     = document.getElementById('page-ehc');
+  const sorted = [...weeklyEntries].sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+  const last12 = sorted.slice(-12);
+  const last13 = sorted.slice(-13);
+  const now    = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1;
+
+  // ── Mission countdown ─────────────────────────────────────────
+  const missionEnd = settings.ehcMissionEndDate || '';
+  let missionHtml;
+  if (!missionEnd) {
+    missionHtml = `<div class="ehc-cd-num" style="font-size:1rem;line-height:1.5">—</div><div class="ehc-cd-sub">Set in Settings</div>`;
+  } else {
+    const endDate    = new Date(missionEnd + 'T00:00:00');
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const daysLeft   = Math.ceil((endDate - todayStart) / 86400000);
+    if (daysLeft <= 0) {
+      missionHtml = `<div style="font-size:.95rem;font-weight:700;color:#fff;line-height:1.4">Mission Complete</div><div class="ehc-cd-sub" style="margin-top:4px">Awaiting next mission</div>`;
+    } else {
+      missionHtml = `<div class="ehc-cd-num">${daysLeft}</div><div class="ehc-cd-sub">${daysLeft === 1 ? 'day' : 'days'} remaining</div>`;
+    }
+  }
+
+  // ── Patient countdown ─────────────────────────────────────────
+  const bpAbs        = settings.bpAbsoluteTarget || 0;
+  const atBP         = allTimeBP();
+  const patientsLeft = bpAbs - atBP;
+  let patientHtml;
+  if (bpAbs === 0) {
+    patientHtml = `<div class="ehc-cd-num" style="font-size:1rem;line-height:1.5">—</div><div class="ehc-cd-sub">Set target in Settings</div>`;
+  } else if (patientsLeft <= 0) {
+    patientHtml = `<div class="ehc-cd-num" style="color:#6ee7b7">Goal Reached!</div><div class="ehc-cd-sub">${atBP} patients enrolled</div>`;
+  } else {
+    patientHtml = `<div class="ehc-cd-num">${patientsLeft}</div><div class="ehc-cd-sub">${patientsLeft === 1 ? 'blister pack patient' : 'blister pack patients'} away from keeping our doors open</div>`;
+  }
+
+  // ── "What drove results" note ─────────────────────────────────
+  const latestEntry = sorted.length ? sorted[sorted.length - 1] : null;
+  const weekNote    = latestEntry?.weeklyNote?.trim() || '';
+  const noteIsEmpty = !weekNote;
+
+  // ── Targets ───────────────────────────────────────────────────
+  const wTT  = settings.transfersWeeklyTarget   || 0;
+  const wBPT = settings.blisterPacksWeeklyTarget || 0;
+  const mTT  = Math.round(wTT  * 4.33);
+  const mBPT = Math.round(wBPT * 4.33);
+
+  // ── Actuals ───────────────────────────────────────────────────
+  const mT  = monthlyTotal('transfers',    y, m);
+  const mBP = monthlyTotal('blisterPacks', y, m);
+
+  function pct(val, tgt) { return tgt > 0 ? Math.min(100, (val / tgt) * 100) : 0; }
+  const tPct  = pct(mT,   mTT);
+  const bPct  = pct(mBP,  mBPT);
+  const atPct = pct(atBP, bpAbs);
+
+  function progBar(pcnt, color) {
+    return `<div class="wk-prog-bar"><div class="wk-prog-fill" style="width:${pcnt.toFixed(1)}%;background:${color}"></div></div>`;
+  }
+
+  // ── Rolling avg helpers ───────────────────────────────────────
+  function rollingAvg(metric) {
+    if (!last13.length) return null;
+    return last13.reduce((s, w) => s + (Number(w[metric]) || 0), 0) / last13.length;
+  }
+  function avgCard(title, avg, target) {
+    if (avg === null) return `
+      <div class="card" style="padding:18px 20px">
+        <div class="card-title" style="margin-bottom:12px">${title}</div>
+        <div style="color:var(--light);font-size:.84rem">Not enough data yet</div>
+      </div>`;
+    const onTarget = target > 0 ? avg >= target : null;
+    const indColor = onTarget === null ? 'var(--light)' : onTarget ? 'var(--teal)' : 'var(--red)';
+    const indLabel = onTarget === null ? '—' : onTarget ? '✓ At or above target' : '↓ Below target';
+    return `
+      <div class="card" style="padding:18px 20px">
+        <div class="card-title" style="margin-bottom:14px">${title}</div>
+        <div style="font-size:.7rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">3-Month Rolling Avg</div>
+        <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <span style="font-size:2rem;font-weight:800;color:var(--navy);line-height:1">${avg.toFixed(1)}</span>
+          <span style="font-size:.85rem;font-weight:400;color:var(--light)">/week</span>
+          <span style="font-size:.78rem;font-weight:700;color:${indColor};white-space:nowrap">${indLabel}</span>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:.7rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Weekly Target</div>
+          <div style="font-size:1.25rem;font-weight:700;color:var(--navy);line-height:1">${target > 0 ? target : '—'}</div>
+        </div>
+      </div>`;
+  }
+  const tAvg  = rollingAvg('transfers');
+  const bpAvg = rollingAvg('blisterPacks');
+  const tTgt  = settings.transfersWeeklyTarget   || 0;
+  const bpTgt = settings.blisterPacksWeeklyTarget || 0;
+
+  el.innerHTML = `
+
+    <!-- ── Mission Header ─────────────────────────────────────── -->
+    <div class="ehc-mission">
+      <div class="ehc-mission-headline">Mission: Stay Open. Bring It Home.</div>
+      <div class="ehc-cd-grid">
+        <div class="ehc-cd-box">
+          <div class="ehc-cd-label">Mission Countdown</div>
+          ${missionHtml}
+        </div>
+        <div class="ehc-cd-box">
+          <div class="ehc-cd-label">Patient Countdown</div>
+          ${patientHtml}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── What drove results ────────────────────────────────── -->
+    <div class="card ehc-note-card" style="padding:18px 20px;margin-bottom:16px">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:8px">What drove results this week</div>
+      <div style="font-size:.95rem;line-height:1.65;color:${noteIsEmpty ? 'var(--light)' : 'var(--text)'};font-style:${noteIsEmpty ? 'italic' : 'normal'}">${noteIsEmpty ? 'No update yet this week — check back soon.' : weekNote}</div>
+      ${latestEntry ? `<div style="font-size:.68rem;color:var(--light);margin-top:10px">Week of ${weekLabel(latestEntry.weekStart)}</div>` : ''}
+    </div>
+
+    <!-- ── Rolling avg cards ─────────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="weekly-pb-grid">
+      ${avgCard('Transfers — Rolling Avg vs Target', tAvg, tTgt)}
+      ${avgCard('Blister Packs — Rolling Avg vs Target', bpAvg, bpTgt)}
+    </div>
+
+    <!-- ── Charts ────────────────────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-bottom:16px">
+      <div class="card" style="padding:16px 18px">
+        <div class="card-title">Transfers — Last 12 Weeks</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ehcChartTransfers"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px 18px">
+        <div class="card-title">Blister Packs — Last 12 Weeks</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ehcChartBP"></canvas></div>
+      </div>
+      <div class="card" style="padding:16px 18px">
+        <div class="card-title">Rx Count — Last 12 Weeks</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ehcChartRx"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ── Progress bars ─────────────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="weekly-pb-grid">
+      <div class="card">
+        <div class="card-title">Transfers — ${now.toLocaleString('en-CA',{month:'long'})} Progress</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:1.8rem;font-weight:800;color:var(--navy)">${mT}</span>
+          <span class="text-xs text-light">of ${mTT} monthly target</span>
+        </div>
+        ${progBar(tPct, tPct >= 100 ? 'var(--teal)' : 'var(--navy)')}
+        <div class="text-xs text-light" style="margin-top:5px">${tPct.toFixed(0)}% complete · weekly target: ${wTT}</div>
+        ${tPct >= 100 ? '<div style="color:var(--teal);font-size:.8rem;font-weight:700;margin-top:6px">✓ Monthly target reached!</div>' : ''}
+      </div>
+      <div class="card">
+        <div class="card-title">Blister Packs</div>
+        <div style="margin-bottom:16px">
+          <div class="wk-prog-label">${now.toLocaleString('en-CA',{month:'long'})} — Monthly</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+            <span style="font-size:1.4rem;font-weight:800;color:var(--navy)">${mBP}</span>
+            <span class="text-xs text-light">of ${mBPT} target</span>
+          </div>
+          ${progBar(bPct, bPct >= 100 ? 'var(--teal)' : 'var(--navy)')}
+          <div class="text-xs text-light" style="margin-top:4px">${bPct.toFixed(0)}% · weekly target: ${wBPT}</div>
+        </div>
+        <div>
+          <div class="wk-prog-label">All-time Cumulative</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+            <span style="font-size:1.4rem;font-weight:800;color:var(--amber)">${atBP}</span>
+            <span class="text-xs text-light">of ${bpAbs} goal</span>
+          </div>
+          ${progBar(atPct, atPct >= 100 ? 'var(--teal)' : 'var(--amber)')}
+          <div class="text-xs text-light" style="margin-top:4px">${atPct.toFixed(0)}% · ${Math.max(0, bpAbs - atBP)} packs remaining</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Render charts after DOM is written
+  if (last12.length) {
+    renderWeeklyChart('ehcChartTransfers', last12, 'transfers',    'Transfers',    'ehc');
+    renderWeeklyChart('ehcChartBP',        last12, 'blisterPacks', 'Blister Packs','ehc');
+    renderWeeklyChart('ehcChartRx',        last12, 'rxCount',      'Rx Count',     'ehc');
+  }
+}
+
+function renderWeeklyChart(canvasId, weeks, metric, label, keyPrefix = 'wk') {
+  destroyChart(keyPrefix + '_' + metric);
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const labels  = weeks.map(w => weekLabel(w.weekStart));
+  const values  = weeks.map(w => Number(w[metric]) || 0);
+  const targets = weeks.map(w => getTargetForWeek(metric, w.weekStart));
+
+  // Red = negative | Green = at/above target | Blue = positive but below target
+  const bgColors = values.map((v, i) => {
+    if (v < 0)                              return 'rgba(229,62,62,.85)';    // red — negative
+    if (targets[i] > 0 && v >= targets[i]) return 'rgba(29,158,117,.85)';   // teal/green — hit
+    return 'rgba(59,100,168,.78)';                                           // blue — below target
+  });
+
+  charts[keyPrefix + '_' + metric] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label, data: values, backgroundColor: bgColors, borderRadius: 4, order: 1 },
+        {
+          label: 'Target', type: 'line',
+          data: targets,
+          borderColor: '#BA7517', borderDash: [6, 4], borderWidth: 2,
+          pointRadius: 0, fill: false, tension: 0, order: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}` } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+// ================================================================
+// WEEKLY MODAL
+// ================================================================
+let _weekEditId = null;  // null = new entry
+
+function openWeekModal(id) {
+  _weekEditId = id || null;
+  document.getElementById('weekModalOverlay').style.display = 'flex';
+  renderWeekModal();
+}
+function closeWeekModal() {
+  document.getElementById('weekModalOverlay').style.display = 'none';
+  _weekEditId = null;
+}
+function weekOverlayClick(e) {
+  if (e.target === document.getElementById('weekModalOverlay')) closeWeekModal();
+}
+
+function renderWeekModal() {
+  const existing    = _weekEditId ? weeklyEntries.find(w => w.id === _weekEditId) : null;
+  const defaultDate = existing ? existing.weekStart : getCurrentMondayISO();
+  const now  = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1;
+  const mT  = monthlyTotal('transfers',    y, m);
+  const mBP = monthlyTotal('blisterPacks', y, m);
+  const mRx = monthlyTotal('rxCount',      y, m);
+  const wTT  = settings.transfersWeeklyTarget    || 0;
+  const wBPT = settings.blisterPacksWeeklyTarget  || 0;
+  const wRxT = settings.rxWeeklyTarget            || 0;
+
+  function mtdCell(lbl, val, tgt) {
+    const p = tgt > 0 ? Math.min(100, (val / tgt) * 100) : 0;
+    const color = p >= 100 ? 'var(--teal)' : 'var(--navy)';
+    return `<div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:.65rem;color:var(--light);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em">${lbl}</div>
+      <div style="font-size:1.15rem;font-weight:800;color:${color}">${val}</div>
+      <div style="font-size:.62rem;color:var(--light)">of ${tgt} (${p.toFixed(0)}%)</div>
+    </div>`;
+  }
+
+  document.getElementById('weekModalBox').innerHTML = `
+    <div class="modal-head">
+      <h2>${existing ? 'Edit Week' : 'Add Week'}</h2>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-row">
+        <label>Week Starting (select any day — auto-snaps to Monday)</label>
+        <input type="date" id="wkDate" value="${defaultDate}" onchange="wkSnapMonday()">
+        <div class="hint" id="wkDateHint" style="color:var(--teal)"></div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="form-row">
+        <label>Transfers <span class="text-xs text-light">— patients transferred in this week, by source</span></label>
+        <div class="wk-src-grid">
+          ${(settings.transferSources||[]).map((src,i) => `
+            <div>
+              <div style="font-size:.65rem;color:var(--light);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em">${esc(src)}</div>
+              <input type="number" id="wkSrc_${i}" min="0" step="1"
+                value="${existing?.sources?.[src] ?? 0}" placeholder="0"
+                oninput="calcTransferTotal()">
+            </div>`).join('')}
+        </div>
+        <div style="margin-top:8px;padding:7px 10px;background:var(--bg);border-radius:6px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:.68rem;color:var(--light);text-transform:uppercase;letter-spacing:.05em">Total Transfers</span>
+          <span id="wkTransfersTotal" style="font-size:1.05rem;font-weight:800;color:var(--navy)">${existing ? (existing.transfers||0) : 0}</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Blister Packs <span class="text-xs text-light">— packs added (negative = lost)</span></label>
+        <input type="number" id="wkBP" step="1" value="${existing ? existing.blisterPacks : ''}" placeholder="0">
+      </div>
+      <div class="form-row">
+        <label>Rx Count <span class="text-xs text-light">— prescriptions filled this week</span></label>
+        <input type="number" id="wkRx" min="0" step="1" value="${existing ? existing.rxCount : ''}" placeholder="0">
+      </div>
+      <div class="form-row">
+        <label>What drove results this week <span class="text-xs text-light">— optional, shown on EHC page</span></label>
+        <textarea id="wkNote" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:.88rem;font-family:inherit;resize:vertical;color:var(--text)" placeholder="e.g. Remit study referrals — 4 transfers from study follow-ups.">${existing ? (existing.weeklyNote || '') : ''}</textarea>
+      </div>
+
+      <hr class="section-divider">
+      <div style="font-size:.72rem;font-weight:700;color:var(--light);letter-spacing:.06em;margin-bottom:10px">
+        MONTH-TO-DATE — ${now.toLocaleString('en-CA',{month:'long',year:'numeric'})}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        ${mtdCell('Transfers', mT, Math.round(wTT*4.33))}
+        ${mtdCell('Blister Packs', mBP, Math.round(wBPT*4.33))}
+        ${mtdCell('Rx Count', mRx, Math.round(wRxT*4.33))}
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeWeekModal()">Cancel</button>
+      <button class="btn btn-success" onclick="saveWeekEntry()">${existing ? 'Save Changes' : 'Add Week'}</button>
+    </div>
+  `;
+  wkSnapMonday();
+}
+
+function wkSnapMonday() {
+  const inp = document.getElementById('wkDate');
+  if (!inp || !inp.value) return;
+  inp.value = getMondayISO(inp.value);
+  const hint = document.getElementById('wkDateHint');
+  if (hint) hint.textContent = 'Week: ' + weekLabel(inp.value);
+}
+
+function calcTransferTotal() {
+  const srcs  = settings.transferSources || [];
+  const total = srcs.reduce((sum, _, i) => sum + (parseInt(document.getElementById('wkSrc_' + i)?.value) || 0), 0);
+  const el    = document.getElementById('wkTransfersTotal');
+  if (el) el.textContent = total;
+}
+
+function saveWeekEntry() {
+  const dateVal      = document.getElementById('wkDate')?.value;
+  const blisterPacks = parseInt(document.getElementById('wkBP')?.value)  || 0;
+  const rxCount      = parseInt(document.getElementById('wkRx')?.value)   || 0;
+  const weeklyNote   = (document.getElementById('wkNote')?.value || '').trim();
+
+  // Collect per-source transfer counts
+  const srcs = settings.transferSources || [];
+  const sourcesData = {};
+  let totalTransfers = 0;
+  srcs.forEach((src, i) => {
+    const v = parseInt(document.getElementById('wkSrc_' + i)?.value) || 0;
+    sourcesData[src] = v;
+    totalTransfers += v;
+  });
+
+  if (!dateVal) { alert('Please select a date.'); return; }
+  const weekStart = getMondayISO(dateVal);
+
+  // Duplicate check (skip self when editing)
+  const dupIdx = weeklyEntries.findIndex(
+    w => w.weekStart === weekStart && w.id !== _weekEditId
+  );
+  if (dupIdx >= 0) {
+    if (!confirm(`A record for the week of ${weekLabel(weekStart)} already exists. Replace it?`)) return;
+    weeklyEntries.splice(dupIdx, 1);
+  }
+
+  const record = {
+    id:           _weekEditId || ('w' + Date.now()),
+    weekStart,
+    transfers:    totalTransfers,  // backward compat — used by existing charts and rolling avg
+    sources:      sourcesData,     // per-source breakdown for insight chart
+    blisterPacks,
+    rxCount,
+    weeklyNote,
+    enteredAt:    new Date().toISOString(),
+  };
+
+  if (_weekEditId) {
+    const idx = weeklyEntries.findIndex(w => w.id === _weekEditId);
+    if (idx >= 0) weeklyEntries[idx] = record; else weeklyEntries.push(record);
+  } else {
+    weeklyEntries.push(record);
+  }
+
+  saveWeeklyEntries();
+  closeWeekModal();
+
+  // Check celebrations
+  const tTgt  = getTargetForWeek('transfers',    weekStart);
+  const bpTgt = getTargetForWeek('blisterPacks', weekStart);
+  const rxTgt = getTargetForWeek('rxCount',      weekStart);
+  const hits  = [];
+  if (tTgt  > 0 && totalTransfers >= tTgt)  hits.push(`Transfers hit! (${totalTransfers} / ${tTgt} target)`);
+  if (bpTgt > 0 && blisterPacks >= bpTgt) hits.push(`Blister Packs hit! (${blisterPacks} / ${bpTgt} target)`);
+  if (rxTgt > 0 && rxCount      >= rxTgt) hits.push(`Rx Count hit! (${rxCount} / ${rxTgt} target)`);
+  if (hits.length) showCelebration(hits);
+
+  navigate('weekly');
+}
+
+async function deleteWeekEntry(id) {
+  if (!confirm('Delete this week\'s entry?')) return;
+  weeklyEntries = weeklyEntries.filter(w => w.id !== id);
+  saveWeeklyEntries();
+  navigate('weekly');
+}
+
+// ================================================================
+// CELEBRATION
+// ================================================================
+function showCelebration(hits) {
+  document.getElementById('celebrationHits').innerHTML =
+    hits.map(h => `<div style="margin:3px 0">🏆 ${h}</div>`).join('');
+  document.getElementById('celebrationOverlay').style.display = 'flex';
+  launchConfetti();
+  // Auto-dismiss after 6 s
+  setTimeout(dismissCelebration, 6000);
+}
+function dismissCelebration() {
+  document.getElementById('celebrationOverlay').style.display = 'none';
+  document.getElementById('confettiContainer').innerHTML = '';
+}
+function launchConfetti() {
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  const colors = ['#1B3A6B','#1D9E75','#BA7517','#E05252','#4CAF50','#FFD700'];
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement('div');
+    const size = 5 + Math.random() * 7;
+    p.style.cssText = [
+      `position:absolute`,
+      `width:${size}px`,
+      `height:${size}px`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `border-radius:${Math.random() > .5 ? '50%' : '2px'}`,
+      `left:${Math.random() * 100}%`,
+      `top:-10px`,
+      `animation:confettiFall ${1.4 + Math.random() * 2}s ease-in ${Math.random() * .7}s forwards`,
+    ].join(';');
+    container.appendChild(p);
+  }
+}
+
+// ================================================================
+// AUTH
+// ================================================================
+function doSignIn() {
+  document.getElementById('authError').textContent   = '';
+  document.getElementById('signInBtn').style.display = 'none';
+  document.getElementById('authLoading').style.display = 'flex';
+  auth.signInWithPopup(provider).catch(err => {
+    document.getElementById('authError').textContent     = 'Sign-in failed: ' + err.message;
+    document.getElementById('signInBtn').style.display   = 'flex';
+    document.getElementById('authLoading').style.display = 'none';
+  });
+}
+
+function doSignOut() {
+  auth.signOut();
+}
+
+// ================================================================
+// INIT (auth-gated)
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Show gate immediately; auth listener will hide it once signed in
+  document.getElementById('authGate').style.display = 'flex';
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) {
+      // Not signed in — show gate
+      document.getElementById('authGate').style.display      = 'flex';
+      document.getElementById('signInBtn').style.display     = 'flex';
+      document.getElementById('authLoading').style.display   = 'none';
+      document.getElementById('signOutBtn').style.display    = 'none';
+      document.getElementById('userDisplay').textContent     = '';
+      return;
+    }
+
+    // Signed in — optional email check
+    if (ALLOWED_EMAIL && user.email !== ALLOWED_EMAIL) {
+      await auth.signOut();
+      document.getElementById('authError').textContent     = `Access denied. ${user.email} is not authorised.`;
+      document.getElementById('signInBtn').style.display   = 'flex';
+      document.getElementById('authLoading').style.display = 'none';
+      return;
+    }
+
+    // Load data from Firestore, then show the app
+    document.getElementById('authLoading').style.display = 'flex';
+    document.getElementById('signInBtn').style.display   = 'none';
+    try {
+      await loadState();
+    } catch (err) {
+      document.getElementById('authError').textContent     = 'Error loading data: ' + err.message;
+      document.getElementById('signInBtn').style.display   = 'flex';
+      document.getElementById('authLoading').style.display = 'none';
+      return;
+    }
+
+    // Update header
+    document.getElementById('userDisplay').textContent  = user.displayName || user.email;
+    document.getElementById('signOutBtn').style.display = 'block';
+
+    // Hide gate, show app
+    document.getElementById('authGate').style.display = 'none';
+    navigate('dashboard');
+  });
+});
+</script>
+</body>
+</html>
