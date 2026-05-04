@@ -3330,14 +3330,22 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[Auth] Trusted email — full access granted, role:', role);
         userRecord = { email: user.email, pages: [...ALL_PAGES], role };
 
-        // Bootstrap users collection in background (non-blocking, owner only)
+        // Owner: AWAIT bootstrap so the users/{email} doc is written
+        // before loadState() runs. Without this, the new Firestore rules
+        // (which require users/{email} to exist) deny the pharmasave reads
+        // because the doc hasn't been created yet.
         if (user.email === OWNER_EMAIL) {
-          bootstrapUsersIfNeeded().catch(e => console.warn('[Bootstrap]', e.message));
+          setLoadMsg('Setting up access…');
+          try {
+            await withTimeout(bootstrapUsersIfNeeded(), 6000);
+            console.log('[Auth] Bootstrap complete');
+          } catch (bErr) {
+            console.warn('[Auth] Bootstrap failed/timed out:', bErr.message);
+            // Continue — loadState fallback will handle it
+          }
         }
 
-        // Load app data — if Firestore is blocked by new rules or
-        // the collection doesn't exist yet, fall back to safe defaults
-        // so the owner always gets in.
+        // Load app data
         setLoadMsg('Loading data…');
         console.log('[Auth] Calling loadState()…');
         try {
