@@ -285,6 +285,13 @@ const FS_USERS           = 'users';      // access-control collection
 
 // ── Access control ────────────────────────────────────────────────
 const OWNER_EMAIL = 'eslam.elbana@gmail.com';
+// Emails that always get full access without a Firestore users/ lookup.
+// Add any trusted email here to guarantee access even before the admin
+// panel seeds the users collection.
+const TRUSTED_EMAILS = [
+  'eslam.elbana@gmail.com',
+  'escarpment.pharmacy@gmail.com',
+];
 const ALL_PAGES   = ['Dashboard','EHC','Forecast','Weekly Metrics','Monthly Data','Expenses','Settings'];
 // Ordered definition used to build the nav and admin checkboxes
 const PAGE_MAP = [
@@ -3157,6 +3164,11 @@ async function bootstrapUsersIfNeeded() {
     pages: [...ALL_PAGES],
     role:  'Owner',
   });
+  batch.set(db.collection(FS_USERS).doc('escarpment.pharmacy@gmail.com'), {
+    email: 'escarpment.pharmacy@gmail.com',
+    pages: [...ALL_PAGES],
+    role:  'Full Access',
+  });
   batch.set(db.collection(FS_USERS).doc('doctormetwally84@gmail.com'), {
     email: 'doctormetwally84@gmail.com',
     pages: [...ALL_PAGES],
@@ -3312,13 +3324,16 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('[Auth v4] Signed in as:', user.email);
 
     try {
-      // ── OWNER: never block on Firestore ──────────────────────────
-      if (user.email === OWNER_EMAIL) {
-        console.log('[Auth] Owner bypass — full access granted');
-        userRecord = { email: user.email, pages: [...ALL_PAGES], role: 'Owner' };
+      // ── TRUSTED EMAILS: never block on Firestore ─────────────────
+      if (TRUSTED_EMAILS.includes(user.email)) {
+        const role = user.email === OWNER_EMAIL ? 'Owner' : 'Full Access';
+        console.log('[Auth] Trusted email — full access granted, role:', role);
+        userRecord = { email: user.email, pages: [...ALL_PAGES], role };
 
-        // Bootstrap users collection in background (non-blocking)
-        bootstrapUsersIfNeeded().catch(e => console.warn('[Bootstrap]', e.message));
+        // Bootstrap users collection in background (non-blocking, owner only)
+        if (user.email === OWNER_EMAIL) {
+          bootstrapUsersIfNeeded().catch(e => console.warn('[Bootstrap]', e.message));
+        }
 
         // Load app data — if Firestore is blocked by new rules or
         // the collection doesn't exist yet, fall back to safe defaults
