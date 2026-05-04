@@ -221,7 +221,7 @@ input:focus{border-color:var(--navy)}
   <div id="authError" style="color:#fca5a5;font-size:0.82rem;text-align:center;max-width:320px"></div>
   <div id="authLoading" style="display:none;color:rgba(255,255,255,.6);font-size:0.85rem">
     <span class="spinner" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></span>
-    Loading data…
+    <span id="authLoadingMsg">Signing in…</span>
   </div>
 </div>
 
@@ -3278,9 +3278,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Show gate immediately; auth listener will hide it once signed in
   document.getElementById('authGate').style.display = 'flex';
 
+  // Helper: race a promise against a timeout
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+    ]);
+  }
+
+  function setLoadMsg(msg) {
+    const el = document.getElementById('authLoadingMsg');
+    if (el) el.textContent = msg;
+  }
+
   auth.onAuthStateChanged(async user => {
     if (!user) {
-      // Not signed in — reset state and show gate
       userRecord = null;
       document.getElementById('mainNav').innerHTML            = '';
       document.getElementById('authGate').style.display      = 'flex';
@@ -3288,41 +3300,55 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('authLoading').style.display   = 'none';
       document.getElementById('signOutBtn').style.display    = 'none';
       document.getElementById('userDisplay').textContent     = '';
+      document.getElementById('authError').textContent       = '';
       return;
     }
 
-    document.getElementById('authLoading').style.display = 'flex';
-    document.getElementById('signInBtn').style.display   = 'none';
-
-    // ── 10-second watchdog — never spin forever ───────────────────
-    let _timedOut = false;
-    const _watchdog = setTimeout(() => {
-      _timedOut = true;
-      console.error('[Auth] Load timed out after 10 s');
-      document.getElementById('authError').textContent     = 'Loading timed out. Please refresh the page and try again.';
-      document.getElementById('signInBtn').style.display   = 'flex';
-      document.getElementById('authLoading').style.display = 'none';
-    }, 10000);
+    document.getElementById('authGate').style.display      = 'flex';
+    document.getElementById('authLoading').style.display   = 'flex';
+    document.getElementById('signInBtn').style.display     = 'none';
+    document.getElementById('authError').textContent       = '';
+    setLoadMsg('Checking access…');
+    console.log('[Auth v4] Signed in as:', user.email);
 
     try {
-      console.log('[Auth] Signed in as:', user.email);
-
-      // ── Owner bypass ─────────────────────────────────────────────
-      // Hardcoded owner email gets full access immediately without
-      // waiting on the users/ collection (avoids chicken-and-egg on
-      // first run before Firestore rules are published).
+      // ── OWNER: never block on Firestore ──────────────────────────
       if (user.email === OWNER_EMAIL) {
-        console.log('[Auth] Owner — granting full access directly');
+        console.log('[Auth] Owner bypass — full access granted');
         userRecord = { email: user.email, pages: [...ALL_PAGES], role: 'Owner' };
-        // Seed the users collection in the background — non-blocking
-        bootstrapUsersIfNeeded().catch(e => console.warn('[Bootstrap] skipped:', e.message));
+
+        // Bootstrap users collection in background (non-blocking)
+        bootstrapUsersIfNeeded().catch(e => console.warn('[Bootstrap]', e.message));
+
+        // Load app data — if Firestore is blocked by new rules or
+        // the collection doesn't exist yet, fall back to safe defaults
+        // so the owner always gets in.
+        setLoadMsg('Loading data…');
+        console.log('[Auth] Calling loadState()…');
+        try {
+          await withTimeout(loadState(), 8000);
+          console.log('[Auth] loadState() succeeded');
+        } catch (fsErr) {
+          console.warn('[Auth] loadState() failed or timed out — using defaults:', fsErr.message);
+          settings      = deepClone(DEFAULT_SETTINGS);
+          months        = [];
+          weeklyEntries = [];
+          weeklyTargets = [];
+        }
+
+      // ── NON-OWNER: must exist in users/ collection ────────────────
       } else {
-        // Non-owner: must exist in the users/ collection
-        console.log('[Auth] Fetching user record from Firestore...');
-        const rec = await fetchUserRecord(user.email);
-        console.log('[Auth] User record:', rec);
+        setLoadMsg('Checking permissions…');
+        console.log('[Auth] Fetching user record…');
+        let rec = null;
+        try {
+          rec = await withTimeout(fetchUserRecord(user.email), 8000);
+        } catch (e) {
+          console.error('[Auth] fetchUserRecord failed:', e.message);
+          throw new Error('Could not reach the permissions database. Check your connection and try again.');
+        }
+
         if (!rec) {
-          clearTimeout(_watchdog);
           await auth.signOut();
           document.getElementById('authError').textContent     = 'Access denied. Contact the pharmacy owner to request access.';
           document.getElementById('signInBtn').style.display   = 'flex';
@@ -3330,36 +3356,29 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         userRecord = rec;
+        console.log('[Auth] User record loaded:', rec.role, rec.pages);
+
+        setLoadMsg('Loading data…');
+        await withTimeout(loadState(), 8000);
+        console.log('[Auth] loadState() succeeded');
       }
 
-      // Load app data
-      console.log('[Auth] Loading app data...');
-      await loadState();
-      console.log('[Auth] App data loaded.');
-
     } catch (err) {
-      clearTimeout(_watchdog);
-      console.error('[Auth] Error during load:', err);
-      document.getElementById('authError').textContent     = 'Error loading data: ' + err.message;
+      console.error('[Auth] Fatal error:', err);
+      document.getElementById('authError').textContent     = 'Error: ' + err.message;
       document.getElementById('signInBtn').style.display   = 'flex';
       document.getElementById('authLoading').style.display = 'none';
       return;
     }
 
-    if (_timedOut) return; // watchdog already handled the UI
-    clearTimeout(_watchdog);
-
-    // Update header
+    // ── Show the app ──────────────────────────────────────────────
     document.getElementById('userDisplay').textContent  = user.displayName || user.email;
     document.getElementById('signOutBtn').style.display = 'block';
-
-    // Build nav from user's page permissions
     renderNav();
-
-    // Hide gate, show app — land on first allowed page
     document.getElementById('authGate').style.display = 'none';
     const firstPage = PAGE_MAP.find(p => userRecord.pages.includes(p.name));
     navigate(firstPage ? firstPage.id : 'dashboard');
+    console.log('[Auth] App ready. Page:', firstPage ? firstPage.id : 'dashboard');
   });
 });
 </script>
