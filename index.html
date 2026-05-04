@@ -206,15 +206,7 @@ input:focus{border-color:var(--navy)}
   </div>
 </header>
 
-<nav>
-  <button class="nav-btn active" data-page="dashboard"  onclick="navigate('dashboard')">Dashboard</button>
-  <button class="nav-btn"        data-page="ehc"        onclick="navigate('ehc')">EHC</button>
-  <button class="nav-btn"        data-page="forecast"   onclick="navigate('forecast')">Forecast</button>
-  <button class="nav-btn"        data-page="weekly"     onclick="navigate('weekly')">Weekly Metrics</button>
-  <button class="nav-btn"        data-page="monthly"    onclick="navigate('monthly')">Monthly Data</button>
-  <button class="nav-btn"        data-page="expenses"   onclick="navigate('expenses')">Expenses</button>
-  <button class="nav-btn"        data-page="settings"   onclick="navigate('settings')">Settings</button>
-</nav>
+<nav id="mainNav"></nav>
 
 <!-- ── AUTH GATE ─────────────────────────────────────────────────── -->
 <div id="authGate" style="position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:24px">
@@ -289,6 +281,21 @@ const FS_SETTINGS        = 'settings';
 const FS_MONTHS          = 'months';
 const FS_WEEKLY_DATA     = 'weeklyData';
 const FS_WEEKLY_TARGETS  = 'weeklyTargets';
+const FS_USERS           = 'users';      // access-control collection
+
+// ── Access control ────────────────────────────────────────────────
+const OWNER_EMAIL = 'eslam.elbana@gmail.com';
+const ALL_PAGES   = ['Dashboard','EHC','Forecast','Weekly Metrics','Monthly Data','Expenses','Settings'];
+// Ordered definition used to build the nav and admin checkboxes
+const PAGE_MAP = [
+  { id:'dashboard', label:'Dashboard',      name:'Dashboard'      },
+  { id:'ehc',       label:'EHC',            name:'EHC'            },
+  { id:'forecast',  label:'Forecast',       name:'Forecast'       },
+  { id:'weekly',    label:'Weekly Metrics', name:'Weekly Metrics' },
+  { id:'monthly',   label:'Monthly Data',   name:'Monthly Data'   },
+  { id:'expenses',  label:'Expenses',       name:'Expenses'       },
+  { id:'settings',  label:'Settings',       name:'Settings'       },
+];
 
 // ================================================================
 // KEYS & DEFAULTS (kept for reference / export format)
@@ -350,6 +357,7 @@ let months        = [];
 let charts        = {};
 let currentPage   = 'dashboard';
 let _srcChartView = 'stacked'; // 'stacked' | 'trend' — persists across Weekly Metrics renders
+let userRecord    = null;       // { email, pages:[], role } — loaded from Firestore on sign-in
 
 // Fixed color palette for transfer sources (assigned by index, consistent per session)
 const SOURCE_PALETTE = [
@@ -630,7 +638,25 @@ function currentMonthKey() {
 // ================================================================
 // NAVIGATION
 // ================================================================
+// Rebuild nav tabs based on the signed-in user's page permissions
+function renderNav() {
+  const nav = document.getElementById('mainNav');
+  if (!nav || !userRecord) return;
+  nav.innerHTML = PAGE_MAP
+    .filter(p => userRecord.pages.includes(p.name))
+    .map(p => `<button class="nav-btn${currentPage===p.id?' active':''}" data-page="${p.id}" onclick="navigate('${p.id}')">${p.label}</button>`)
+    .join('');
+}
+
 function navigate(page) {
+  // Access guard — silently redirect to first allowed page if not permitted
+  if (userRecord) {
+    const entry = PAGE_MAP.find(p => p.id === page);
+    if (entry && !userRecord.pages.includes(entry.name)) {
+      const first = PAGE_MAP.find(p => userRecord.pages.includes(p.name));
+      page = first ? first.id : page;
+    }
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
@@ -1793,7 +1819,44 @@ function renderSettings() {
         <button class="btn btn-danger" onclick="resetData()">Reset All Data</button>
       </div>
       <p class="text-xs text-light" style="margin-top:12px">Export creates a JSON backup of all monthly data and settings. Import restores from a previously exported file.</p>
-    </div>`;
+    </div>
+
+    ${userRecord && userRecord.email === OWNER_EMAIL ? `
+    <div class="card" id="adminPanel">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>User Management</span>
+        <span style="font-size:11px;font-weight:600;background:var(--navy);color:#fff;padding:2px 8px;border-radius:8px;letter-spacing:.04em">OWNER ONLY</span>
+      </div>
+      <p class="text-sm text-light" style="margin-bottom:16px">Control which pages each user can access. Changes take effect on their next page load.</p>
+
+      <div id="adminUserList"><p class="text-sm text-light">Loading users…</p></div>
+
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" style="font-size:0.82rem" onclick="openAddUserForm()">+ Add User</button>
+        <div id="addUserForm" style="display:none;border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px">
+          <div class="form-row" style="margin-bottom:12px">
+            <label style="font-weight:600;font-size:0.85rem">Email address</label>
+            <input id="newUserEmail" type="email" placeholder="user@example.com" style="max-width:280px">
+          </div>
+          <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px">Pages to grant access</div>
+          <div id="newUserPageChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:14px">
+            ${ALL_PAGES.map(pg => `
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;padding:4px 0">
+                <input type="checkbox" value="${pg}"> ${pg}
+              </label>`).join('')}
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" style="font-size:0.8rem" onclick="saveNewUser()">Save User</button>
+            <button class="btn btn-ghost"   style="font-size:0.8rem" onclick="openAddUserForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>` : ''}`;
+
+  // Load admin user list if owner
+  if (userRecord && userRecord.email === OWNER_EMAIL) {
+    loadAdminUsers();
+  }
 }
 
 function setSetting(key, val) {
@@ -3073,6 +3136,142 @@ function doSignOut() {
 }
 
 // ================================================================
+// USER ACCESS CONTROL — FIRESTORE HELPERS
+// ================================================================
+
+// Fetch the current user's permissions doc from Firestore.
+// Returns the data object or null if the user is not in the system.
+async function fetchUserRecord(email) {
+  const doc = await db.collection(FS_USERS).doc(email).get();
+  return doc.exists ? doc.data() : null;
+}
+
+// Called on first-ever sign-in by the owner when the users collection is empty.
+// Seeds both initial user documents so the system is ready for the second user.
+async function bootstrapUsersIfNeeded() {
+  const snap = await db.collection(FS_USERS).limit(1).get();
+  if (!snap.empty) return; // already seeded
+  const batch = db.batch();
+  batch.set(db.collection(FS_USERS).doc('eslam.elbana@gmail.com'), {
+    email: 'eslam.elbana@gmail.com',
+    pages: [...ALL_PAGES],
+    role:  'Owner',
+  });
+  batch.set(db.collection(FS_USERS).doc('doctormetwally84@gmail.com'), {
+    email: 'doctormetwally84@gmail.com',
+    pages: [...ALL_PAGES],
+    role:  'Full Access',
+  });
+  await batch.commit();
+}
+
+// ── Admin panel helpers (owner only) ─────────────────────────────
+
+let _adminUsers = []; // cached list for the admin panel
+
+async function loadAdminUsers() {
+  const snap = await db.collection(FS_USERS).get();
+  _adminUsers = snap.docs.map(d => d.data());
+  _adminUsers.sort((a,b) => a.email.localeCompare(b.email));
+  renderAdminUserList();
+}
+
+function renderAdminUserList() {
+  const el = document.getElementById('adminUserList');
+  if (!el) return;
+  if (!_adminUsers.length) {
+    el.innerHTML = '<p class="text-sm text-light">No users found.</p>';
+    return;
+  }
+  el.innerHTML = _adminUsers.map(u => {
+    const pageChips = ALL_PAGES.map(pg => {
+      const has = u.pages.includes(pg);
+      return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin:2px;background:${has?'var(--navy)':'#e5e7eb'};color:${has?'#fff':'var(--light)'}">${pg}</span>`;
+    }).join('');
+    const isOwner = u.email === OWNER_EMAIL;
+    return `
+      <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div>
+            <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${u.email}</div>
+            <div style="font-size:0.75rem;color:var(--light);margin-top:2px">${u.role || 'Custom'}</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 12px" onclick="openEditUser('${u.email}')">Edit</button>
+            ${isOwner ? '' : `<button class="btn btn-danger" style="font-size:0.75rem;padding:4px 12px" onclick="removeUser('${u.email}')">Remove</button>`}
+          </div>
+        </div>
+        <div>${pageChips}</div>
+      </div>`;
+  }).join('');
+}
+
+function openEditUser(email) {
+  const u = _adminUsers.find(x => x.email === email);
+  if (!u) return;
+  const el = document.getElementById('adminUserList');
+  // Replace the user's row with an inline edit form
+  const existing = el.querySelectorAll('[data-edit-email]');
+  existing.forEach(e => e.remove()); // close any open edit
+  const checkboxes = ALL_PAGES.map(pg => `
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;padding:4px 0">
+      <input type="checkbox" value="${pg}" ${u.pages.includes(pg)?'checked':''}
+        ${u.email===OWNER_EMAIL && pg==='Settings' ? 'disabled checked' : ''}>
+      ${pg}
+    </label>`).join('');
+  const form = document.createElement('div');
+  form.setAttribute('data-edit-email', email);
+  form.style.cssText = 'border:2px solid var(--navy);border-radius:10px;padding:16px;margin-bottom:10px';
+  form.innerHTML = `
+    <div style="font-weight:700;font-size:0.88rem;color:var(--navy);margin-bottom:12px">Edit access — ${email}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:14px">${checkboxes}</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="font-size:0.8rem" onclick="saveEditUser('${email}')">Save</button>
+      <button class="btn btn-ghost"   style="font-size:0.8rem" onclick="loadAdminUsers()">Cancel</button>
+    </div>`;
+  el.insertBefore(form, el.firstChild);
+}
+
+async function saveEditUser(email) {
+  const form = document.querySelector(`[data-edit-email="${email}"]`);
+  if (!form) return;
+  const checked = [...form.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
+  if (!checked.length) { alert('User must have at least one page.'); return; }
+  await db.collection(FS_USERS).doc(email).update({ pages: checked });
+  await loadAdminUsers();
+}
+
+async function removeUser(email) {
+  if (email === OWNER_EMAIL) return;
+  if (!confirm(`Remove ${email}?\n\nThey will lose access immediately on next page load.`)) return;
+  await db.collection(FS_USERS).doc(email).delete();
+  await loadAdminUsers();
+}
+
+function openAddUserForm() {
+  const el = document.getElementById('addUserForm');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveNewUser() {
+  const emailEl = document.getElementById('newUserEmail');
+  const email   = (emailEl.value || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) { alert('Enter a valid email address.'); return; }
+  if (_adminUsers.find(u => u.email === email)) { alert('This user already exists.'); return; }
+  const checked = [...document.querySelectorAll('#newUserPageChecks input:checked')].map(c => c.value);
+  if (!checked.length) { alert('Select at least one page.'); return; }
+  await db.collection(FS_USERS).doc(email).set({
+    email,
+    pages: checked,
+    role:  'Custom',
+  });
+  emailEl.value = '';
+  document.querySelectorAll('#newUserPageChecks input').forEach(c => c.checked = false);
+  document.getElementById('addUserForm').style.display = 'none';
+  await loadAdminUsers();
+}
+
+// ================================================================
 // INIT (auth-gated)
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -3081,7 +3280,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   auth.onAuthStateChanged(async user => {
     if (!user) {
-      // Not signed in — show gate
+      // Not signed in — reset state and show gate
+      userRecord = null;
+      document.getElementById('mainNav').innerHTML            = '';
       document.getElementById('authGate').style.display      = 'flex';
       document.getElementById('signInBtn').style.display     = 'flex';
       document.getElementById('authLoading').style.display   = 'none';
@@ -3090,20 +3291,30 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Signed in — optional email check
-    if (ALLOWED_EMAIL && user.email !== ALLOWED_EMAIL) {
-      await auth.signOut();
-      document.getElementById('authError').textContent     = `Access denied. ${user.email} is not authorised.`;
-      document.getElementById('signInBtn').style.display   = 'flex';
-      document.getElementById('authLoading').style.display = 'none';
-      return;
-    }
-
-    // Load data from Firestore, then show the app
     document.getElementById('authLoading').style.display = 'flex';
     document.getElementById('signInBtn').style.display   = 'none';
+
     try {
+      // Owner: bootstrap users collection if this is first-ever sign-in
+      if (user.email === OWNER_EMAIL) {
+        await bootstrapUsersIfNeeded();
+      }
+
+      // Fetch this user's permissions from Firestore
+      const rec = await fetchUserRecord(user.email);
+      if (!rec) {
+        // Email exists in Firebase Auth but not in the users collection
+        await auth.signOut();
+        document.getElementById('authError').textContent     = `Access denied. Contact the pharmacy owner to request access.`;
+        document.getElementById('signInBtn').style.display   = 'flex';
+        document.getElementById('authLoading').style.display = 'none';
+        return;
+      }
+      userRecord = rec;
+
+      // Load app data
       await loadState();
+
     } catch (err) {
       document.getElementById('authError').textContent     = 'Error loading data: ' + err.message;
       document.getElementById('signInBtn').style.display   = 'flex';
@@ -3115,9 +3326,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('userDisplay').textContent  = user.displayName || user.email;
     document.getElementById('signOutBtn').style.display = 'block';
 
-    // Hide gate, show app
+    // Build nav from user's page permissions
+    renderNav();
+
+    // Hide gate, show app — land on first allowed page
     document.getElementById('authGate').style.display = 'none';
-    navigate('dashboard');
+    const firstPage = PAGE_MAP.find(p => userRecord.pages.includes(p.name));
+    navigate(firstPage ? firstPage.id : 'dashboard');
   });
 });
 </script>
