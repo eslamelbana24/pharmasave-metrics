@@ -3294,33 +3294,60 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authLoading').style.display = 'flex';
     document.getElementById('signInBtn').style.display   = 'none';
 
-    try {
-      // Owner: bootstrap users collection if this is first-ever sign-in
-      if (user.email === OWNER_EMAIL) {
-        await bootstrapUsersIfNeeded();
-      }
+    // ── 10-second watchdog — never spin forever ───────────────────
+    let _timedOut = false;
+    const _watchdog = setTimeout(() => {
+      _timedOut = true;
+      console.error('[Auth] Load timed out after 10 s');
+      document.getElementById('authError').textContent     = 'Loading timed out. Please refresh the page and try again.';
+      document.getElementById('signInBtn').style.display   = 'flex';
+      document.getElementById('authLoading').style.display = 'none';
+    }, 10000);
 
-      // Fetch this user's permissions from Firestore
-      const rec = await fetchUserRecord(user.email);
-      if (!rec) {
-        // Email exists in Firebase Auth but not in the users collection
-        await auth.signOut();
-        document.getElementById('authError').textContent     = `Access denied. Contact the pharmacy owner to request access.`;
-        document.getElementById('signInBtn').style.display   = 'flex';
-        document.getElementById('authLoading').style.display = 'none';
-        return;
+    try {
+      console.log('[Auth] Signed in as:', user.email);
+
+      // ── Owner bypass ─────────────────────────────────────────────
+      // Hardcoded owner email gets full access immediately without
+      // waiting on the users/ collection (avoids chicken-and-egg on
+      // first run before Firestore rules are published).
+      if (user.email === OWNER_EMAIL) {
+        console.log('[Auth] Owner — granting full access directly');
+        userRecord = { email: user.email, pages: [...ALL_PAGES], role: 'Owner' };
+        // Seed the users collection in the background — non-blocking
+        bootstrapUsersIfNeeded().catch(e => console.warn('[Bootstrap] skipped:', e.message));
+      } else {
+        // Non-owner: must exist in the users/ collection
+        console.log('[Auth] Fetching user record from Firestore...');
+        const rec = await fetchUserRecord(user.email);
+        console.log('[Auth] User record:', rec);
+        if (!rec) {
+          clearTimeout(_watchdog);
+          await auth.signOut();
+          document.getElementById('authError').textContent     = 'Access denied. Contact the pharmacy owner to request access.';
+          document.getElementById('signInBtn').style.display   = 'flex';
+          document.getElementById('authLoading').style.display = 'none';
+          return;
+        }
+        userRecord = rec;
       }
-      userRecord = rec;
 
       // Load app data
+      console.log('[Auth] Loading app data...');
       await loadState();
+      console.log('[Auth] App data loaded.');
 
     } catch (err) {
+      clearTimeout(_watchdog);
+      console.error('[Auth] Error during load:', err);
       document.getElementById('authError').textContent     = 'Error loading data: ' + err.message;
       document.getElementById('signInBtn').style.display   = 'flex';
       document.getElementById('authLoading').style.display = 'none';
       return;
     }
+
+    if (_timedOut) return; // watchdog already handled the UI
+    clearTimeout(_watchdog);
 
     // Update header
     document.getElementById('userDisplay').textContent  = user.displayName || user.email;
