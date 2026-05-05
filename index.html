@@ -3358,11 +3358,14 @@ document.addEventListener('DOMContentLoaded', () => {
           await withTimeout(loadState(), 8000);
           console.log('[Auth] loadState() succeeded');
         } catch (fsErr) {
-          console.warn('[Auth] loadState() failed or timed out — using defaults:', fsErr.message);
-          settings      = deepClone(DEFAULT_SETTINGS);
-          months        = [];
-          weeklyEntries = [];
-          weeklyTargets = [];
+          console.error('[Auth] loadState() failed:', fsErr.message, fsErr.code);
+          // Show the real error instead of silently using defaults
+          document.getElementById('authError').textContent =
+            'Data load failed: ' + (fsErr.code || fsErr.message) +
+            ' — check browser console for details.';
+          document.getElementById('signInBtn').style.display   = 'flex';
+          document.getElementById('authLoading').style.display = 'none';
+          return;
         }
 
       // ── NON-OWNER: must exist in users/ collection ────────────────
