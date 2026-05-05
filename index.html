@@ -212,19 +212,64 @@ input:focus{border-color:var(--navy)}
 <nav id="mainNav"></nav>
 
 <!-- ── AUTH GATE ─────────────────────────────────────────────────── -->
-<div id="authGate" style="position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:24px">
+<div id="authGate" style="position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:24px;overflow-y:auto">
   <div style="text-align:center">
     <div style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">Pharmasave Escarpment Metrics</div>
     <div style="font-size:0.88rem;color:rgba(255,255,255,.65)">Private Access</div>
   </div>
-  <button id="signInBtn" onclick="doSignIn()" style="display:flex;align-items:center;gap:10px;background:#fff;color:#1a2640;border:none;padding:13px 28px;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25)">
+
+  <!-- Google Sign-In -->
+  <button id="signInBtn" onclick="doSignIn()" style="display:flex;align-items:center;gap:10px;background:#fff;color:#1a2640;border:none;padding:13px 28px;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25);width:100%;max-width:320px;justify-content:center">
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.5 33.5 29.7 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.8 20-21 0-1.4-.1-2.7-.5-4z"/></svg>
     Sign in with Google
   </button>
-  <div id="authError" style="color:#fca5a5;font-size:0.82rem;text-align:center;max-width:320px"></div>
-  <div id="authLoading" style="display:none;color:rgba(255,255,255,.6);font-size:0.85rem">
+
+  <!-- Divider -->
+  <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:320px">
+    <div style="flex:1;height:1px;background:rgba(255,255,255,.2)"></div>
+    <span style="color:rgba(255,255,255,.45);font-size:0.78rem">or</span>
+    <div style="flex:1;height:1px;background:rgba(255,255,255,.2)"></div>
+  </div>
+
+  <!-- Email / Password form -->
+  <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:320px">
+    <input id="authEmail" type="email" placeholder="Email address" autocomplete="email"
+      style="padding:11px 14px;border-radius:8px;border:none;font-size:0.9rem;background:rgba(255,255,255,.1);color:#fff;outline:none;width:100%;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
+    <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password"
+      style="padding:11px 14px;border-radius:8px;border:none;font-size:0.9rem;background:rgba(255,255,255,.1);color:#fff;outline:none;width:100%;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')doEmailSignIn()">
+    <button onclick="doEmailSignIn()"
+      style="padding:12px;border-radius:8px;border:none;background:var(--teal);color:#fff;font-size:0.92rem;font-weight:700;cursor:pointer;width:100%">
+      Sign In
+    </button>
+    <button onclick="doForgotPassword()"
+      style="background:none;border:none;color:rgba(255,255,255,.55);font-size:0.78rem;cursor:pointer;padding:2px 0;text-align:center;text-decoration:underline">
+      Forgot password?
+    </button>
+  </div>
+
+  <div id="authError" style="color:#fca5a5;font-size:0.82rem;text-align:center;max-width:320px;min-height:1.2em"></div>
+  <div id="authLoading" style="display:none;color:rgba(255,255,255,.6);font-size:0.85rem;align-items:center;gap:8px">
     <span class="spinner" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></span>
     <span id="authLoadingMsg">Signing in…</span>
+  </div>
+</div>
+
+<!-- ── PASSWORD CHANGE MODAL (first-login email users) ─────────── -->
+<div id="pwChangeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:14px;padding:28px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="font-size:1.05rem;font-weight:800;color:var(--navy);margin-bottom:6px">Set Your Password</div>
+    <p style="font-size:0.85rem;color:var(--light);margin-bottom:18px">You're using a temporary password. Please set a new one to continue.</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="pwNew"     type="password" placeholder="New password (min 8 characters)"
+        style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;width:100%;box-sizing:border-box">
+      <input id="pwConfirm" type="password" placeholder="Confirm new password"
+        style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;width:100%;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')doChangePassword()">
+      <div id="pwChangeError" style="color:var(--red);font-size:0.8rem;min-height:1em"></div>
+      <button onclick="doChangePassword()" class="btn btn-primary" style="width:100%">Save New Password</button>
+    </div>
   </div>
 </div>
 
@@ -385,18 +430,30 @@ function uid() { return 'm' + (nextId++); }
 // LOAD / SAVE  (Firestore)
 // ================================================================
 async function loadState() {
-  const [sDoc, mDoc, wDoc, wtDoc] = await Promise.all([
+  // allSettled so a permission-denied on one doc (e.g. restricted users
+  // can't read pharmasave/months) doesn't block the others.
+  const results = await Promise.allSettled([
     db.collection(FS_COL).doc(FS_SETTINGS).get(),
     db.collection(FS_COL).doc(FS_MONTHS).get(),
     db.collection(FS_COL).doc(FS_WEEKLY_DATA).get(),
     db.collection(FS_COL).doc(FS_WEEKLY_TARGETS).get(),
   ]);
-  const s  = sDoc.exists  ? sDoc.data()  : null;
-  const m  = mDoc.exists  ? mDoc.data()  : null;
-  const w  = wDoc.exists  ? wDoc.data()  : null;
-  const wt = wtDoc.exists ? wtDoc.data() : null;
+  const get = (r) => (r.status === 'fulfilled' ? r.value : null);
+  const sDoc = get(results[0]), mDoc = get(results[1]);
+  const wDoc = get(results[2]), wtDoc = get(results[3]);
+
+  // Throw if ALL reads were denied (genuine auth failure, not partial access)
+  if (!sDoc && !mDoc && !wDoc && !wtDoc) {
+    const err = results.find(r => r.status === 'rejected');
+    if (err) throw err.reason;
+  }
+
+  const s  = sDoc  && sDoc.exists  ? sDoc.data()  : null;
+  const m  = mDoc  && mDoc.exists  ? mDoc.data()  : null;
+  const w  = wDoc  && wDoc.exists  ? wDoc.data()  : null;
+  const wt = wtDoc && wtDoc.exists ? wtDoc.data() : null;
   settings      = s  ? mergeDeep(DEFAULT_SETTINGS, s) : deepClone(DEFAULT_SETTINGS);
-  months        = m  ? m.months    : SAMPLE_MONTHS.map(x => ({...x}));
+  months        = m  ? m.months    : (mDoc ? SAMPLE_MONTHS.map(x => ({...x})) : []);
   weeklyEntries = w  ? w.weeks     : [];
   weeklyTargets = wt ? wt.targets  : [];
   months.sort((a,b) => a.monthKey.localeCompare(b.monthKey));
@@ -1844,9 +1901,26 @@ function renderSettings() {
       <div style="margin-top:14px">
         <button class="btn btn-primary" style="font-size:0.82rem" onclick="openAddUserForm()">+ Add User</button>
         <div id="addUserForm" style="display:none;border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px">
-          <div class="form-row" style="margin-bottom:12px">
+          <div class="form-row" style="margin-bottom:10px">
             <label style="font-weight:600;font-size:0.85rem">Email address</label>
             <input id="newUserEmail" type="email" placeholder="user@example.com" style="max-width:280px">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <label style="font-weight:600;font-size:0.85rem;display:block;margin-bottom:4px">Role</label>
+              <select id="newUserRole" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem">
+                <option value="Full Access">Full Access</option>
+                <option value="Clinic Staff">Clinic Staff</option>
+                <option value="Custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-weight:600;font-size:0.85rem;display:block;margin-bottom:4px">Sign-in method</label>
+              <select id="newUserAuthMethod" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem">
+                <option value="google">Google</option>
+                <option value="email">Email / Password</option>
+              </select>
+            </div>
           </div>
           <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px">Pages to grant access</div>
           <div id="newUserPageChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:14px">
@@ -1855,6 +1929,7 @@ function renderSettings() {
                 <input type="checkbox" value="${pg}"> ${pg}
               </label>`).join('')}
           </div>
+          <p class="text-xs text-light" style="margin-bottom:10px">For Email/Password users: create the Firebase Auth account in <strong>Firebase Console → Authentication</strong> first, then add them here.</p>
           <div style="display:flex;gap:8px">
             <button class="btn btn-primary" style="font-size:0.8rem" onclick="saveNewUser()">Save User</button>
             <button class="btn btn-ghost"   style="font-size:0.8rem" onclick="openAddUserForm()">Cancel</button>
@@ -3130,15 +3205,85 @@ function launchConfetti() {
 // ================================================================
 // AUTH
 // ================================================================
+function friendlyAuthError(code) {
+  const map = {
+    'auth/user-not-found':      'No account found for that email.',
+    'auth/wrong-password':      'Incorrect password.',
+    'auth/invalid-email':       'Invalid email address.',
+    'auth/too-many-requests':   'Too many attempts. Please wait a moment and try again.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+    'auth/invalid-credential':  'Incorrect email or password.',
+  };
+  return map[code] || code;
+}
+
+function setAuthLoading(on) {
+  document.getElementById('authLoading').style.display = on ? 'flex' : 'none';
+  document.getElementById('signInBtn').style.display   = on ? 'none' : 'flex';
+  // Also hide/show email form buttons
+  const emailBtn = document.getElementById('emailSignInBtn');
+  if (emailBtn) emailBtn.style.display = on ? 'none' : 'block';
+}
+
 function doSignIn() {
-  document.getElementById('authError').textContent   = '';
-  document.getElementById('signInBtn').style.display = 'none';
-  document.getElementById('authLoading').style.display = 'flex';
+  document.getElementById('authError').textContent = '';
+  setAuthLoading(true);
   auth.signInWithPopup(provider).catch(err => {
-    document.getElementById('authError').textContent     = 'Sign-in failed: ' + err.message;
-    document.getElementById('signInBtn').style.display   = 'flex';
-    document.getElementById('authLoading').style.display = 'none';
+    document.getElementById('authError').textContent = 'Google sign-in failed: ' + err.message;
+    setAuthLoading(false);
   });
+}
+
+async function doEmailSignIn() {
+  const email    = (document.getElementById('authEmail').value    || '').trim();
+  const password = (document.getElementById('authPassword').value || '');
+  if (!email || !password) {
+    document.getElementById('authError').textContent = 'Enter your email and password.';
+    return;
+  }
+  document.getElementById('authError').textContent = '';
+  setAuthLoading(true);
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    // onAuthStateChanged handles the rest
+  } catch (err) {
+    document.getElementById('authError').textContent = friendlyAuthError(err.code);
+    setAuthLoading(false);
+  }
+}
+
+async function doForgotPassword() {
+  const email = (document.getElementById('authEmail').value || '').trim();
+  if (!email) {
+    document.getElementById('authError').textContent = 'Enter your email address above first.';
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    document.getElementById('authError').style.color = '#86efac';
+    document.getElementById('authError').textContent = '✓ Password reset email sent — check your inbox.';
+  } catch (err) {
+    document.getElementById('authError').style.color = '#fca5a5';
+    document.getElementById('authError').textContent = 'Could not send reset email: ' + friendlyAuthError(err.code);
+  }
+}
+
+async function doChangePassword() {
+  const pw1 = document.getElementById('pwNew').value;
+  const pw2 = document.getElementById('pwConfirm').value;
+  const errEl = document.getElementById('pwChangeError');
+  errEl.textContent = '';
+  if (pw1.length < 8)  { errEl.textContent = 'Password must be at least 8 characters.'; return; }
+  if (pw1 !== pw2)     { errEl.textContent = 'Passwords do not match.'; return; }
+  try {
+    await auth.currentUser.updatePassword(pw1);
+    // Clear the mustChangePassword flag in Firestore
+    const email = auth.currentUser.email;
+    await db.collection(FS_USERS).doc(email).update({ mustChangePassword: false }).catch(() => {});
+    document.getElementById('pwChangeOverlay').style.display = 'none';
+  } catch (err) {
+    errEl.textContent = 'Could not update password: ' + (err.message || err.code);
+  }
 }
 
 function doSignOut() {
@@ -3174,7 +3319,9 @@ async function bootstrapUsersIfNeeded() {
     col.doc('escarpment.pharmacy@gmail.com').set(
       { email: 'escarpment.pharmacy@gmail.com', pages: [...ALL_PAGES], role: 'Full Access' }, opts),
     col.doc('doctormetwally84@gmail.com').set(
-      { email: 'doctormetwally84@gmail.com',    pages: [...ALL_PAGES], role: 'Full Access' }, opts),
+      { email: 'doctormetwally84@gmail.com',    pages: [...ALL_PAGES], role: 'Full Access', authMethod: 'google'  }, opts),
+    col.doc('tatjana.dsouza@escarpmenthealth.ca').set(
+      { email: 'tatjana.dsouza@escarpmenthealth.ca', pages: ['EHC'], role: 'Clinic Staff', authMethod: 'email', mustChangePassword: true }, opts),
   ]);
   console.log('[Bootstrap] Initial user docs created');
 }
@@ -3202,17 +3349,22 @@ function renderAdminUserList() {
       const has = u.pages.includes(pg);
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin:2px;background:${has?'var(--navy)':'#e5e7eb'};color:${has?'#fff':'var(--light)'}">${pg}</span>`;
     }).join('');
-    const isOwner = u.email === OWNER_EMAIL;
+    const isOwner    = u.email === OWNER_EMAIL;
+    const isEmail    = u.authMethod === 'email';
+    const methodBadge = isEmail
+      ? `<span style="font-size:10px;font-weight:600;background:#e0f2fe;color:#0369a1;padding:1px 7px;border-radius:8px;margin-left:6px">Email</span>`
+      : `<span style="font-size:10px;font-weight:600;background:#f0fdf4;color:#15803d;padding:1px 7px;border-radius:8px;margin-left:6px">Google</span>`;
     return `
       <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
           <div>
-            <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${u.email}</div>
+            <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${u.email}${methodBadge}</div>
             <div style="font-size:0.75rem;color:var(--light);margin-top:2px">${u.role || 'Custom'}</div>
           </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 12px" onclick="openEditUser('${u.email}')">Edit</button>
-            ${isOwner ? '' : `<button class="btn btn-danger" style="font-size:0.75rem;padding:4px 12px" onclick="removeUser('${u.email}')">Remove</button>`}
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${isEmail ? `<button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 10px" onclick="sendResetEmail('${u.email}')">Send Reset Email</button>` : ''}
+            <button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 10px" onclick="openEditUser('${u.email}')">Edit</button>
+            ${isOwner ? '' : `<button class="btn btn-danger" style="font-size:0.75rem;padding:4px 10px" onclick="removeUser('${u.email}')">Remove</button>`}
           </div>
         </div>
         <div>${pageChips}</div>
@@ -3267,18 +3419,35 @@ function openAddUserForm() {
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
+async function sendResetEmail(email) {
+  try {
+    await auth.sendPasswordResetEmail(email);
+    alert(`✓ Password reset email sent to ${email}`);
+  } catch (err) {
+    alert('Could not send reset email: ' + (err.message || err.code));
+  }
+}
+
 async function saveNewUser() {
-  const emailEl = document.getElementById('newUserEmail');
-  const email   = (emailEl.value || '').trim().toLowerCase();
+  const emailEl      = document.getElementById('newUserEmail');
+  const roleEl       = document.getElementById('newUserRole');
+  const authMethodEl = document.getElementById('newUserAuthMethod');
+  const email      = (emailEl.value || '').trim().toLowerCase();
+  const role       = roleEl ? roleEl.value : 'Custom';
+  const authMethod = authMethodEl ? authMethodEl.value : 'google';
   if (!email || !email.includes('@')) { alert('Enter a valid email address.'); return; }
   if (_adminUsers.find(u => u.email === email)) { alert('This user already exists.'); return; }
   const checked = [...document.querySelectorAll('#newUserPageChecks input:checked')].map(c => c.value);
   if (!checked.length) { alert('Select at least one page.'); return; }
-  await db.collection(FS_USERS).doc(email).set({
-    email,
-    pages: checked,
-    role:  'Custom',
-  });
+  const doc = { email, pages: checked, role, authMethod };
+  if (authMethod === 'email') doc.mustChangePassword = true;
+  await db.collection(FS_USERS).doc(email).set(doc);
+  // Offer to send welcome/reset email for email-type users
+  if (authMethod === 'email') {
+    if (confirm(`User saved. Send a password setup email to ${email} now?\n\n(The Firebase Auth account must already be created in Firebase Console first.)`)) {
+      await sendResetEmail(email);
+    }
+  }
   emailEl.value = '';
   document.querySelectorAll('#newUserPageChecks input').forEach(c => c.checked = false);
   document.getElementById('addUserForm').style.display = 'none';
@@ -3315,6 +3484,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('signOutBtn').style.display    = 'none';
       document.getElementById('userDisplay').textContent     = '';
       document.getElementById('authError').textContent       = '';
+      document.getElementById('authError').style.color       = '#fca5a5'; // reset to red
+      document.getElementById('pwChangeOverlay').style.display = 'none';
       return;
     }
 
@@ -3414,6 +3585,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const firstPage = PAGE_MAP.find(p => userRecord.pages.includes(p.name));
     navigate(firstPage ? firstPage.id : 'dashboard');
     console.log('[Auth] App ready. Page:', firstPage ? firstPage.id : 'dashboard');
+
+    // Prompt email/password users to change their temporary password
+    const isEmailUser = user.providerData.some(p => p.providerId === 'password');
+    if (isEmailUser && userRecord.mustChangePassword) {
+      document.getElementById('pwNew').value     = '';
+      document.getElementById('pwConfirm').value = '';
+      document.getElementById('pwChangeError').textContent = '';
+      document.getElementById('pwChangeOverlay').style.display = 'flex';
+    }
   });
 });
 </script>
