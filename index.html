@@ -3329,18 +3329,25 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[Auth] Trusted email — full access granted, role:', role);
         userRecord = { email: user.email, pages: [...ALL_PAGES], role };
 
-        // Owner: AWAIT bootstrap so the users/{email} doc is written
-        // before loadState() runs. Without this, the new Firestore rules
-        // (which require users/{email} to exist) deny the pharmasave reads
-        // because the doc hasn't been created yet.
+        // Owner: always write their own user doc before loadState runs.
+        // This is idempotent (merge:true) and guarantees the doc exists
+        // so Firestore rules can pass the exists() check on pharmasave reads.
+        // Background-seed other default users after the doc is confirmed.
         if (user.email === OWNER_EMAIL) {
           setLoadMsg('Setting up access…');
           try {
-            await withTimeout(bootstrapUsersIfNeeded(), 6000);
-            console.log('[Auth] Bootstrap complete');
+            await withTimeout(
+              db.collection(FS_USERS).doc(OWNER_EMAIL).set(
+                { email: OWNER_EMAIL, pages: [...ALL_PAGES], role: 'Owner' },
+                { merge: true }
+              ), 6000
+            );
+            console.log('[Auth] Owner doc written');
+            // Seed other default users in background (non-blocking)
+            bootstrapUsersIfNeeded().catch(e => console.warn('[Bootstrap]', e.message));
           } catch (bErr) {
-            console.warn('[Auth] Bootstrap failed/timed out:', bErr.message);
-            // Continue — loadState fallback will handle it
+            console.warn('[Auth] Owner doc write failed/timed out:', bErr.message);
+            // Continue — if old permissive rules are in place, loadState may still work
           }
         }
 
