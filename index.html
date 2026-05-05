@@ -3156,25 +3156,24 @@ async function fetchUserRecord(email) {
 // Called on first-ever sign-in by the owner when the users collection is empty.
 // Seeds both initial user documents so the system is ready for the second user.
 async function bootstrapUsersIfNeeded() {
-  const snap = await db.collection(FS_USERS).limit(1).get();
-  if (!snap.empty) return; // already seeded
-  const batch = db.batch();
-  batch.set(db.collection(FS_USERS).doc('eslam.elbana@gmail.com'), {
-    email: 'eslam.elbana@gmail.com',
-    pages: [...ALL_PAGES],
-    role:  'Owner',
-  });
-  batch.set(db.collection(FS_USERS).doc('escarpment.pharmacy@gmail.com'), {
-    email: 'escarpment.pharmacy@gmail.com',
-    pages: [...ALL_PAGES],
-    role:  'Full Access',
-  });
-  batch.set(db.collection(FS_USERS).doc('doctormetwally84@gmail.com'), {
-    email: 'doctormetwally84@gmail.com',
-    pages: [...ALL_PAGES],
-    role:  'Full Access',
-  });
-  await batch.commit();
+  // Check the OWNER doc specifically — not just any doc in the collection.
+  // A partial previous run may have created other docs while leaving the
+  // owner doc missing, which blocks the owner from reading app data.
+  const ownerDoc = await db.collection(FS_USERS).doc(OWNER_EMAIL).get();
+  if (ownerDoc.exists) return; // owner already seeded — all good
+
+  // Use merge:true so we never overwrite existing page assignments
+  const opts = { merge: true };
+  const col  = db.collection(FS_USERS);
+  await Promise.all([
+    col.doc('eslam.elbana@gmail.com').set(
+      { email: 'eslam.elbana@gmail.com',        pages: [...ALL_PAGES], role: 'Owner'       }, opts),
+    col.doc('escarpment.pharmacy@gmail.com').set(
+      { email: 'escarpment.pharmacy@gmail.com', pages: [...ALL_PAGES], role: 'Full Access' }, opts),
+    col.doc('doctormetwally84@gmail.com').set(
+      { email: 'doctormetwally84@gmail.com',    pages: [...ALL_PAGES], role: 'Full Access' }, opts),
+  ]);
+  console.log('[Bootstrap] Initial user docs created');
 }
 
 // ── Admin panel helpers (owner only) ─────────────────────────────
