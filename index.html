@@ -3228,7 +3228,7 @@ function setAuthLoading(on) {
 function doSignIn() {
   document.getElementById('authError').textContent = '';
   setAuthLoading(true);
-  auth.signInWithPopup(provider).catch(err => {
+  auth.signInWithRedirect(provider).catch(err => {
     document.getElementById('authError').textContent = 'Google sign-in failed: ' + err.message;
     setAuthLoading(false);
   });
@@ -3301,29 +3301,29 @@ async function fetchUserRecord(email) {
   return doc.exists ? doc.data() : null;
 }
 
-// Called on first-ever sign-in by the owner when the users collection is empty.
-// Seeds both initial user documents so the system is ready for the second user.
-async function bootstrapUsersIfNeeded() {
-  // Check the OWNER doc specifically — not just any doc in the collection.
-  // A partial previous run may have created other docs while leaving the
-  // owner doc missing, which blocks the owner from reading app data.
-  const ownerDoc = await db.collection(FS_USERS).doc(OWNER_EMAIL).get();
-  if (ownerDoc.exists) return; // owner already seeded — all good
+// Default users that should always exist in Firestore.
+// merge:true means existing page assignments are never overwritten.
+// Add new permanent accounts here — they will be created automatically
+// the next time the owner logs in (even if the system is already bootstrapped).
+const DEFAULT_USERS = [
+  { email: 'eslam.elbana@gmail.com',                pages: [...ALL_PAGES], role: 'Owner'        },
+  { email: 'escarpment.pharmacy@gmail.com',          pages: [...ALL_PAGES], role: 'Full Access'  },
+  { email: 'doctormetwally84@gmail.com',             pages: [...ALL_PAGES], role: 'Full Access',  authMethod: 'google' },
+  { email: 'tatjana.dsouza@escarpmenthealth.ca',     pages: ['EHC'],        role: 'Clinic Staff', authMethod: 'email', mustChangePassword: true },
+  { email: 'tatjana.dsouza@gmail.com',               pages: ['EHC'],        role: 'Clinic Staff', authMethod: 'google' },
+];
 
-  // Use merge:true so we never overwrite existing page assignments
-  const opts = { merge: true };
+// Ensures every entry in DEFAULT_USERS exists in Firestore.
+// Called on every owner login — merge:true means existing records are never clobbered.
+async function bootstrapUsersIfNeeded() {
   const col  = db.collection(FS_USERS);
-  await Promise.all([
-    col.doc('eslam.elbana@gmail.com').set(
-      { email: 'eslam.elbana@gmail.com',        pages: [...ALL_PAGES], role: 'Owner'       }, opts),
-    col.doc('escarpment.pharmacy@gmail.com').set(
-      { email: 'escarpment.pharmacy@gmail.com', pages: [...ALL_PAGES], role: 'Full Access' }, opts),
-    col.doc('doctormetwally84@gmail.com').set(
-      { email: 'doctormetwally84@gmail.com',    pages: [...ALL_PAGES], role: 'Full Access', authMethod: 'google'  }, opts),
-    col.doc('tatjana.dsouza@escarpmenthealth.ca').set(
-      { email: 'tatjana.dsouza@escarpmenthealth.ca', pages: ['EHC'], role: 'Clinic Staff', authMethod: 'email', mustChangePassword: true }, opts),
-  ]);
-  console.log('[Bootstrap] Initial user docs created');
+  const opts = { merge: true };
+  // Fetch all default-user docs in parallel to see which are missing
+  const snapshots = await Promise.all(DEFAULT_USERS.map(u => col.doc(u.email).get()));
+  const toCreate  = DEFAULT_USERS.filter((u, i) => !snapshots[i].exists);
+  if (!toCreate.length) return; // nothing to do
+  await Promise.all(toCreate.map(u => col.doc(u.email).set(u, opts)));
+  console.log('[Bootstrap] Created missing user docs:', toCreate.map(u => u.email));
 }
 
 // ── Admin panel helpers (owner only) ─────────────────────────────
@@ -3460,6 +3460,18 @@ async function saveNewUser() {
 document.addEventListener('DOMContentLoaded', () => {
   // Show gate immediately; auth listener will hide it once signed in
   document.getElementById('authGate').style.display = 'flex';
+
+  // Handle the result of signInWithRedirect (fires after Google sends user back)
+  auth.getRedirectResult().then(result => {
+    if (result && result.user) {
+      console.log('[Auth] Redirect sign-in complete:', result.user.email);
+      // onAuthStateChanged will fire and handle the rest
+    }
+  }).catch(err => {
+    if (err && err.code !== 'auth/no-current-user') {
+      document.getElementById('authError').textContent = 'Google sign-in failed: ' + err.message;
+    }
+  });
 
   // Helper: race a promise against a timeout
   function withTimeout(promise, ms) {
