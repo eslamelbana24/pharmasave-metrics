@@ -359,6 +359,8 @@ const PAGE_MAP = [
 const DEFAULT_SETTINGS = {
   rxGPMethod:    'fee_markup',  // 'fee_markup' | 'pct'
   rxGPPct:       13.5,
+  rateBasis:     'manual',      // 'manual' | 'avg' — source of Rx GP% & Rebate% for next-month projection + targets
+  avgWindow:     6,             // 3 | 6 | 12 — trailing months used when rateBasis === 'avg'
   frontGPMethod: 'pct',         // 'pct' | 'actual'
   frontGPPct:    25,
   rebateMethod:  'manual',      // 'manual' | 'pct'
@@ -608,15 +610,54 @@ function sCurveK(monthsToCeiling) {
     : 0.8; // fallback for edge cases
 }
 
-// Returns net profit derived from S-curve Rx(t) using latest-month GP rates
+// Effective Rx GP & Rebate rates (per $1 of Rx Sales) used for forward
+// projections and the Rx Sales Targets. Honors the rateBasis setting:
+//   'avg'    → derive from a trailing window of REAL month data (fee+markup,
+//              actual rebate $). Most accurate when you enter real numbers.
+//   'manual' → use the static Rx GP % / Rebate % from Settings.
+// Returns { rxGPRate, rebRate, source, window } with rates as decimals.
+function projectionRates() {
+  const win = parseInt(settings.avgWindow) || 6;
+  if (settings.rateBasis === 'avg' && months.length) {
+    const slice = months.slice(-win);
+    let sumRx = 0, sumGP = 0, sumReb = 0;
+    slice.forEach(m => {
+      const rx = parseFloat(m.rxSales) || 0;
+      // Real Rx GP dollars: prefer dispensing fee + markup, else fall back to %
+      const fm = (parseFloat(m.rxGP_fees) || 0) + (parseFloat(m.rxGP_markup) || 0);
+      const gp = fm > 0
+        ? fm
+        : rx * ((m.rxGP_pct !== undefined ? parseFloat(m.rxGP_pct) : settings.rxGPPct) || 0) / 100;
+      // Real rebate dollars: prefer the actual amount entered, else fall back to %
+      let reb = parseFloat(m.rebate);
+      if (!(reb > 0)) reb = rx * (settings.rebatePct || 0) / 100;
+      sumRx += rx; sumGP += gp; sumReb += reb;
+    });
+    if (sumRx > 0) {
+      return { rxGPRate: sumGP / sumRx, rebRate: sumReb / sumRx, source: 'avg', window: slice.length };
+    }
+  }
+  // Manual / fallback
+  return {
+    rxGPRate: (settings.rxGPPct || 0) / 100,
+    rebRate:  settings.rebateMethod === 'pct' ? (settings.rebatePct || 0) / 100 : 0,
+    source:   'manual',
+    window:   0,
+  };
+}
+
+// Returns net profit derived from S-curve Rx(t) using latest-month GP rates.
+// When rateBasis === 'avg', uses the trailing-average rates instead so the
+// forecast stays consistent with the dashboard targets.
 function sCurveNPRates() {
   const lm       = latestMonth();
   if (!lm) return null;
   const lmData   = calcMonthData(lm);
   const lmRx     = parseFloat(lm.rxSales) || 1;
+  const pr       = projectionRates();
   return {
-    rxGPRate:  lmData.rxGP   / lmRx,  // rxGP per $1 of Rx Sales
-    rebRate:   lmData.rebate  / lmRx,  // rebate per $1 of Rx Sales
+    rxGPRate:  pr.source === 'avg' ? pr.rxGPRate : lmData.rxGP   / lmRx,  // rxGP per $1 of Rx Sales
+    rebRate:   pr.source === 'avg' ? pr.rebRate  : lmData.rebate  / lmRx,  // rebate per $1 of Rx Sales
     frontGP:   lmData.frontGP,         // front-store GP (assumed constant)
     expenses:  calcTotalExpenses(),
   };
@@ -889,13 +930,22 @@ function renderDashboard() {
 
   // ── Next Month Rx Sales Target ───────────────────────────────────
   const growthForTarget = avg.rate !== null ? avg.rate : settings.growthRates.realistic;
+  const projRates = projectionRates();
   let nextRxTarget = null, nextGPVal = null, nextNPVal = null;
   if (lm) {
     nextRxTarget = (parseFloat(lm.rxSales)||0) * (1 + growthForTarget / 100);
-    const nextM  = {...lm, rxSales: nextRxTarget};
-    const nextD  = calcMonthData(nextM);
-    nextGPVal    = nextD.totalGP;
-    nextNPVal    = nextD.netProfit;
+    if (projRates.source === 'avg') {
+      // Scale Rx GP & rebate with the projected Rx sales using the trailing-average
+      // rates; hold front-store GP at last month's level.
+      const frontGPFixed = lmData ? lmData.frontGP : 0;
+      nextGPVal = nextRxTarget * (projRates.rxGPRate + projRates.rebRate) + frontGPFixed;
+      nextNPVal = nextGPVal - expTotal;
+    } else {
+      const nextM  = {...lm, rxSales: nextRxTarget};
+      const nextD  = calcMonthData(nextM);
+      nextGPVal    = nextD.totalGP;
+      nextNPVal    = nextD.netProfit;
+    }
   }
   const motivational = nextNPVal === null ? ''
     : nextNPVal >= 5000  ? 'Great trajectory — keep pushing!'
@@ -904,16 +954,21 @@ function renderDashboard() {
     : 'Focus on Rx volume growth to close the gap.';
 
   // ── Rx Sales Targets calculation ─────────────────────────────────
-  const canCalcRxTargets = lm && settings.rxGPMethod === 'pct';
+  // Unlocked when we have a usable forward rate: either historical % mode,
+  // or the trailing-average basis derived from real data.
+  const canCalcRxTargets = lm && (settings.rxGPMethod === 'pct' || projRates.source === 'avg');
   let rxTargetsHtml = '';
   if (!months.length) {
     rxTargetsHtml = `<div style="color:var(--light);font-size:0.88rem;padding:8px 0">Add monthly data to calculate targets.</div>`;
   } else if (!canCalcRxTargets) {
-    rxTargetsHtml = `<div style="color:var(--amber);font-size:0.88rem;padding:8px 0">Set Rx GP method to <strong>% of Rx Sales</strong> in Settings to unlock these targets.</div>`;
+    rxTargetsHtml = `<div style="color:var(--amber);font-size:0.88rem;padding:8px 0">To unlock these targets, either set the Rx GP method to <strong>% of Rx Sales</strong>, or turn on <strong>Auto rate basis (trailing average of real data)</strong> in Settings.</div>`;
   } else {
-    const rxGPRate     = settings.rxGPPct || 0;
-    const rebateRate   = settings.rebateMethod === 'pct' ? (settings.rebatePct || 0) : 0;
-    const combinedRate = (rxGPRate + rebateRate) / 100;
+    const rxGPRate     = projRates.rxGPRate * 100;
+    const rebateRate   = projRates.rebRate * 100;
+    const combinedRate = projRates.rxGPRate + projRates.rebRate;
+    const rateSrcLabel = projRates.source === 'avg'
+      ? `${projRates.window}-mo real avg`
+      : 'manual';
     const frontGPFixed = lmData ? lmData.frontGP : 0;
     const lastRxSales  = parseFloat(lm.rxSales) || 0;
 
@@ -947,7 +1002,7 @@ function renderDashboard() {
           : `<div style="font-size:0.8rem;color:var(--amber);font-weight:600">You are ${fmt(Math.abs(valGap))} away in monthly Rx sales</div>`}
       </div>` : '';
 
-    const assumptions = `Assumes front store GP of ${fmt(frontGPFixed)}/month (last month) | Rx GP: ${rxGPRate}% | Rebate: ${rebateRate}% | Expenses: ${fmt(expTotal)}/month`;
+    const assumptions = `Assumes front store GP of ${fmt(frontGPFixed)}/month (last month) | Rx GP: ${rxGPRate.toFixed(1)}% | Rebate: ${rebateRate.toFixed(1)}% (${rateSrcLabel}) | Expenses: ${fmt(expTotal)}/month`;
 
     rxTargetsHtml = `
       <div class="rx-tgt-grid" style="display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-bottom:14px">
@@ -1746,6 +1801,40 @@ function renderSettings() {
               oninput="setSetting('rebatePct',parseFloat(this.value))">
             <div class="hint">Used to pre-fill the rebate field when adding a new month. Always editable.</div>
           </div>` : '<p class="text-sm text-light">Enter rebate dollar amount directly for each month.</p>'}
+      </div>
+
+      <div class="setting-block" style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+        <div class="setting-label">Projection &amp; Targets — Rate Basis</div>
+        <p class="text-sm text-light mb-12">Controls the Rx GP % and Rebate % used for the <strong>next-month projection</strong> and the <strong>Rx Sales Targets</strong> (break-even &amp; $1M valuation). Your historical months always stay on the real Dispensing Fee + Markup numbers — this only affects forward-looking figures.</p>
+        <div class="pill-toggle mb-12">
+          <button class="pill-opt ${s.rateBasis!=='avg'?'active':''}" onclick="setSetting('rateBasis','manual');renderSettings();renderDashboard()">Manual %</button>
+          <button class="pill-opt ${s.rateBasis==='avg'?'active':''}" onclick="setSetting('rateBasis','avg');renderSettings();renderDashboard()">Auto — trailing average of real data</button>
+        </div>
+        ${s.rateBasis==='avg' ? (() => {
+          const pr = projectionRates();
+          const winOpts = [3,6,12].map(w =>
+            `<option value="${w}" ${(parseInt(s.avgWindow)||6)===w?'selected':''}>${w} months</option>`).join('');
+          const enoughNote = (pr.window||0) < (parseInt(s.avgWindow)||6)
+            ? `<div class="hint" style="color:var(--amber)">Only ${pr.window} month(s) of data available — averaging across what you have.</div>`
+            : '';
+          const preview = pr.source==='avg'
+            ? `<div class="gp-summary" style="margin-top:12px">
+                 <div class="gp-row"><span>Effective Rx GP %</span><span style="font-weight:700">${(pr.rxGPRate*100).toFixed(2)}%</span></div>
+                 <div class="gp-row"><span>Effective Rebate %</span><span style="font-weight:700">${(pr.rebRate*100).toFixed(2)}%</span></div>
+                 <div class="gp-divider"></div>
+                 <div class="gp-row gp-total"><span>Combined GP rate on Rx sales</span><span>${((pr.rxGPRate+pr.rebRate)*100).toFixed(2)}%</span></div>
+               </div>`
+            : `<div class="hint" style="color:var(--amber)">Add monthly data with real Fee + Markup and Rebate figures to compute the average.</div>`;
+          return `
+            <div class="form-row">
+              <label>Averaging window</label>
+              <select style="max-width:180px;padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;color:var(--text)"
+                onchange="setSetting('avgWindow',parseInt(this.value));renderSettings();renderDashboard()">${winOpts}</select>
+              <div class="hint">Derived live from your real Rx sales, dispensing fee + markup, and rebate dollars over the trailing window.</div>
+              ${enoughNote}
+            </div>
+            ${preview}`;
+        })() : '<p class="text-sm text-light">Uses the static Rx GP % and Rebate % entered above. Targets require the % of Rx Sales method.</p>'}
       </div>
     </div>
 
