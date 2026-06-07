@@ -12,6 +12,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
 <style>
 :root{
   --navy:#1B3A6B; --teal:#1D9E75; --red:#E05252; --amber:#BA7517;
@@ -196,6 +199,167 @@ input:focus{border-color:var(--navy)}
 .items-center{align-items:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
 .mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
 .text-sm{font-size:.84rem}.text-xs{font-size:.72rem}.text-light{color:var(--light)}.font-bold{font-weight:700}
+</style>
+<style>
+/* ============================================================
+   NAVY EDITORIAL DASHBOARD (Direction B) — scoped under .dash2
+   ============================================================ */
+.dash2{
+  --b-navy:#1B3A6B; --b-teal:#1D9E75; --b-red:#E05252; --b-amber:#BA7517;
+  --b-bg:#edeef4; --b-card:#fcfcfe; --b-ink:#16243d; --b-muted:#5d6b85;
+  --b-faint:#93a0b6; --b-line:#e6e8f0; --b-line-strong:#d6deea;
+  --b-radius:18px; --b-radius-sm:13px; --b-pad:32px;
+  --b-navy-soft:#eef2f8; --b-teal-soft:#e7f5ee; --b-red-soft:#fbeaea; --b-amber-soft:#f7eedd;
+  --b-shadow:0 1px 2px rgba(20,40,70,.05), 0 18px 40px -24px rgba(20,40,70,.32);
+  --b-font-ui:'Manrope',system-ui,-apple-system,sans-serif;
+  --b-font-num:'Newsreader',Georgia,'Times New Roman',serif;
+  font-family:var(--b-font-ui); color:var(--b-ink);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  padding:clamp(16px,2.4vw,30px) clamp(14px,3vw,30px) 40px; background:var(--b-bg);
+}
+#page-dashboard.page{ padding:0; max-width:1320px; }
+.dash2, .dash2 *{ box-sizing:border-box; }
+.dash2{ overflow:hidden; border-radius:0; }
+.dash2 .num{ font-family:var(--b-font-num); font-weight:500; font-variant-numeric:lining-nums tabular-nums; }
+.dash2 .pos{ color:var(--b-teal); } .dash2 .neg{ color:var(--b-red); }
+.dash2 .warn{ color:var(--b-amber); } .dash2 .navytxt{ color:var(--b-navy); }
+
+/* toolbar */
+.dash2 .toolbar{ display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap; margin-bottom:22px; }
+.dash2 .toolbar-title h1{ margin:0; font-size:clamp(20px,2.4vw,25px); font-weight:800; letter-spacing:-0.02em; color:var(--b-ink); }
+.dash2 .toolbar-title p{ margin:4px 0 0; color:var(--b-muted); font-size:13.5px; }
+.dash2 .toolbar-controls{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.dash2 .monthpick{ display:flex; align-items:center; background:#fff; border:1px solid var(--b-line-strong); border-radius:11px; padding:3px; overflow-x:auto; scrollbar-width:none; max-width:100%; }
+.dash2 .monthpick::-webkit-scrollbar{ display:none; }
+.dash2 .mbtn{ font:inherit; font-size:13px; font-weight:600; color:var(--b-muted); background:none; border:none; cursor:pointer; padding:7px 12px; border-radius:8px; white-space:nowrap; transition:background .15s,color .15s; }
+.dash2 .mbtn:hover{ color:var(--b-ink); }
+.dash2 .mbtn.active{ background:var(--b-navy); color:#fff; }
+.dash2 .seg{ display:inline-flex; background:#fff; border:1px solid var(--b-line-strong); border-radius:11px; padding:3px; }
+.dash2 .seg button{ font:inherit; font-size:12.5px; font-weight:600; color:var(--b-muted); background:none; border:none; cursor:pointer; padding:7px 12px; border-radius:8px; transition:background .15s,color .15s; }
+.dash2 .seg button.active{ background:var(--b-navy); color:#fff; }
+.dash2 .seg .lab{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--b-faint); align-self:center; padding:0 8px 0 4px; }
+
+/* board / zones */
+.dash2 .board{ display:grid; gap:clamp(14px,1.6vw,20px); grid-template-columns:repeat(12,1fr); }
+.dash2 .zone-label{ grid-column:1/-1; display:flex; align-items:center; gap:12px; margin:14px 2px 0; }
+.dash2 .zone-label:first-child{ margin-top:0; }
+.dash2 .zone-label .step{ font-family:var(--b-font-num); font-weight:600; font-size:12px; color:#fff; background:var(--b-navy); width:22px; height:22px; border-radius:7px; display:grid; place-items:center; flex:none; }
+.dash2 .zone-label h2{ margin:0; font-size:12.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--b-muted); }
+.dash2 .zone-label .rule{ flex:1; height:1px; background:var(--b-line); }
+.dash2 .card{ background:var(--b-card); border:1px solid var(--b-line); border-radius:var(--b-radius); box-shadow:var(--b-shadow); margin:0; padding:0; }
+.dash2 .eyebrow{ font-size:11.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--b-faint); }
+
+/* hero */
+.dash2 .hero-now{ grid-column:span 7; padding:var(--b-pad); display:flex; flex-direction:column; }
+.dash2 .hero-goal{ grid-column:span 5; padding:var(--b-pad); display:flex; flex-direction:column; background:linear-gradient(160deg,#234a82 0%, var(--b-navy) 70%); color:#fff; border-color:transparent; }
+.dash2 .hero-net{ margin-top:18px; }
+.dash2 .hero-net .lbl{ font-size:14px; font-weight:600; color:var(--b-muted); }
+.dash2 .bignum{ font-family:var(--b-font-num); font-weight:500; line-height:1; font-variant-numeric:lining-nums tabular-nums; }
+.dash2 .hero-net .bignum{ font-size:clamp(44px,6vw,64px); margin:6px 0 8px; }
+.dash2 .hero-net .sub{ font-size:14px; color:var(--b-muted); }
+.dash2 .hero-now-row{ margin-top:auto; padding-top:24px; display:flex; gap:14px; flex-wrap:wrap; }
+.dash2 .hero-now-row > div{ flex:1; min-width:120px; border-top:1px solid var(--b-line); padding-top:14px; }
+.dash2 .mini-label{ display:block; font-size:12px; font-weight:600; color:var(--b-faint); margin-bottom:5px; }
+.dash2 .mini-num{ font-family:var(--b-font-num); font-weight:500; font-size:21px; font-variant-numeric:lining-nums tabular-nums; color:var(--b-ink); }
+.dash2 .pill{ display:inline-flex; align-items:center; gap:6px; font-family:var(--b-font-ui); font-size:13px; font-weight:700; padding:5px 11px; border-radius:999px; }
+.dash2 .pill.amber{ background:var(--b-amber-soft); color:var(--b-amber); }
+.dash2 .pill.teal{ background:var(--b-teal-soft); color:var(--b-teal); }
+.dash2 .pill.red{ background:var(--b-red-soft); color:var(--b-red); }
+.dash2 .pill .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; }
+
+/* goal panel (navy) */
+.dash2 .hero-goal .eyebrow{ color:rgba(255,255,255,.62); }
+.dash2 .hero-goal .mini-label{ color:rgba(255,255,255,.62); }
+.dash2 .goal-top{ display:flex; align-items:stretch; justify-content:space-between; gap:14px; flex:1; }
+.dash2 .goal-value .bignum{ font-size:clamp(34px,4.2vw,42px); margin:6px 0 6px; color:#fbd98a; }
+.dash2 .goal-value .hint{ font-size:12.5px; color:rgba(255,255,255,.55); }
+.dash2 .goal-arrival{ text-align:right; }
+.dash2 .goal-arrival .midnum{ font-family:var(--b-font-num); font-weight:500; font-size:26px; color:#fff; margin:5px 0 4px; }
+.dash2 .goal-arrival .hint{ font-size:11.5px; color:rgba(255,255,255,.55); max-width:160px; margin-left:auto; }
+.dash2 .ring-wrap{ display:flex; align-items:center; gap:18px; margin-top:24px; padding-top:24px; border-top:1px solid rgba(255,255,255,.16); }
+.dash2 .ring{ width:96px; height:96px; flex:none; }
+.dash2 .ring-track{ stroke:rgba(255,255,255,.16); }
+.dash2 .ring-fill{ stroke:#f3b64a; transition:stroke-dashoffset 1s cubic-bezier(.22,.61,.36,1); }
+.dash2 .ring-pct{ font-family:var(--b-font-num); font-weight:600; fill:#fff; }
+.dash2 .ring-meta{ font-size:13px; color:rgba(255,255,255,.7); line-height:1.5; }
+.dash2 .ring-meta b{ color:#fff; font-weight:600; }
+
+/* KPI strip */
+.dash2 .kpi{ grid-column:span 4; padding:22px 24px; display:flex; flex-direction:column; gap:2px; }
+.dash2 .kpi .k-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.dash2 .kpi .k-label{ font-size:12.5px; font-weight:600; color:var(--b-muted); }
+.dash2 .kpi .k-num{ font-family:var(--b-font-num); font-weight:500; font-size:30px; line-height:1.05; margin-top:9px; font-variant-numeric:lining-nums tabular-nums; }
+.dash2 .kpi .k-sub{ font-size:12.5px; color:var(--b-faint); margin-top:6px; }
+.dash2 .k-chip{ font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px; }
+.dash2 .k-chip.up{ background:var(--b-teal-soft); color:var(--b-teal); }
+.dash2 .k-chip.down{ background:var(--b-red-soft); color:var(--b-red); }
+.dash2 .k-chip.flat{ background:var(--b-navy-soft); color:var(--b-navy); }
+
+/* next month */
+.dash2 .next-main{ grid-column:span 7; padding:var(--b-pad); }
+.dash2 .next-side{ grid-column:span 5; padding:var(--b-pad); display:flex; flex-direction:column; }
+.dash2 .next-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+.dash2 .next-head .eyebrow{ color:var(--b-muted); }
+.dash2 .next-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.dash2 .proj{ background:#f1f3f9; border-radius:var(--b-radius-sm); padding:18px; }
+.dash2 .proj .p-lbl{ font-size:12.5px; color:var(--b-muted); font-weight:600; }
+.dash2 .proj .p-num{ font-family:var(--b-font-num); font-weight:500; font-size:27px; margin:8px 0 6px; font-variant-numeric:lining-nums tabular-nums; }
+.dash2 .proj .p-sub{ font-size:11.5px; color:var(--b-faint); }
+.dash2 .note{ display:flex; gap:11px; align-items:center; margin-top:18px; padding:14px 16px; border-radius:var(--b-radius-sm); background:var(--b-teal-soft); border-left:3px solid var(--b-teal); font-size:14px; color:#1a6b50; font-style:italic; font-weight:500; }
+.dash2 .target-block{ border-bottom:1px solid var(--b-line); padding:18px 0; }
+.dash2 .target-block:first-of-type{ padding-top:4px; }
+.dash2 .target-block:last-of-type{ border-bottom:none; padding-bottom:4px; }
+.dash2 .target-block .t-lbl{ font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--b-faint); }
+.dash2 .target-block .t-num{ font-family:var(--b-font-num); font-weight:500; font-size:30px; color:var(--b-amber); margin:7px 0 6px; font-variant-numeric:lining-nums tabular-nums; }
+.dash2 .target-block .t-desc{ font-size:12.5px; color:var(--b-muted); line-height:1.5; }
+.dash2 .target-block .t-flag{ font-size:13px; font-weight:700; margin-top:8px; }
+.dash2 .assume-toggle{ margin-top:16px; }
+.dash2 .assume-btn{ font:inherit; font-size:12.5px; font-weight:600; color:var(--b-navy); background:none; border:none; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:6px; }
+.dash2 .assume-btn .chev{ transition:transform .2s; font-size:10px; }
+.dash2 .assume-btn.open .chev{ transform:rotate(90deg); }
+.dash2 .assume-body{ font-size:12px; color:var(--b-faint); line-height:1.7; margin-top:10px; display:none; }
+.dash2 .assume-body.open{ display:block; }
+
+/* trends */
+.dash2 .trend-main{ grid-column:span 8; padding:var(--b-pad); display:flex; flex-direction:column; }
+.dash2 .trend-side{ grid-column:span 4; padding:var(--b-pad); display:flex; flex-direction:column; }
+.dash2 .trend-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.dash2 .trend-head h3{ margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; color:var(--b-ink); }
+.dash2 .chart-box{ position:relative; flex:1; min-height:300px; }
+.dash2 .chart-box canvas{ position:absolute; inset:0; }
+.dash2 .hidden{ display:none !important; }
+.dash2 .donut-box{ position:relative; height:230px; margin:6px 0 14px; }
+.dash2 .legend{ display:flex; flex-direction:column; gap:9px; margin-top:auto; }
+.dash2 .legend .lrow{ display:flex; align-items:center; gap:10px; font-size:13px; }
+.dash2 .legend .sw{ width:11px; height:11px; border-radius:3px; flex:none; }
+.dash2 .legend .lname{ color:var(--b-muted); flex:1; }
+.dash2 .legend .lval{ font-family:var(--b-font-num); font-weight:500; color:var(--b-ink); font-variant-numeric:lining-nums tabular-nums; }
+.dash2 .legend .lpct{ color:var(--b-faint); font-size:12px; width:42px; text-align:right; }
+
+/* density: compact hides secondary detail */
+.dash2[data-density="compact"] .k-sub,
+.dash2[data-density="compact"] .proj .p-sub,
+.dash2[data-density="compact"] .target-block .t-desc,
+.dash2[data-density="compact"] .assume-toggle,
+.dash2[data-density="compact"] .goal-arrival .hint,
+.dash2[data-density="compact"] .goal-value .hint,
+.dash2[data-density="compact"] .hero-net .sub{ display:none; }
+
+@media (max-width:1080px){
+  .dash2 .hero-now,.dash2 .hero-goal,.dash2 .next-main,.dash2 .next-side,.dash2 .trend-main,.dash2 .trend-side{ grid-column:1/-1; }
+  .dash2 .kpi{ grid-column:span 6; }
+}
+@media (max-width:720px){
+  .dash2{ --b-pad:22px; }
+  .dash2 .kpi{ grid-column:1/-1; }
+  .dash2 .next-grid{ grid-template-columns:1fr; }
+  .dash2 .toolbar{ align-items:stretch; }
+  .dash2 .goal-top{ flex-direction:column; gap:14px; }
+  .dash2 .goal-arrival{ text-align:left; }
+  .dash2 .goal-arrival .hint{ margin-left:0; max-width:none; }
+  .dash2 .hero-now-row > div{ flex:1 1 42%; min-width:0; }
+}
+@media (prefers-reduced-motion: reduce){ .dash2 .ring-fill{ transition:none; } }
 </style>
 </head>
 <body>
@@ -824,465 +988,422 @@ const gapLabelPlugin = {
 // ================================================================
 // PAGE: DASHBOARD
 // ================================================================
-function renderDashboard() {
+function renderDashboard(animate){
   syncRealisticRate();
-
   const el = document.getElementById('page-dashboard');
-  const lm = latestMonth();
-  const lmData = lm ? calcMonthData(lm) : null;
-  const expTotal = calcTotalExpenses();
-  const be = calcBreakEven(settings.growthRates.realistic);
+  const sorted = [...months].sort((a,b)=>a.monthKey.localeCompare(b.monthKey));
 
-  const lGP = lmData ? lmData.totalGP : 0;
-  const lNP = lmData ? lmData.netProfit : 0;
-
-  const avg = calcRollingAvgGrowth();
-  const avgDisplay = avg.rate !== null
-    ? (avg.rate >= 0 ? '+' : '') + avg.rate + '% / mo'
-    : 'Not enough data';
-  const avgClass = avg.rate === null ? '' : avg.rate >= 0 ? 'pos' : 'neg';
-  const trendHtml = avg.trend === 'accelerating'
-    ? '<span style="color:var(--teal)">↑ Accelerating</span>'
-    : avg.trend === 'decelerating'
-    ? '<span style="color:var(--amber)">↓ Slowing</span>'
-    : avg.trend === 'stable'
-    ? '<span style="color:var(--light)">→ Stable</span>'
-    : '';
-
-  // ── Pharmacy Value KPI ──────────────────────────────────────────
-  const vm = settings.valuationMultiple || 3;
-  const sortedM = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
-  let pharmValueNum = null, pharmValueStr, pharmBadge, pharmBadgeColor, pharmSub;
-
-  if (!months.length) {
-    pharmValueStr = '—';
-    pharmBadge    = 'No data';
-    pharmBadgeColor = 'var(--light)';
-    pharmSub      = 'Add monthly data to calculate';
-  } else if (lmData && lmData.netProfit < 0) {
-    const beMonths = be && !be.already ? be.months : null;
-    pharmValueStr  = beMonths ? `~${beMonths} mo` : 'N/A';
-    pharmBadge     = 'Not Yet Profitable';
-    pharmBadgeColor = 'var(--red)';
-    pharmSub       = 'Break-even estimate';
-  } else if (sortedM.length >= 12) {
-    const annualGP = sortedM.slice(-12).reduce((s,mo) => s + calcMonthData(mo).totalGP, 0);
-    pharmValueNum  = annualGP * vm;
-    pharmValueStr  = fmt(pharmValueNum);
-    pharmBadge     = 'Actual Annual Data';
-    pharmBadgeColor = 'var(--teal)';
-    pharmSub       = `${fmt(annualGP)} annual GP × ${vm}×`;
-  } else {
-    const last3    = sortedM.slice(-Math.min(3, sortedM.length));
-    const avg3GP   = last3.reduce((s,mo) => s + calcMonthData(mo).totalGP, 0) / last3.length;
-    pharmValueNum  = avg3GP * 12 * vm;
-    pharmValueStr  = fmt(pharmValueNum);
-    pharmBadge     = 'Projection';
-    pharmBadgeColor = 'var(--amber)';
-    pharmSub       = `${fmt(avg3GP)}/mo avg × 12 × ${vm}×`;
+  if(!sorted.length){
+    el.innerHTML = `<div class="dash2"><div class="card" style="padding:40px;text-align:center">
+      <div class="eyebrow" style="margin-bottom:10px">No data yet</div>
+      <p style="color:var(--b-muted);font-size:15px;margin:0">Go to <strong>Monthly Data</strong> to add your first month.</p></div></div>`;
+    return;
   }
 
-  // ── $1M Valuation Tracker ────────────────────────────────────────
-  const targetValue    = 1000000;
-  let currentPharmValue = pharmValueNum !== null ? pharmValueNum : 0;
-  const progressPct    = Math.min(100, Math.max(0, (currentPharmValue / targetValue) * 100));
-  const progressColor  = progressPct >= 100 ? 'var(--teal)' : progressPct >= 60 ? 'var(--amber)' : 'var(--navy)';
+  if(dashSel===null || dashSel<0 || dashSel>sorted.length-1) dashSel = sorted.length-1;
+  const sel = dashSel;
+  const c = dashCompute(sorted, sel);
+  const m = c.m, d = c.d;
+  const profitable = d.netProfit>=0;
+  const rx = parseFloat(m.rxSales)||0;
+  const fSign=n=>(n<0?'-$':'+$')+Math.abs(Math.round(n)).toLocaleString('en-CA');
+  const fPct=n=>(n>=0?'+':'')+(n*100).toFixed(1)+'%';
+  const shortM=key=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(key.split('-')[1])-1];
 
-  let monthsTo1M = null;
-  let beyond24Months = false;
-  // Only declare "already there" if the pharmacy is profitable AND the valuation is ≥ $1M
-  if (pharmValueNum !== null && pharmValueNum >= targetValue && lmData && lmData.netProfit >= 0) {
-    monthsTo1M = 0;
-  } else if (avg.rate !== null && avg.rate > 0 && lmData && lmData.totalGP > 0) {
-    let gp = lmData.totalGP;
-    // Use net profit × valuation multiple — not gross profit.
-    // projNP must be positive before the threshold is considered, so the loop
-    // never fires while the pharmacy is still losing money.
-    for (let i = 1; i <= 24; i++) {
-      gp *= (1 + avg.rate / 100);
-      const projNP = gp - expTotal;
-      if (projNP >= 0 && projNP * 12 * vm >= targetValue) { monthsTo1M = i; break; }
-    }
-    if (monthsTo1M === null) beyond24Months = true;
+  // standing pill
+  const near = !profitable && c.needMore!==null && c.needMore <= rx*0.30;
+  const standingPill = profitable
+    ? `<span class="pill teal"><span class="dot"></span>Profitable</span>`
+    : near ? `<span class="pill amber"><span class="dot"></span>Near break-even</span>`
+    : `<span class="pill red"><span class="dot"></span>Below break-even</span>`;
+
+  // growth chip + strings
+  const gv = c.growth;
+  let chip = `<span class="k-chip flat">—</span>`, growthAvgStr='—', growthSub='First month of data', growthCls='';
+  if(gv.last!==null && gv.avg!==null){
+    const accel=gv.trend==='accelerating', slow=gv.trend==='decelerating';
+    chip = `<span class="k-chip ${accel?'up':slow?'down':'flat'}">${accel?'↗ Accelerating':slow?'↘ Slowing':'→ Stable'}</span>`;
+    growthAvgStr = fPct(gv.avg)+' / mo';
+    growthCls = gv.avg>=0?'pos':'neg';
+    growthSub = 'Last month '+fPct(gv.last)+' vs '+monthKeyToLabel(sorted[sel-1].monthKey);
   }
 
-  // ── Last MoM growth (for merged Growth card) ────────────────────
-  const sortedForMoM = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
-  let lastMoM = null, prevMonthLabel = null;
-  if (sortedForMoM.length >= 2) {
-    const prevM = sortedForMoM[sortedForMoM.length - 2];
-    const currM = sortedForMoM[sortedForMoM.length - 1];
-    const prevGP = calcMonthData(prevM).totalGP;
-    const currGP = calcMonthData(currM).totalGP;
-    if (prevGP > 0) {
-      lastMoM = parseFloat(((currGP - prevGP) / prevGP * 100).toFixed(1));
-      prevMonthLabel = monthKeyToLabel(prevM.monthKey);
-    }
-  }
+  // break-even KPI
+  const beKpiNum = profitable ? 'Profitable' : (c.beMonths!==null ? c.beMonths+' mo.' : 'N/A');
+  const beKpiSub = profitable ? 'Net profit is positive' : 'At '+fPct(c.g)+'/mo realistic growth';
 
-  // ── Est. arrival date for $1M (based on last data month) ────────
-  let arrivalDate = null;
-  if (monthsTo1M !== null && monthsTo1M > 0 && lm) {
-    const [yr, mo] = lm.monthKey.split('-').map(Number);
-    const d = new Date(yr, mo - 1 + monthsTo1M, 1);
-    arrivalDate = d.toLocaleString('en-CA', {month:'short', year:'numeric'});
-  }
+  // road to $1M
+  const arrivalStr = c.value>=1000000 ? '🎉' : (c.arrival || '—');
+  const arrivalSub = c.value>=1000000 ? "You're there!" : (c.arrival ? 'Based on '+fPct(c.g)+'/mo avg growth' : 'Grow faster to project a date');
 
-  // ── Next Month Rx Sales Target ───────────────────────────────────
-  const growthForTarget = avg.rate !== null ? avg.rate : settings.growthRates.realistic;
-  const projRates = projectionRates();
-  let nextRxTarget = null, nextGPVal = null, nextNPVal = null;
-  if (lm) {
-    nextRxTarget = (parseFloat(lm.rxSales)||0) * (1 + growthForTarget / 100);
-    if (projRates.source === 'avg') {
-      // Scale Rx GP & rebate with the projected Rx sales using the trailing-average
-      // rates; hold front-store GP at last month's level.
-      const frontGPFixed = lmData ? lmData.frontGP : 0;
-      nextGPVal = nextRxTarget * (projRates.rxGPRate + projRates.rebRate) + frontGPFixed;
-      nextNPVal = nextGPVal - expTotal;
-    } else {
-      const nextM  = {...lm, rxSales: nextRxTarget};
-      const nextD  = calcMonthData(nextM);
-      nextGPVal    = nextD.totalGP;
-      nextNPVal    = nextD.netProfit;
-    }
-  }
-  const motivational = nextNPVal === null ? ''
-    : nextNPVal >= 5000  ? 'Great trajectory — keep pushing!'
-    : nextNPVal >= 0     ? 'Almost there — you\'re at break-even range.'
-    : nextNPVal >= -3000 ? 'Close to break-even — one strong month can flip it.'
-    : 'Focus on Rx volume growth to close the gap.';
+  // targets
+  const beAbove = c.needMore!==null && c.needMore<=0;
+  const beFlag = c.beRx===null ? '' : (beAbove
+      ? `<div class="t-flag pos">✓ Already above break-even Rx level</div>`
+      : `<div class="t-flag warn">You need ${fmt(c.needMore)} more in Rx sales</div>`);
+  const mAbove = c.awayMillion!==null && c.awayMillion<=0;
+  const mFlag = c.valRx===null ? '' : (mAbove
+      ? `<div class="t-flag pos">🎉 Already at $1M valuation Rx level</div>`
+      : `<div class="t-flag warn">You are ${fmt(Math.abs(c.awayMillion))} away in monthly Rx sales</div>`);
+  const rateSrc = c.rates.source==='avg' ? c.rates.window+'-mo real avg' : 'manual';
+  const assumptions = `Assumes front-store GP of ${fmt(c.frontGP)}/month (this month) · Rx GP ${(c.rates.rxGPRate*100).toFixed(1)}% · Rebate ${(c.rates.rebRate*100).toFixed(1)}% (${rateSrc}) · Expenses ${fmt(c.expenses)}/month · Valuation = trailing-avg monthly GP × 12 × ${c.vm}.`;
 
-  // ── Rx Sales Targets calculation ─────────────────────────────────
-  // Unlocked when we have a usable forward rate: either historical % mode,
-  // or the trailing-average basis derived from real data.
-  const canCalcRxTargets = lm && (settings.rxGPMethod === 'pct' || projRates.source === 'avg');
-  let rxTargetsHtml = '';
-  if (!months.length) {
-    rxTargetsHtml = `<div style="color:var(--light);font-size:0.88rem;padding:8px 0">Add monthly data to calculate targets.</div>`;
-  } else if (!canCalcRxTargets) {
-    rxTargetsHtml = `<div style="color:var(--amber);font-size:0.88rem;padding:8px 0">To unlock these targets, either set the Rx GP method to <strong>% of Rx Sales</strong>, or turn on <strong>Auto rate basis (trailing average of real data)</strong> in Settings.</div>`;
-  } else {
-    const rxGPRate     = projRates.rxGPRate * 100;
-    const rebateRate   = projRates.rebRate * 100;
-    const combinedRate = projRates.rxGPRate + projRates.rebRate;
-    const rateSrcLabel = projRates.source === 'avg'
-      ? `${projRates.window}-mo real avg`
-      : 'manual';
-    const frontGPFixed = lmData ? lmData.frontGP : 0;
-    const lastRxSales  = parseFloat(lm.rxSales) || 0;
+  // momentum
+  let momentum;
+  if(profitable) momentum='Profitable and compounding — keep expenses flat and the valuation curve takes care of itself.';
+  else if(near) momentum='Close to break-even — one strong month can flip it.';
+  else if(gv.avg!==null && gv.avg>0) momentum='Climbing at '+fPct(c.g)+'/mo — break-even is roughly '+(c.beMonths||'—')+' months out at this pace.';
+  else momentum='Focus on Rx volume growth to close the gap.';
 
-    // Target 1 — Break-even
-    const beRxSales = combinedRate > 0 ? (expTotal - frontGPFixed) / combinedRate : null;
-    const beGap     = beRxSales !== null ? lastRxSales - beRxSales : null;
+  // unlocked targets?
+  const canTargets = c.combined>0 && (settings.rxGPMethod==='pct' || c.rates.source==='avg');
 
-    // Target 2 — $1M Valuation
-    const reqMonthlyNP  = (1000000 / vm) / 12;
-    const reqTotalGP    = reqMonthlyNP + expTotal;
-    const valRxSales    = combinedRate > 0 ? (reqTotalGP - frontGPFixed) / combinedRate : null;
-    const valGap        = valRxSales !== null ? lastRxSales - valRxSales : null;
+  // month chips
+  const chips = sorted.map((mm,i)=>`<button class="mbtn${i===sel?' active':''}" data-idx="${i}" title="${monthKeyToLabel(mm.monthKey)}">${shortM(mm.monthKey)}</button>`).join('');
 
-    const beCol = beRxSales !== null ? `
-      <div>
-        <div style="font-size:0.72rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Rx Sales to Break Even</div>
-        <div style="font-size:1.5rem;font-weight:700;color:var(--amber);margin-bottom:4px">${fmt(Math.max(0, beRxSales))}</div>
-        <div style="font-size:0.78rem;color:var(--light);margin-bottom:10px">GP at this level covers all ${fmt(expTotal)} in monthly expenses</div>
-        ${beGap >= 0
-          ? `<div style="font-size:0.8rem;color:var(--teal);font-weight:600">✅ Already above break-even Rx level</div>`
-          : `<div style="font-size:0.8rem;color:var(--red);font-weight:600">You need ${fmt(Math.abs(beGap))} more in Rx sales</div>`}
-      </div>` : '';
-
-    const valCol = valRxSales !== null ? `
-      <div>
-        <div style="font-size:0.72rem;color:var(--light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Rx Sales for $1M Valuation</div>
-        <div style="font-size:1.5rem;font-weight:700;color:#BA7517;margin-bottom:4px">${fmt(Math.max(0, valRxSales))}</div>
-        <div style="font-size:0.78rem;color:var(--light);margin-bottom:10px">Generates the net profit needed for a $1M pharmacy value</div>
-        ${valGap >= 0
-          ? `<div style="font-size:0.8rem;color:var(--teal);font-weight:600">🎉 Already at $1M valuation Rx level</div>`
-          : `<div style="font-size:0.8rem;color:var(--amber);font-weight:600">You are ${fmt(Math.abs(valGap))} away in monthly Rx sales</div>`}
-      </div>` : '';
-
-    const assumptions = `Assumes front store GP of ${fmt(frontGPFixed)}/month (last month) | Rx GP: ${rxGPRate.toFixed(1)}% | Rebate: ${rebateRate.toFixed(1)}% (${rateSrcLabel}) | Expenses: ${fmt(expTotal)}/month`;
-
-    rxTargetsHtml = `
-      <div class="rx-tgt-grid" style="display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-bottom:14px">
-        <div style="padding-right:20px">${beCol}</div>
-        <div class="rx-tgt-divider" style="background:var(--border)"></div>
-        <div style="padding-left:20px">${valCol}</div>
-      </div>
-      <div style="padding-top:12px;border-top:1px solid var(--border);font-size:0.73rem;color:var(--light)">${assumptions}</div>`;
-  }
+  const projGPcls = c.projGP>=0?'pos':'neg';
+  const projNetCls = c.projNet>=0?'pos':'neg';
+  const netCls = d.netProfit>=0?'pos':'neg';
 
   el.innerHTML = `
-    ${!months.length ? '<div class="alert alert-warning">No data yet — go to <strong>Monthly Data</strong> to add your first month.</div>' : ''}
-
-    <div class="kpi-grid mb-20" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Rx Sales</div>
-        <div class="kpi-val-wrap">
-          <div class="kpi-value" style="color:#1B3A6B">${lm ? fmt(parseFloat(lm.rxSales)||0) : '$0'}</div>
-        </div>
-        <div class="kpi-sub">${lm ? monthKeyToLabel(lm.monthKey) + ' — most recent month' : 'no data yet'}</div>
+  <div class="dash2" data-density="${dashDensity}">
+    <div class="toolbar">
+      <div class="toolbar-title">
+        <h1>Dashboard</h1>
+        <p>Pharmacy financials &amp; progress to a $1M valuation</p>
       </div>
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Latest Month Gross Profit</div>
-        <div class="kpi-val-wrap">
-          <div class="kpi-value">${fmt(lGP)}</div>
-        </div>
-        <div class="kpi-sub">${lm ? monthKeyToLabel(lm.monthKey) : '—'}</div>
-      </div>
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Latest Month Net Profit</div>
-        <div class="kpi-val-wrap">
-          <div class="kpi-value ${lNP>=0?'pos':'neg'}">${fmt(lNP)}</div>
-        </div>
-        <div class="kpi-sub">Gross Profit minus Expenses</div>
-      </div>
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Monthly Expenses</div>
-        <div class="kpi-val-wrap">
-          <div class="kpi-value">${fmt(expTotal)}</div>
-        </div>
-        <div class="kpi-sub">${settings.expenseMethod === 'lump' ? 'Lump sum' : 'Itemized total'}</div>
-      </div>
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Months to Break-even</div>
-        <div class="kpi-val-wrap">
-          <div class="kpi-value ${lNP>=0?'pos':''}">${
-            lNP >= 0 ? '✓ Profitable' :
-            (be && !be.already ? be.months + ' mo.' : 'N/A')
-          }</div>
-        </div>
-        <div class="kpi-sub">Realistic (${settings.growthRates.realistic}%/mo growth)</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Growth</div>
-        <div style="font-size:0.7rem;color:var(--light);margin-bottom:2px">6-Month Avg</div>
-        <div class="kpi-value ${avgClass}" style="font-size:1.3rem;${avg.rate===null?'color:var(--light)':''};margin-bottom:2px">${avgDisplay}</div>
-        <div style="font-size:0.75rem;margin-bottom:10px">${trendHtml || '<span style="color:var(--light)">—</span>'}</div>
-        <div style="border-top:1px solid #e2e8f0;margin:8px 0"></div>
-        <div style="font-size:0.7rem;color:var(--light);margin-bottom:3px">Last Month</div>
-        <div style="font-size:0.95rem;font-weight:700" class="${lastMoM===null?'':lastMoM>=0?'pos':'neg'}">
-          ${lastMoM === null ? '<span style="color:var(--light)">—</span>' : (lastMoM >= 0 ? '+' : '') + lastMoM.toFixed(1) + '% vs ' + prevMonthLabel}
+      <div class="toolbar-controls">
+        <div class="monthpick" id="dashMonthpick">${chips}</div>
+        <div class="seg" id="dashDensitySeg">
+          <span class="lab">View</span>
+          <button data-density="detailed" class="${dashDensity==='detailed'?'active':''}">Detailed</button>
+          <button data-density="compact" class="${dashDensity==='compact'?'active':''}">Compact</button>
         </div>
       </div>
     </div>
 
-    ${lm && nextRxTarget !== null ? `
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">Next Month Rx Sales Target</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px">
-        <div style="background:var(--bg);border-radius:8px;padding:14px">
-          <div style="font-size:0.75rem;color:var(--light);margin-bottom:4px">Rx Sales Target</div>
-          <div style="font-size:1.4rem;font-weight:700;color:var(--navy)">${fmt(nextRxTarget)}</div>
-          <div style="font-size:0.78rem;color:var(--light)">Last: ${fmt(parseFloat(lm.rxSales)||0)} + ${(avg.rate!==null?avg.rate:settings.growthRates.realistic).toFixed(1)}% growth</div>
-        </div>
-        <div style="background:var(--bg);border-radius:8px;padding:14px">
-          <div style="font-size:0.75rem;color:var(--light);margin-bottom:4px">Projected Total GP</div>
-          <div style="font-size:1.4rem;font-weight:700;color:var(--teal)">${fmt(nextGPVal)}</div>
-          <div style="font-size:0.78rem;color:var(--light)">All streams at target</div>
-        </div>
-        <div style="background:var(--bg);border-radius:8px;padding:14px">
-          <div style="font-size:0.75rem;color:var(--light);margin-bottom:4px">Projected Net Profit</div>
-          <div style="font-size:1.4rem;font-weight:700" class="${nextNPVal>=0?'pos':'neg'}">${fmt(nextNPVal)}</div>
-          <div style="font-size:0.78rem;color:var(--light)">After ${fmt(expTotal)} expenses</div>
-        </div>
-      </div>
-      <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px">
-        <div style="font-size:0.72rem;font-weight:700;color:var(--navy);letter-spacing:.07em;margin-bottom:14px">RX SALES TARGETS</div>
-        ${rxTargetsHtml}
-      </div>
-      <div style="font-size:0.88rem;color:var(--navy);font-style:italic;padding:10px 14px;background:var(--bg);border-radius:8px;border-left:3px solid var(--teal)">${motivational}</div>
-    </div>
-    ` : ''}
+    <div class="board">
+      <!-- ZONE 1 -->
+      <div class="zone-label"><span class="step">1</span><h2>Where I am now</h2><span class="rule"></span></div>
 
-    ${months.length ? `
-    <div class="card" style="margin-bottom:16px">
-      <div style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0;align-items:center">
+      <section class="hero-now card">
+        <div class="eyebrow">This month · ${monthKeyToLabel(m.monthKey)}</div>
+        <div class="hero-net">
+          <div class="lbl">Net Profit</div>
+          <div class="bignum num ${netCls}" id="dashNet">${fSign(d.netProfit)}</div>
+          <div class="sub">${profitable ? 'Gross Profit minus Expenses — in the black' : 'Gross Profit minus Expenses ('+fmt(d.totalGP)+' − '+fmt(c.expenses)+')'}</div>
+        </div>
+        <div class="hero-now-row">
+          <div><span class="mini-label">Rx Sales</span><span class="mini-num">${fmt(rx)}</span></div>
+          <div><span class="mini-label">Gross Profit</span><span class="mini-num">${fmt(d.totalGP)}</span></div>
+          <div><span class="mini-label">Standing</span>${standingPill}</div>
+        </div>
+      </section>
 
-        <div style="padding:4px 24px 4px 4px">
-          <div style="font-size:0.68rem;font-weight:700;color:var(--light);letter-spacing:.07em;margin-bottom:8px">PHARMACY VALUE</div>
-          <div style="margin-bottom:8px">
-            <span style="background:${pharmBadgeColor};color:#fff;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700">${pharmBadge}</span>
+      <section class="hero-goal card">
+        <div class="goal-top">
+          <div class="goal-value">
+            <div class="eyebrow">Road to $1M valuation</div>
+            <div class="bignum num" id="dashValue">${fmt(c.value)}</div>
+            <div class="hint">Trailing-avg monthly GP × 12 × ${c.vm} multiple</div>
           </div>
-          <div style="font-size:1.9rem;font-weight:700;color:${pharmBadgeColor};line-height:1.1;margin-bottom:6px">${pharmValueStr}</div>
-          <div style="font-size:0.78rem;color:var(--light)">${pharmSub}</div>
-        </div>
-
-        <div style="background:var(--border);height:80%;align-self:stretch"></div>
-
-        <div style="padding:4px 24px">
-          <div style="font-size:0.68rem;font-weight:700;color:var(--light);letter-spacing:.07em;margin-bottom:8px">ROAD TO $1M</div>
-          <div style="background:#e0e4ea;border-radius:6px;height:10px;overflow:hidden;margin-bottom:8px">
-            <div style="width:${progressPct.toFixed(1)}%;height:100%;background:${progressColor};border-radius:6px;transition:width .4s"></div>
+          <div class="goal-arrival">
+            <div class="mini-label">Est. arrival</div>
+            <div class="midnum">${arrivalStr}</div>
+            <div class="hint">${arrivalSub}</div>
           </div>
-          <div style="font-size:0.85rem;color:var(--navy);font-weight:600;margin-bottom:4px">${fmt(currentPharmValue)} of $1M</div>
-          <div style="font-size:0.78rem;color:var(--light)">${progressPct.toFixed(1)}% of target</div>
         </div>
-
-        <div style="background:var(--border);height:80%;align-self:stretch"></div>
-
-        <div style="padding:4px 4px 4px 24px">
-          <div style="font-size:0.68rem;font-weight:700;color:var(--light);letter-spacing:.07em;margin-bottom:8px">ESTIMATED ARRIVAL</div>
-          ${monthsTo1M === 0
-            ? `<div style="font-size:1.6rem;font-weight:700" class="pos">🎉 You're there!</div>`
-            : beyond24Months
-            ? `<div style="font-size:1rem;font-weight:600;color:var(--light)">Beyond 24 months</div>
-               <div style="font-size:0.75rem;color:var(--light);margin-top:4px">Grow faster to reach $1M sooner</div>`
-            : arrivalDate
-            ? `<div style="font-size:1.9rem;font-weight:700;color:var(--navy);line-height:1.1;margin-bottom:6px">${arrivalDate}</div>
-               <div style="font-size:0.78rem;color:var(--light)">Based on ${avg.rate !== null ? avg.rate + '%' : settings.growthRates.realistic + '%'} 6-month avg growth</div>`
-            : `<div style="font-size:1rem;font-weight:600;color:var(--light)">Need more data</div>`}
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="11"></circle>
+            <circle class="ring-fill" id="dashRing" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+            <text class="ring-pct" id="dashRingPct" x="60" y="66" text-anchor="middle" font-size="22">0%</text>
+          </svg>
+          <div class="ring-meta">Pharmacy value of <b>${fmt(c.value)}</b><br>toward the <b>$1M</b> goal.<br>${fmt(1000000-c.value)} to go.</div>
         </div>
+      </section>
 
-      </div>
+      <section class="kpi card">
+        <div class="k-top"><span class="k-label">Monthly Expenses</span></div>
+        <div class="k-num num navytxt">${fmt(c.expenses)}</div>
+        <div class="k-sub">${settings.expenseMethod==='lump'?'Lump sum total':'Itemized operating total'}</div>
+      </section>
+      <section class="kpi card">
+        <div class="k-top"><span class="k-label">Months to Break-even</span></div>
+        <div class="k-num num ${profitable?'pos':'navytxt'}">${beKpiNum}</div>
+        <div class="k-sub">${beKpiSub}</div>
+      </section>
+      <section class="kpi card">
+        <div class="k-top"><span class="k-label">Growth · avg / mo</span>${chip}</div>
+        <div class="k-num num ${growthCls}">${growthAvgStr}</div>
+        <div class="k-sub">${growthSub}</div>
+      </section>
+
+      <!-- ZONE 2 -->
+      <div class="zone-label"><span class="step">2</span><h2>Where I'm headed next month</h2><span class="rule"></span></div>
+
+      <section class="next-main card">
+        <div class="next-head">
+          <span class="eyebrow">Next month Rx sales target</span>
+          <span class="pill teal"><span class="dot"></span>Projection</span>
+        </div>
+        <div class="next-grid">
+          <div class="proj">
+            <div class="p-lbl">Rx Sales Target</div>
+            <div class="p-num num navytxt">${fmt(c.targetRx)}</div>
+            <div class="p-sub">Last: ${fmt(rx)} + ${(c.g*100).toFixed(1)}% growth</div>
+          </div>
+          <div class="proj">
+            <div class="p-lbl">Projected Total GP</div>
+            <div class="p-num num ${projGPcls}">${fmt(c.projGP)}</div>
+            <div class="p-sub">All streams at target</div>
+          </div>
+          <div class="proj">
+            <div class="p-lbl">Projected Net Profit</div>
+            <div class="p-num num ${projNetCls}">${fSign(c.projNet)}</div>
+            <div class="p-sub">After ${fmt(c.expenses)} expenses</div>
+          </div>
+        </div>
+        <div class="note"><span>${momentum}</span></div>
+      </section>
+
+      <section class="next-side card">
+        <div class="eyebrow" style="margin-bottom:6px">Rx sales targets</div>
+        ${canTargets ? `
+        <div class="target-block">
+          <div class="t-lbl">Rx sales to break even</div>
+          <div class="t-num num">${fmt(c.beRx)}</div>
+          <div class="t-desc">GP at this level covers all ${fmt(c.expenses)} in monthly expenses.</div>
+          ${beFlag}
+        </div>
+        <div class="target-block">
+          <div class="t-lbl">Rx sales for $1M valuation</div>
+          <div class="t-num num">${fmt(c.valRx)}</div>
+          <div class="t-desc">Generates the net profit needed for a $1M pharmacy value.</div>
+          ${mFlag}
+        </div>
+        <div class="assume-toggle">
+          <button class="assume-btn" id="dashAssumeBtn"><span class="chev">▶</span>Show assumptions</button>
+          <div class="assume-body" id="dashAssumeBody">${assumptions}</div>
+        </div>` : `
+        <div class="target-block" style="border:none">
+          <div class="t-desc" style="color:var(--b-amber);font-weight:600">To unlock these targets, set the Rx GP method to <strong>% of Rx Sales</strong>, or turn on <strong>Auto rate basis (trailing average of real data)</strong> in Settings.</div>
+        </div>`}
+      </section>
+
+      <!-- ZONE 3 -->
+      <div class="zone-label"><span class="step">3</span><h2>Trends over time</h2><span class="rule"></span></div>
+
+      <section class="trend-main card">
+        <div class="trend-head">
+          <h3 id="dashTrendTitle">${dashTrendView==='streams'?'Gross profit by stream':'Monthly profit &amp; loss'}</h3>
+          <div class="seg" id="dashTrendSeg">
+            <button data-view="streams" class="${dashTrendView==='streams'?'active':''}">By stream</button>
+            <button data-view="perf" class="${dashTrendView==='perf'?'active':''}">Monthly P&amp;L</button>
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="dashStreams" class="${dashTrendView==='streams'?'':'hidden'}"></canvas>
+          <canvas id="dashPerf" class="${dashTrendView==='perf'?'':'hidden'}"></canvas>
+        </div>
+      </section>
+
+      <section class="trend-side card">
+        <div class="trend-head"><h3>GP breakdown · ${monthKeyToLabel(m.monthKey)}</h3></div>
+        <div class="donut-box"><canvas id="dashDonut"></canvas></div>
+        <div class="legend" id="dashLegend"></div>
+      </section>
     </div>
-    ` : ''}
+  </div>`;
 
+  // charts
+  dashCharts(sorted, sel);
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="charts-row-2">
-      <div class="card">
-        <div class="card-title">GP Trends by Stream</div>
-        <div class="chart-wrap" style="height:280px"><canvas id="gpTrendsChart"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-title">GP Breakdown — ${lm ? monthKeyToLabel(lm.monthKey) : 'Latest Month'}</div>
-        <div style="max-width:340px;margin:0 auto;padding:8px 0"><canvas id="pieChart"></canvas></div>
-      </div>
-    </div>
+  // ring
+  const circ = 2*Math.PI*52;
+  const ring = document.getElementById('dashRing');
+  ring.style.strokeDasharray = circ;
+  ring.style.strokeDashoffset = circ;
+  requestAnimationFrame(()=>{ ring.style.strokeDashoffset = circ*(1-c.pct/100); });
+  document.getElementById('dashRingPct').textContent = Math.round(c.pct)+'%';
 
-    <div class="card">
-      <div class="card-title">Monthly Performance — Last ${Math.min(months.length,12)} Months</div>
-      <div class="chart-wrap" style="height:320px"><canvas id="perfChart"></canvas></div>
-    </div>`;
-
-  if (months.length) {
-    renderPerfChart();
-    renderGPTrendsChart();
-    renderPieChart();
+  // animated counters
+  if(animate && _dashPrev){
+    dashAnimateNum(document.getElementById('dashNet'), _dashPrev.net, d.netProfit, fSign);
+    dashAnimateNum(document.getElementById('dashValue'), _dashPrev.value, c.value, fmt);
   }
-}
+  _dashPrev = { net:d.netProfit, value:c.value };
 
-function renderPerfChart() {
-  destroyChart('perf');
-  const canvas = document.getElementById('perfChart');
-  if (!canvas) return;
-  const data12 = months.slice(-12);
-  const labels  = data12.map(m => monthKeyToLabel(m.monthKey));
-  const gps     = data12.map(m => calcMonthData(m).totalGP);
-  const exps    = data12.map(m => calcMonthData(m).totalExp);
-  const profits = data12.map(m => calcMonthData(m).netProfit);
-  const expLine = data12.map(() => calcTotalExpenses());
-
-  charts.perf = new Chart(canvas, {
-    type: 'bar',
-    plugins: [gapLabelPlugin],
-    data: {
-      labels,
-      datasets: [
-        {label:'Gross Profit', data:gps,     backgroundColor:'rgba(27,58,107,.78)',  borderRadius:4},
-        {label:'Expenses',     data:exps,    backgroundColor:'rgba(224,82,82,.75)',  borderRadius:4},
-        {label:'Net Profit',   data:profits,
-          backgroundColor: profits.map(v => v>=0 ? 'rgba(29,158,117,.85)' : 'rgba(224,82,82,.5)'),
-          borderRadius:4},
-        {label:'Expense Threshold', type:'line',
-          data:expLine, borderColor:'#BA7517', borderDash:[7,4], borderWidth:2,
-          pointRadius:0, fill:false, tension:0, order:0},
-      ],
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      layout:{padding:{top:22}},
-      plugins:{
-        legend:{position:'top'},
-        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},
-      },
-      scales:{
-        x:{grid:{display:false}},
-        y:{ticks:{callback:v=>(Math.abs(v)>=1000?(v<0?'-':'')+Math.abs(v/1000).toFixed(0)+'k':v)}},
-      },
-    },
+  // events
+  document.getElementById('dashMonthpick').addEventListener('click', e=>{
+    const b=e.target.closest('.mbtn'); if(!b) return;
+    dashSel = parseInt(b.dataset.idx); renderDashboard(true);
+  });
+  document.getElementById('dashDensitySeg').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    dashDensity = b.dataset.density;
+    const wrap=document.querySelector('.dash2'); wrap.setAttribute('data-density', dashDensity);
+    document.querySelectorAll('#dashDensitySeg button').forEach(x=>x.classList.toggle('active',x===b));
+    setTimeout(()=>{ ['streams','perf','donut'].forEach(k=>charts[k]&&charts[k].resize()); },60);
+  });
+  document.getElementById('dashTrendSeg').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    dashTrendView = b.dataset.view;
+    document.querySelectorAll('#dashTrendSeg button').forEach(x=>x.classList.toggle('active',x===b));
+    document.getElementById('dashStreams').classList.toggle('hidden', dashTrendView!=='streams');
+    document.getElementById('dashPerf').classList.toggle('hidden', dashTrendView!=='perf');
+    document.getElementById('dashTrendTitle').innerHTML = dashTrendView==='streams'?'Gross profit by stream':'Monthly profit &amp; loss';
+    setTimeout(()=>{ charts.streams&&charts.streams.resize(); charts.perf&&charts.perf.resize(); },40);
+  });
+  const ab=document.getElementById('dashAssumeBtn');
+  if(ab) ab.addEventListener('click', function(){
+    this.classList.toggle('open');
+    const body=document.getElementById('dashAssumeBody'); body.classList.toggle('open');
+    this.childNodes[1].textContent = body.classList.contains('open')?' Hide assumptions':' Show assumptions';
   });
 }
 
-function renderPieChart() {
-  destroyChart('pie');
-  const canvas = document.getElementById('pieChart');
-  if (!canvas) return;
-  const lm = latestMonth();
-  if (!lm) return;
-  const d = calcMonthData(lm);
-  const cats = [
-    {label:'Rx Gross Profit',         value:d.rxGP,    color:'#1B3A6B'},
-    {label:'Front Store Gross Profit', value:d.frontGP, color:'#1D9E75'},
-    {label:'Rebates',                  value:d.rebate,  color:'#BA7517'},
-  ].filter(c => c.value > 0);
+// ---- Navy Editorial dashboard state & helpers ----
+let dashSel = null;
+let dashDensity = 'detailed';
+let dashTrendView = 'streams';
+let _dashPrev = null;
+const DASH_C = { navy:'#1B3A6B', teal:'#1D9E75', amber:'#BA7517', red:'#E05252', ink:'#16243d', muted:'#5d6b85', faint:'#93a0b6', line:'#e6e8f0' };
+function _wa(hex,a){ const h=hex.replace('#',''); return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; }
 
-  charts.pie = new Chart(canvas, {
-    type:'pie',
-    data:{
-      labels: cats.map(c=>c.label),
-      datasets:[{data:cats.map(c=>c.value), backgroundColor:cats.map(c=>c.color), borderWidth:2, borderColor:'#fff'}],
-    },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{position:'right'},
-        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${((ctx.raw/d.totalGP)*100).toFixed(1)}%)`}},
-      },
-    },
-  });
+function dashAnimateNum(el, from, to, fmtFn){
+  if(!el) return; const dur=600, t0=performance.now(); const ease=t=>1-Math.pow(1-t,3);
+  function step(now){ let p=Math.min(1,(now-t0)/dur); el.textContent=fmtFn(from+(to-from)*ease(p)); if(p<1) requestAnimationFrame(step); else el.textContent=fmtFn(to); }
+  requestAnimationFrame(step);
 }
 
-function renderGPTrendsChart() {
-  destroyChart('gpTrends');
-  const canvas = document.getElementById('gpTrendsChart');
-  if (!canvas) return;
-  const data12   = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey)).slice(-12);
-  const labels   = data12.map(m => monthKeyToLabel(m.monthKey));
-  const rxGPs    = data12.map(m => calcMonthData(m).rxGP);
-  const frontGPs = data12.map(m => calcMonthData(m).frontGP);
-  const rebates  = data12.map(m => calcMonthData(m).rebate);
-  const totalGPs = data12.map(m => calcMonthData(m).totalGP);
-  const expLine  = data12.map(() => calcTotalExpenses());
+function dashRatesUpTo(sorted, idx){
+  const win = parseInt(settings.avgWindow)||6;
+  const slice = sorted.slice(Math.max(0, idx-win+1), idx+1);
+  let sumRx=0,sumGP=0,sumReb=0;
+  slice.forEach(mm=>{
+    const r=parseFloat(mm.rxSales)||0;
+    const fm=(parseFloat(mm.rxGP_fees)||0)+(parseFloat(mm.rxGP_markup)||0);
+    const gp=fm>0?fm:r*((mm.rxGP_pct!==undefined?parseFloat(mm.rxGP_pct):settings.rxGPPct)||0)/100;
+    let reb=parseFloat(mm.rebate); if(!(reb>0)) reb=r*(settings.rebatePct||0)/100;
+    sumRx+=r; sumGP+=gp; sumReb+=reb;
+  });
+  if(settings.rateBasis==='avg' && sumRx>0)
+    return { rxGPRate:sumGP/sumRx, rebRate:sumReb/sumRx, source:'avg', window:slice.length };
+  return { rxGPRate:(settings.rxGPPct||0)/100, rebRate:settings.rebateMethod==='pct'?(settings.rebatePct||0)/100:0, source:'manual', window:0 };
+}
 
-  // Fix: $1M target = monthly NP needed + expenses
-  // monthly NP needed = ($1M ÷ multiple) ÷ 12
-  const vm             = settings.valuationMultiple || 3;
-  const monthlyNP      = (1000000 / vm) / 12;
-  const targetMonthlyGP = monthlyNP + calcTotalExpenses();
-  const targetLine     = data12.map(() => targetMonthlyGP);
+function dashGrowthCalc(sorted, idx){
+  const start=Math.max(1, idx-5); const rates=[];
+  for(let k=start;k<=idx;k++){ const p=calcMonthData(sorted[k-1]).totalGP, cu=calcMonthData(sorted[k]).totalGP; if(p>0) rates.push((cu-p)/p); }
+  const avg = rates.length? rates.reduce((s,r)=>s+r,0)/rates.length : null;
+  let last=null; if(idx>=1){ const p=calcMonthData(sorted[idx-1]).totalGP; if(p>0) last=(calcMonthData(sorted[idx]).totalGP-p)/p; }
+  let trend='stable';
+  if(rates.length>=2){ const mid=Math.ceil(rates.length/2); const fa=rates.slice(0,mid).reduce((s,r)=>s+r,0)/mid; const la=rates.slice(-mid).reduce((s,r)=>s+r,0)/mid; const diff=la-fa; if(diff>0.005)trend='accelerating'; else if(diff<-0.005)trend='decelerating'; }
+  return { avg, last, trend };
+}
 
-  charts.gpTrends = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {label:'Rx GP',          data:rxGPs,    borderColor:'#1B3A6B', backgroundColor:'rgba(27,58,107,.10)',
-          borderWidth:2.5, pointRadius:4, fill:true, tension:0.3},
-        {label:'Front Store GP', data:frontGPs, borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,.08)',
-          borderWidth:2.5, pointRadius:4, fill:true, tension:0.3},
-        {label:'Rebates',        data:rebates,  borderColor:'#BA7517', backgroundColor:'rgba(186,117,23,.08)',
-          borderWidth:2.5, pointRadius:4, fill:true, tension:0.3},
-        {label:'Total GP',       data:totalGPs, borderColor:'#6B9FD4', backgroundColor:'rgba(107,159,212,.06)',
-          borderWidth:2.5, pointRadius:4, fill:false, tension:0.3},
-        {label:'Break-even',     data:expLine,  borderColor:'#E05252', borderDash:[6,4],
-          borderWidth:1.5, pointRadius:0, fill:false, tension:0},
-        {label:`$1M Target (${fmt(Math.round(targetMonthlyGP))}/mo)`, data:targetLine, borderColor:'#7B5EA7', borderDash:[4,4],
-          borderWidth:1.5, pointRadius:0, fill:false, tension:0},
-      ],
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{position:'top', labels:{boxWidth:12, font:{size:11}}},
-        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},
-      },
-      scales:{
-        x:{grid:{display:false}},
-        y:{ticks:{callback:v=>(Math.abs(v)>=1000?(v<0?'-':'')+Math.abs(v/1000).toFixed(0)+'k':v)}},
-      },
-    },
+function dashAddMonths(monthKey, n){
+  const [y,mo]=monthKey.split('-').map(Number); const t=(mo-1)+n; const yy=y+Math.floor(t/12); const mm=((t%12)+12)%12;
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mm]+' '+yy;
+}
+
+function dashCompute(sorted, idx){
+  const m = sorted[idx];
+  const d = calcMonthData(m);
+  const expenses = calcTotalExpenses();
+  const vm = settings.valuationMultiple || 3;
+  const target = 1000000;
+  const rates = dashRatesUpTo(sorted, idx);
+  const combined = rates.rxGPRate + rates.rebRate;
+  const growth = dashGrowthCalc(sorted, idx);
+  const g = growth.avg!==null ? growth.avg : (settings.growthRates.realistic||3)/100;
+
+  let s=0; for(let k=0;k<=idx;k++) s+=calcMonthData(sorted[k]).totalGP;
+  const avgGP = s/(idx+1);
+  const value = avgGP * 12 * vm;
+  const pct = Math.min(100, Math.max(0, value/target*100));
+
+  let m1=null; if(value>=target) m1=0; else { let gp=d.totalGP; for(let s3=1;s3<=120;s3++){ gp*=(1+g); if(gp*12*vm>=target){ m1=s3; break; } } }
+  const arrival = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
+
+  const rx = parseFloat(m.rxSales)||0;
+  const targetRx = rx*(1+g);
+  const frontGP = d.frontGP;
+  let projGP, projNet;
+  if(rates.source==='avg'){ projGP = targetRx*combined + frontGP; projNet = projGP - expenses; }
+  else { const nd=calcMonthData({...m, rxSales:targetRx}); projGP=nd.totalGP; projNet=nd.netProfit; }
+
+  const beRx = combined>0 ? (expenses - frontGP)/combined : null;
+  const needMore = beRx!==null ? beRx-rx : null;
+  const reqMonthlyNP=(target/vm)/12; const reqTotalGP=reqMonthlyNP+expenses;
+  const valRx = combined>0 ? (reqTotalGP - frontGP)/combined : null;
+  const awayMillion = valRx!==null ? valRx-rx : null;
+
+  let beMonths=null; if(d.netProfit>=0) beMonths=0; else { let r=rx; for(let s2=1;s2<=120;s2++){ r*=(1+g); const nd=calcMonthData({...m, rxSales:r}); if(nd.netProfit>=0){ beMonths=s2; break; } } }
+
+  return { m, d, expenses, vm, value, pct, m1, arrival, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, rates, combined, frontGP, g, growth };
+}
+
+function dashCharts(sorted, sel){
+  ['streams','perf','donut'].forEach(k=>destroyChart(k));
+  const C=DASH_C;
+  Chart.defaults.font.family = 'Manrope, system-ui, sans-serif';
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = C.muted;
+  const labels = sorted.map(m=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m.monthKey.split('-')[1])-1]);
+  const A = sorted.map(m=>calcMonthData(m));
+  const exp = calcTotalExpenses();
+  const vm = settings.valuationMultiple||3;
+  const targetMonthlyGP = (1000000/vm)/12 + exp;
+
+  // streams line
+  charts.streams = new Chart(document.getElementById('dashStreams'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Total GP', data:A.map(a=>a.totalGP), borderColor:C.navy, backgroundColor:_wa(C.navy,.08), borderWidth:2.5, fill:true, tension:.35, pointRadius:sorted.map((_,i)=>i===sel?6:3), pointBackgroundColor:C.navy, pointBorderColor:'#fff', pointBorderWidth:2, order:1 },
+      { label:'Rx GP', data:A.map(a=>a.rxGP), borderColor:C.teal, borderWidth:2, fill:false, tension:.35, pointRadius:3, pointBackgroundColor:C.teal, pointBorderColor:'#fff', pointBorderWidth:1.5 },
+      { label:'Rebates', data:A.map(a=>a.rebate), borderColor:C.amber, borderWidth:2, fill:false, tension:.35, pointRadius:3, pointBackgroundColor:C.amber, pointBorderColor:'#fff', pointBorderWidth:1.5 },
+      { label:'Front store GP', data:A.map(a=>a.frontGP), borderColor:C.muted, borderWidth:1.5, borderDash:[2,2], fill:false, tension:.35, pointRadius:0 },
+      { label:'Break-even', data:A.map(()=>exp), borderColor:C.red, borderWidth:1.5, borderDash:[6,5], fill:false, pointRadius:0 },
+      { label:'$1M target GP', data:A.map(()=>targetMonthlyGP), borderColor:_wa(C.navy,.5), borderWidth:1.5, borderDash:[2,3], fill:false, pointRadius:0 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:9,boxHeight:9,padding:14,font:{size:11.5,weight:'600'}}},
+        tooltip:{backgroundColor:C.navy,padding:11,cornerRadius:9,titleFont:{weight:'700'},bodyFont:{size:12},callbacks:{label:x=>' '+x.dataset.label+': '+fmt(x.parsed.y)}} },
+      scales:{ x:{grid:{display:false},ticks:{font:{size:11.5}}}, y:{grid:{color:C.line},border:{display:false},ticks:{callback:v=>'$'+(v/1000)+'k',font:{size:11}}} } }
+  });
+
+  // monthly P&L bar
+  charts.perf = new Chart(document.getElementById('dashPerf'), {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'Gross Profit', data:A.map(a=>a.totalGP), backgroundColor:sorted.map((_,i)=>i===sel?C.navy:_wa(C.navy,.4)), borderRadius:5, categoryPercentage:.66, barPercentage:.9 },
+      { label:'Net Profit', data:A.map(a=>a.netProfit), backgroundColor:A.map((a,i)=> i===sel ? (a.netProfit>=0?C.teal:C.red) : (a.netProfit>=0?_wa(C.teal,.45):_wa(C.red,.45))), borderRadius:5, categoryPercentage:.66, barPercentage:.9 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:9,boxHeight:9,padding:14,font:{size:11.5,weight:'600'}}},
+        tooltip:{backgroundColor:C.navy,padding:11,cornerRadius:9,callbacks:{label:x=>' '+x.dataset.label+': '+((x.parsed.y<0?'-$':'+$')+Math.abs(Math.round(x.parsed.y)).toLocaleString('en-CA'))}} },
+      scales:{ x:{grid:{display:false},ticks:{font:{size:11.5}}}, y:{grid:{color:C.line},border:{display:false},ticks:{callback:v=>'$'+(v/1000)+'k',font:{size:11}}} } }
+  });
+
+  // donut
+  const a = A[sel];
+  const data=[a.rxGP, a.rebate, a.frontGP];
+  const colors=[C.navy, C.teal, C.amber];
+  const names=['Rx Gross Profit','Rebates','Front Store GP'];
+  charts.donut = new Chart(document.getElementById('dashDonut'), {
+    type:'doughnut',
+    data:{ labels:names, datasets:[{ data, backgroundColor:colors, borderColor:'#fcfcfe', borderWidth:3, hoverOffset:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'64%',
+      plugins:{ legend:{display:false}, tooltip:{backgroundColor:C.navy,padding:10,cornerRadius:9,callbacks:{label:x=>' '+x.label+': '+fmt(x.parsed)}} } }
+  });
+  const total=data.reduce((x,y)=>x+y,0)||1;
+  const lg=document.getElementById('dashLegend'); lg.innerHTML='';
+  names.forEach((n,idx)=>{
+    const row=document.createElement('div'); row.className='lrow';
+    row.innerHTML=`<span class="sw" style="background:${colors[idx]}"></span><span class="lname">${n}</span><span class="lval">${fmt(data[idx])}</span><span class="lpct">${(data[idx]/total*100).toFixed(0)}%</span>`;
+    lg.appendChild(row);
   });
 }
 
