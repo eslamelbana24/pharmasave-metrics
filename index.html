@@ -1032,9 +1032,57 @@ function renderDashboard(animate){
   const beKpiNum = profitable ? 'Profitable' : (c.beMonths!==null ? c.beMonths+' mo.' : 'N/A');
   const beKpiSub = profitable ? 'Net profit is positive' : 'At '+fPct(c.g)+'/mo realistic growth';
 
-  // road to $1M
-  const arrivalStr = c.value>=1000000 ? '🎉' : (c.arrival || '—');
-  const arrivalSub = c.value>=1000000 ? "You're there!" : (c.arrival ? 'Based on '+fPct(c.g)+'/mo avg growth' : 'Grow faster to project a date');
+  // ── Goal panel: break-even forecast until profitable, then $1M valuation ──
+  const ringPctVal = c.isProfit ? c.pct : c.bePct;
+  let goalHtml;
+  if(c.isProfit){
+    const arrivalStr = c.value>=1000000 ? '🎉' : (c.arrival1M || '—');
+    const arrivalSub = c.value>=1000000 ? "You're there!" : (c.arrival1M ? 'Based on '+fPct(c.g)+'/mo net growth' : 'Grow net profit to project a date');
+    goalHtml = `
+      <div class="goal-top">
+        <div class="goal-value">
+          <div class="eyebrow">Road to $1M valuation</div>
+          <div class="bignum num" id="dashValue">${fmt(c.value)}</div>
+          <div class="hint">Monthly net profit × 12 × ${c.vm} multiple</div>
+        </div>
+        <div class="goal-arrival">
+          <div class="mini-label">Est. arrival</div>
+          <div class="midnum">${arrivalStr}</div>
+          <div class="hint">${arrivalSub}</div>
+        </div>
+      </div>
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="11"></circle>
+          <circle class="ring-fill" id="dashRing" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+          <text class="ring-pct" id="dashRingPct" x="60" y="66" text-anchor="middle" font-size="22">0%</text>
+        </svg>
+        <div class="ring-meta">Pharmacy value of <b>${fmt(c.value)}</b><br>toward the <b>$1M</b> goal.<br>${fmt(Math.max(0,1000000-c.value))} to go.</div>
+      </div>`;
+  } else {
+    const beBig = c.beMonths!==null ? c.beMonths+(c.beMonths===1?' mo':' mo') : '—';
+    goalHtml = `
+      <div class="goal-top">
+        <div class="goal-value">
+          <div class="eyebrow">Road to break-even</div>
+          <div class="bignum num" id="dashValue">${beBig}</div>
+          <div class="hint">Months until net profit turns positive</div>
+        </div>
+        <div class="goal-arrival">
+          <div class="mini-label">Est. break-even</div>
+          <div class="midnum">${c.beDate || '—'}</div>
+          <div class="hint">${c.beMonths!==null ? 'At '+fPct(c.g)+'/mo growth' : 'Need positive growth to project'}</div>
+        </div>
+      </div>
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="11"></circle>
+          <circle class="ring-fill" id="dashRing" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+          <text class="ring-pct" id="dashRingPct" x="60" y="66" text-anchor="middle" font-size="22">0%</text>
+        </svg>
+        <div class="ring-meta">GP of <b>${fmt(c.d.totalGP)}</b> vs <b>${fmt(c.expenses)}</b> needed/mo.<br>Currently <b>${fSign(c.d.netProfit)}</b>/mo.<br>${fmt(c.beGpGap)} more GP/mo to break even.</div>
+      </div>`;
+  }
 
   // targets
   const beAbove = c.needMore!==null && c.needMore<=0;
@@ -1100,28 +1148,7 @@ function renderDashboard(animate){
         </div>
       </section>
 
-      <section class="hero-goal card">
-        <div class="goal-top">
-          <div class="goal-value">
-            <div class="eyebrow">Road to $1M valuation</div>
-            <div class="bignum num" id="dashValue">${fmt(c.value)}</div>
-            <div class="hint">Trailing-avg monthly GP × 12 × ${c.vm} multiple</div>
-          </div>
-          <div class="goal-arrival">
-            <div class="mini-label">Est. arrival</div>
-            <div class="midnum">${arrivalStr}</div>
-            <div class="hint">${arrivalSub}</div>
-          </div>
-        </div>
-        <div class="ring-wrap">
-          <svg class="ring" viewBox="0 0 120 120">
-            <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="11"></circle>
-            <circle class="ring-fill" id="dashRing" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
-            <text class="ring-pct" id="dashRingPct" x="60" y="66" text-anchor="middle" font-size="22">0%</text>
-          </svg>
-          <div class="ring-meta">Pharmacy value of <b>${fmt(c.value)}</b><br>toward the <b>$1M</b> goal.<br>${fmt(1000000-c.value)} to go.</div>
-        </div>
-      </section>
+      <section class="hero-goal card">${goalHtml}</section>
 
       <section class="kpi card">
         <div class="k-top"><span class="k-label">Monthly Expenses</span></div>
@@ -1219,20 +1246,21 @@ function renderDashboard(animate){
   // charts
   dashCharts(sorted, sel);
 
-  // ring
+  // ring (valuation % when profitable, else progress toward break-even GP)
   const circ = 2*Math.PI*52;
   const ring = document.getElementById('dashRing');
   ring.style.strokeDasharray = circ;
   ring.style.strokeDashoffset = circ;
-  requestAnimationFrame(()=>{ ring.style.strokeDashoffset = circ*(1-c.pct/100); });
-  document.getElementById('dashRingPct').textContent = Math.round(c.pct)+'%';
+  requestAnimationFrame(()=>{ ring.style.strokeDashoffset = circ*(1-ringPctVal/100); });
+  document.getElementById('dashRingPct').textContent = Math.round(ringPctVal)+'%';
 
   // animated counters
   if(animate && _dashPrev){
     dashAnimateNum(document.getElementById('dashNet'), _dashPrev.net, d.netProfit, fSign);
-    dashAnimateNum(document.getElementById('dashValue'), _dashPrev.value, c.value, fmt);
+    // only animate the valuation figure when both states are the $1M valuation (a number)
+    if(c.isProfit && _dashPrev.isProfit) dashAnimateNum(document.getElementById('dashValue'), _dashPrev.value, c.value, fmt);
   }
-  _dashPrev = { net:d.netProfit, value:c.value };
+  _dashPrev = { net:d.netProfit, value:c.value, isProfit:c.isProfit };
 
   // events
   document.getElementById('dashMonthpick').addEventListener('click', e=>{
@@ -1319,13 +1347,17 @@ function dashCompute(sorted, idx){
   const growth = dashGrowthCalc(sorted, idx);
   const g = growth.avg!==null ? growth.avg : (settings.growthRates.realistic||3)/100;
 
-  let s=0; for(let k=0;k<=idx;k++) s+=calcMonthData(sorted[k]).totalGP;
-  const avgGP = s/(idx+1);
-  const value = avgGP * 12 * vm;
+  // Valuation is based on NET profit run-rate: monthly net profit × 12 × multiple.
+  // Until the pharmacy is profitable, the panel shows a break-even forecast instead.
+  const monthlyNet = d.netProfit;
+  const isProfit = monthlyNet >= 0;
+  const value = Math.max(0, monthlyNet) * 12 * vm;
   const pct = Math.min(100, Math.max(0, value/target*100));
 
-  let m1=null; if(value>=target) m1=0; else { let gp=d.totalGP; for(let s3=1;s3<=120;s3++){ gp*=(1+g); if(gp*12*vm>=target){ m1=s3; break; } } }
-  const arrival = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
+  // Months to $1M (only meaningful once profitable): grow net profit at avg growth.
+  let m1=null;
+  if(isProfit){ if(value>=target) m1=0; else { let nv=monthlyNet; for(let s3=1;s3<=120;s3++){ nv*=(1+g); if(nv*12*vm>=target){ m1=s3; break; } } } }
+  const arrival1M = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
 
   const rx = parseFloat(m.rxSales)||0;
   const targetRx = rx*(1+g);
@@ -1340,9 +1372,16 @@ function dashCompute(sorted, idx){
   const valRx = combined>0 ? (reqTotalGP - frontGP)/combined : null;
   const awayMillion = valRx!==null ? valRx-rx : null;
 
-  let beMonths=null; if(d.netProfit>=0) beMonths=0; else { let r=rx; for(let s2=1;s2<=120;s2++){ r*=(1+g); const nd=calcMonthData({...m, rxSales:r}); if(nd.netProfit>=0){ beMonths=s2; break; } } }
+  // Months to break-even: grow current GP run-rate at avg growth until it covers expenses.
+  let beMonths=null;
+  if(d.netProfit>=0) beMonths=0;
+  else if(g>0){ let gp=d.totalGP; for(let s2=1;s2<=120;s2++){ gp*=(1+g); if(gp-expenses>=0){ beMonths=s2; break; } } }
+  // Break-even forecast detail: progress = current GP vs the GP needed to cover expenses.
+  const beDate = (beMonths && beMonths>0) ? dashAddMonths(m.monthKey, beMonths) : null;
+  const bePct  = expenses>0 ? Math.min(100, Math.max(0, d.totalGP/expenses*100)) : 0;
+  const beGpGap = Math.max(0, expenses - d.totalGP);
 
-  return { m, d, expenses, vm, value, pct, m1, arrival, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, rates, combined, frontGP, g, growth };
+  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, arrival1M, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, g, growth };
 }
 
 function dashCharts(sorted, sel){
