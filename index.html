@@ -2799,6 +2799,12 @@ function renderWeekly() {
       </div>
     </div>
 
+    <!-- Fee + Markup (full width) -->
+    <div class="card" style="padding:16px 18px;margin-bottom:16px">
+      <div class="card-title">Fee + Markup — Last 12 Weeks</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="wkChartFM"></canvas></div>
+    </div>
+
     <!-- Transfer Source Insight -->
     <div class="card" style="padding:16px 18px;margin-bottom:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -2861,6 +2867,7 @@ function renderWeekly() {
             <th>Transfers</th>
             <th>Blister Packs</th>
             <th>Rx Count</th>
+            <th>Fee + Markup</th>
             <th style="width:100px"></th>
           </tr></thead>
           <tbody>
@@ -2877,6 +2884,7 @@ function renderWeekly() {
                 <td>${w.transfers}${hit(w.transfers, tT)}</td>
                 <td>${bpVal}${hit(w.blisterPacks, bT)}</td>
                 <td>${w.rxCount}${hit(w.rxCount, rT)}</td>
+                <td>${w.feeMarkup != null && w.feeMarkup !== '' ? fmt(w.feeMarkup) : '—'}</td>
                 <td>
                   <button class="btn btn-xs btn-ghost" onclick="openWeekModal('${w.id}')">Edit</button>
                   <button class="btn btn-xs btn-danger" onclick="deleteWeekEntry('${w.id}')">✕</button>
@@ -2900,6 +2908,7 @@ function renderWeekly() {
     renderWeeklyChart('wkChartTransfers', last12, 'transfers',    'Transfers');
     renderWeeklyChart('wkChartBP',        last12, 'blisterPacks', 'Blister Packs');
     renderWeeklyChart('wkChartRx',        last12, 'rxCount',      'Rx Count');
+    renderWeeklyChart('wkChartFM',        last12, 'feeMarkup',    'Fee + Markup', 'wk', {money:true, noTarget:true});
   }
   renderSourceChart('wkChartSrc', last12);
 }
@@ -3185,45 +3194,51 @@ function renderEHC() {
   }
 }
 
-function renderWeeklyChart(canvasId, weeks, metric, label, keyPrefix = 'wk') {
+function renderWeeklyChart(canvasId, weeks, metric, label, keyPrefix = 'wk', opts = {}) {
   destroyChart(keyPrefix + '_' + metric);
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
+  const money    = !!opts.money;     // format as currency
+  const noTarget = !!opts.noTarget;  // metric has no weekly target line
+
   const labels  = weeks.map(w => weekLabel(w.weekStart));
   const values  = weeks.map(w => Number(w[metric]) || 0);
-  const targets = weeks.map(w => getTargetForWeek(metric, w.weekStart));
+  const targets = noTarget ? [] : weeks.map(w => getTargetForWeek(metric, w.weekStart));
 
-  // Red = negative | Green = at/above target | Blue = positive but below target
+  // Red = negative | Green = at/above target | Blue = positive but below target (or no target)
   const bgColors = values.map((v, i) => {
-    if (v < 0)                              return 'rgba(229,62,62,.85)';    // red — negative
-    if (targets[i] > 0 && v >= targets[i]) return 'rgba(29,158,117,.85)';   // teal/green — hit
-    return 'rgba(59,100,168,.78)';                                           // blue — below target
+    if (v < 0)                                          return 'rgba(229,62,62,.85)';  // red — negative
+    if (!noTarget && targets[i] > 0 && v >= targets[i]) return 'rgba(29,158,117,.85)'; // teal/green — hit
+    return 'rgba(59,100,168,.78)';                                                     // blue — below/no target
   });
+
+  const datasets = [{ label, data: values, backgroundColor: bgColors, borderRadius: 4, order: 1 }];
+  if (!noTarget) {
+    datasets.push({
+      label: 'Target', type: 'line', data: targets,
+      borderColor: '#BA7517', borderDash: [6, 4], borderWidth: 2,
+      pointRadius: 0, fill: false, tension: 0, order: 0,
+    });
+  }
+
+  const fmtVal  = money ? (v => fmt(v)) : (v => v);
+  const fmtTick = money
+    ? (v => '$' + (Math.abs(v) >= 1000 ? (v/1000).toFixed(0) + 'k' : v))
+    : (v => v);
 
   charts[keyPrefix + '_' + metric] = new Chart(canvas, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label, data: values, backgroundColor: bgColors, borderRadius: 4, order: 1 },
-        {
-          label: 'Target', type: 'line',
-          data: targets,
-          borderColor: '#BA7517', borderDash: [6, 4], borderWidth: 2,
-          pointRadius: 0, fill: false, tension: 0, order: 0,
-        },
-      ],
-    },
+    data: { labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}` } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtVal(ctx.raw)}` } },
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, callback: fmtTick } },
       },
     },
   });
@@ -3308,6 +3323,12 @@ function renderWeekModal() {
         <input type="number" id="wkRx" min="0" step="1" value="${existing ? existing.rxCount : ''}" placeholder="0">
       </div>
       <div class="form-row">
+        <label>Fee + Markup <span class="text-xs text-light">— weekly dispensing fee + markup ($)</span></label>
+        <div class="input-prefix"><span>$</span>
+          <input type="number" id="wkFM" min="0" step="0.01" value="${existing && existing.feeMarkup != null ? existing.feeMarkup : ''}" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
         <label>What drove results this week <span class="text-xs text-light">— optional, shown on EHC page</span></label>
         <textarea id="wkNote" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:.88rem;font-family:inherit;resize:vertical;color:var(--text)" placeholder="e.g. Remit study referrals — 4 transfers from study follow-ups.">${existing ? (existing.weeklyNote || '') : ''}</textarea>
       </div>
@@ -3350,6 +3371,7 @@ function saveWeekEntry() {
   const dateVal      = document.getElementById('wkDate')?.value;
   const blisterPacks = parseInt(document.getElementById('wkBP')?.value)  || 0;
   const rxCount      = parseInt(document.getElementById('wkRx')?.value)   || 0;
+  const feeMarkup    = parseFloat(document.getElementById('wkFM')?.value) || 0;
   const weeklyNote   = (document.getElementById('wkNote')?.value || '').trim();
 
   // Collect per-source transfer counts
@@ -3381,6 +3403,7 @@ function saveWeekEntry() {
     sources:      sourcesData,     // per-source breakdown for insight chart
     blisterPacks,
     rxCount,
+    feeMarkup,
     weeklyNote,
     enteredAt:    new Date().toISOString(),
   };
