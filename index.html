@@ -1241,6 +1241,11 @@ function renderDashboard(animate){
         <div class="donut-box"><canvas id="dashDonut"></canvas></div>
         <div class="legend" id="dashLegend"></div>
       </section>
+
+      <section class="trend-main card" style="grid-column:1/-1">
+        <div class="trend-head"><h3>Rx Count — monthly</h3></div>
+        <div class="chart-box" style="min-height:260px"><canvas id="dashRxCount"></canvas></div>
+      </section>
     </div>
   </div>`;
 
@@ -1386,7 +1391,7 @@ function dashCompute(sorted, idx){
 }
 
 function dashCharts(sorted, sel){
-  ['streams','perf','donut'].forEach(k=>destroyChart(k));
+  ['streams','perf','donut','rxcount'].forEach(k=>destroyChart(k));
   const C=DASH_C;
   Chart.defaults.font.family = 'Manrope, system-ui, sans-serif';
   Chart.defaults.font.size = 12;
@@ -1445,6 +1450,20 @@ function dashCharts(sorted, sel){
     row.innerHTML=`<span class="sw" style="background:${colors[idx]}"></span><span class="lname">${n}</span><span class="lval">${fmt(data[idx])}</span><span class="lpct">${(data[idx]/total*100).toFixed(0)}%</span>`;
     lg.appendChild(row);
   });
+
+  // Rx Count — monthly (full-width line)
+  const rxc = sorted.map(m => Number(m.rxCount) || 0);
+  charts.rxcount = new Chart(document.getElementById('dashRxCount'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Rx Count', data:rxc, borderColor:C.navy, backgroundColor:_wa(C.navy,.08), borderWidth:2.5, fill:true, tension:.35,
+        pointRadius:sorted.map((_,i)=>i===sel?6:3), pointBackgroundColor:C.navy, pointBorderColor:'#fff', pointBorderWidth:2 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{display:false},
+        tooltip:{backgroundColor:C.navy,padding:11,cornerRadius:9,titleFont:{weight:'700'},bodyFont:{size:12},callbacks:{label:x=>' Rx Count: '+Math.round(x.parsed.y).toLocaleString('en-CA')}} },
+      scales:{ x:{grid:{display:false},ticks:{font:{size:11.5}}}, y:{grid:{color:C.line},border:{display:false},beginAtZero:true,ticks:{precision:0,font:{size:11}}} } }
+  });
 }
 
 // ================================================================
@@ -1482,6 +1501,7 @@ function renderMonthly() {
       <tr>
         <td><strong>${monthKeyToLabel(m.monthKey)}</strong></td>
         <td>${fmt(m.rxSales)}</td>
+        <td>${m.rxCount != null && m.rxCount !== '' ? Number(m.rxCount).toLocaleString('en-CA') : '—'}</td>
         <td>${fmt(m.frontSales)}</td>
         <td>${fmt(m.rebate)}</td>
         <td>${fmt(d.totalGP)}</td>
@@ -1528,12 +1548,12 @@ function renderMonthly() {
       <div class="tbl-wrap">
         <table class="data-tbl">
           <thead><tr>
-            <th>Month</th><th>Rx Sales</th><th>Front Store</th><th>Rebate</th>
+            <th>Month</th><th>Rx Sales</th><th>Rx Count</th><th>Front Store</th><th>Rebate</th>
             <th>Total GP</th><th>MoM Growth</th><th>Expenses</th><th>Net Profit</th><th></th>
           </tr></thead>
           <tbody>${rows}</tbody>
           <tfoot><tr class="tot-row">
-            <td colspan="4"><strong>TOTALS (${months.length} months)</strong></td>
+            <td colspan="5"><strong>TOTALS (${months.length} months)</strong></td>
             <td><strong>${fmt(tot.gp)}</strong></td>
             ${momAvgCell}
             <td><strong>${fmt(tot.exp)}</strong></td>
@@ -1556,10 +1576,10 @@ function deleteMonth(id) {
 
 function downloadCSV() {
   const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
-  const headers = ['Month','Rx Sales','Front Store Sales','Rebate','Total GP','Expenses','Net Profit'];
+  const headers = ['Month','Rx Sales','Rx Count','Front Store Sales','Rebate','Total GP','Expenses','Net Profit'];
   const rows = sorted.map(m => {
     const d = calcMonthData(m);
-    return [monthKeyToLabel(m.monthKey), m.rxSales, m.frontSales, m.rebate, d.totalGP.toFixed(2), d.totalExp.toFixed(2), d.netProfit.toFixed(2)];
+    return [monthKeyToLabel(m.monthKey), m.rxSales, (m.rxCount||0), m.frontSales, m.rebate, d.totalGP.toFixed(2), d.totalExp.toFixed(2), d.netProfit.toFixed(2)];
   });
   const csv = [headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
   const a = document.createElement('a');
@@ -2359,6 +2379,11 @@ function renderModal(m) {
       </div>
 
       <div class="form-row">
+        <label>Rx Count <span class="text-xs text-light">— prescriptions filled this month</span></label>
+        <input type="number" id="mRxCount" min="0" step="1" value="${m.rxCount != null ? m.rxCount : ''}" placeholder="0">
+      </div>
+
+      <div class="form-row">
         <label>Gross Profit Method</label>
         <div class="pill-toggle">
           <button class="pill-opt ${isRxFee?'active':''}"  onclick="setSetting('rxGPMethod','fee_markup');renderModal(collectModal())">Fee + Markup</button>
@@ -2488,6 +2513,7 @@ function collectModal() {
     id:            get('mMonth') || currentMonthKey(),
     monthKey:      get('mMonth') || currentMonthKey(),
     rxSales:       parseDollar(get('mRxSales')),
+    rxCount:       parseInt(get('mRxCount')) || 0,
     rxGP_fees:     parseDollar(get('mRxFees')),
     rxGP_markup:   parseDollar(get('mRxMarkup')),
     rxGP_pct:      parseFloat(get('mRxPct'))  || settings.rxGPPct,
@@ -2535,6 +2561,7 @@ function saveModal(id, isNew) {
     id:             isNew ? uid() : id,
     monthKey,
     rxSales:        m.rxSales,
+    rxCount:        m.rxCount,
     rxGP_fees:      m.rxGP_fees,
     rxGP_markup:    m.rxGP_markup,
     rxGP_pct:       m.rxGP_pct,
@@ -3243,7 +3270,11 @@ function renderWeeklyChart(canvasId, weeks, metric, label, keyPrefix = 'wk', opt
 
   const fmtVal  = money ? (v => fmt(v)) : (v => v);
   const fmtTick = money
-    ? (v => '$' + (Math.abs(v) >= 1000 ? (v/1000).toFixed(0) + 'k' : v))
+    ? (v => {
+        const a = Math.abs(v);
+        if (a >= 1000) { const k = v/1000; return '$' + (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k'; }
+        return '$' + v;
+      })
     : (v => v);
 
   charts[keyPrefix + '_' + metric] = new Chart(canvas, {
