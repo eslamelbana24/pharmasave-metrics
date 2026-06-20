@@ -553,6 +553,7 @@ const DEFAULT_SETTINGS = {
   transfersWeeklyTarget:    5,
   blisterPacksWeeklyTarget: 3,
   rxWeeklyTarget:           150,
+  feeMarkupWeeklyTarget:    0,
   bpAbsoluteTarget:         120,
   bpGoalMethod:             'date',  // 'date' | 'weeks'
   bpGoalDate:               '',
@@ -2092,6 +2093,18 @@ function renderSettings() {
           <div class="hint">Monthly target auto-calculated: ${Math.round((s.rxWeeklyTarget||0)*4.33)} Rx/month</div>
         </div>
       </div>
+
+      <div class="setting-block">
+        <div class="setting-label">Fee + Markup</div>
+        <div class="form-row">
+          <label>Weekly target ($ dispensing fee + markup)</label>
+          <div class="input-prefix" style="max-width:160px"><span>$</span>
+            <input type="number" min="0" step="1" value="${s.feeMarkupWeeklyTarget||0}"
+              oninput="updateWeeklyTarget('feeMarkup',parseFloat(this.value)||0)">
+          </div>
+          <div class="hint">Monthly target auto-calculated: ${fmt(Math.round((s.feeMarkupWeeklyTarget||0)*4.33))}/month · set to 0 to hide the goal line</div>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -2583,12 +2596,18 @@ function saveWeeklyTargets() {
   db.collection(FS_COL).doc(FS_WEEKLY_TARGETS).set({ targets: weeklyTargets }).catch(console.error);
 }
 
+// Maps a weekly metric to its settings key
+const WEEKLY_TARGET_KEYS = {
+  transfers:    'transfersWeeklyTarget',
+  blisterPacks: 'blisterPacksWeeklyTarget',
+  rxCount:      'rxWeeklyTarget',
+  feeMarkup:    'feeMarkupWeeklyTarget',
+};
+
 // Called from Settings when a target input changes
 function updateWeeklyTarget(metric, value) {
   // Update live setting for immediate UI use
-  const key = metric === 'transfers' ? 'transfersWeeklyTarget'
-            : metric === 'blisterPacks' ? 'blisterPacksWeeklyTarget'
-            : 'rxWeeklyTarget';
+  const key = WEEKLY_TARGET_KEYS[metric] || 'rxWeeklyTarget';
   settings[key] = value;
   saveSettings();
 
@@ -2602,9 +2621,7 @@ function updateWeeklyTarget(metric, value) {
 
 // Look up what target was active for a given week
 function getTargetForWeek(metric, weekStart) {
-  const key = metric === 'transfers' ? 'transfersWeeklyTarget'
-            : metric === 'blisterPacks' ? 'blisterPacksWeeklyTarget'
-            : 'rxWeeklyTarget';
+  const key = WEEKLY_TARGET_KEYS[metric] || 'rxWeeklyTarget';
   const history = weeklyTargets
     .filter(t => t.metric === metric && t.effectiveFrom <= weekStart)
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom));
@@ -2908,7 +2925,7 @@ function renderWeekly() {
     renderWeeklyChart('wkChartTransfers', last12, 'transfers',    'Transfers');
     renderWeeklyChart('wkChartBP',        last12, 'blisterPacks', 'Blister Packs');
     renderWeeklyChart('wkChartRx',        last12, 'rxCount',      'Rx Count');
-    renderWeeklyChart('wkChartFM',        last12, 'feeMarkup',    'Fee + Markup', 'wk', {money:true, noTarget:true});
+    renderWeeklyChart('wkChartFM',        last12, 'feeMarkup',    'Fee + Markup', 'wk', {money:true});
   }
   renderSourceChart('wkChartSrc', last12);
 }
@@ -3205,16 +3222,18 @@ function renderWeeklyChart(canvasId, weeks, metric, label, keyPrefix = 'wk', opt
   const labels  = weeks.map(w => weekLabel(w.weekStart));
   const values  = weeks.map(w => Number(w[metric]) || 0);
   const targets = noTarget ? [] : weeks.map(w => getTargetForWeek(metric, w.weekStart));
+  // Only draw a goal line when a real target exists (0 / unset hides it)
+  const showTarget = !noTarget && targets.some(t => t > 0);
 
   // Red = negative | Green = at/above target | Blue = positive but below target (or no target)
   const bgColors = values.map((v, i) => {
-    if (v < 0)                                          return 'rgba(229,62,62,.85)';  // red — negative
-    if (!noTarget && targets[i] > 0 && v >= targets[i]) return 'rgba(29,158,117,.85)'; // teal/green — hit
-    return 'rgba(59,100,168,.78)';                                                     // blue — below/no target
+    if (v < 0)                                            return 'rgba(229,62,62,.85)';  // red — negative
+    if (showTarget && targets[i] > 0 && v >= targets[i]) return 'rgba(29,158,117,.85)'; // teal/green — hit
+    return 'rgba(59,100,168,.78)';                                                       // blue — below/no target
   });
 
   const datasets = [{ label, data: values, backgroundColor: bgColors, borderRadius: 4, order: 1 }];
-  if (!noTarget) {
+  if (showTarget) {
     datasets.push({
       label: 'Target', type: 'line', data: targets,
       borderColor: '#BA7517', borderDash: [6, 4], borderWidth: 2,
@@ -3422,10 +3441,12 @@ function saveWeekEntry() {
   const tTgt  = getTargetForWeek('transfers',    weekStart);
   const bpTgt = getTargetForWeek('blisterPacks', weekStart);
   const rxTgt = getTargetForWeek('rxCount',      weekStart);
+  const fmTgt = getTargetForWeek('feeMarkup',    weekStart);
   const hits  = [];
   if (tTgt  > 0 && totalTransfers >= tTgt)  hits.push(`Transfers hit! (${totalTransfers} / ${tTgt} target)`);
   if (bpTgt > 0 && blisterPacks >= bpTgt) hits.push(`Blister Packs hit! (${blisterPacks} / ${bpTgt} target)`);
   if (rxTgt > 0 && rxCount      >= rxTgt) hits.push(`Rx Count hit! (${rxCount} / ${rxTgt} target)`);
+  if (fmTgt > 0 && feeMarkup    >= fmTgt) hits.push(`Fee + Markup hit! (${fmt(feeMarkup)} / ${fmt(fmTgt)} target)`);
   if (hits.length) showCelebration(hits);
 
   navigate('weekly');
