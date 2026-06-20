@@ -3267,6 +3267,7 @@ function renderWeeklyChart(canvasId, weeks, metric, label, keyPrefix = 'wk', opt
 // WEEKLY MODAL
 // ================================================================
 let _weekEditId = null;  // null = new entry
+let _weekModalSrcList = [];  // source names rendered in the modal (current + legacy)
 
 function openWeekModal(id) {
   _weekEditId = id || null;
@@ -3284,6 +3285,16 @@ function weekOverlayClick(e) {
 function renderWeekModal() {
   const existing    = _weekEditId ? weeklyEntries.find(w => w.id === _weekEditId) : null;
   const defaultDate = existing ? existing.weekStart : getCurrentMondayISO();
+
+  // Build the source list shown in the modal: current sources, plus any
+  // "legacy" sources still carrying data on this entry under names no longer
+  // in the active source list. This keeps a renamed/removed source's numbers
+  // from being silently zeroed when an old week is re-saved.
+  const curSrcs    = settings.transferSources || [];
+  const legacySrcs = (existing && existing.sources)
+    ? Object.keys(existing.sources).filter(k => !curSrcs.includes(k) && (Number(existing.sources[k]) || 0) !== 0)
+    : [];
+  _weekModalSrcList = [...curSrcs, ...legacySrcs];
   const now  = new Date();
   const y = now.getFullYear(), m = now.getMonth() + 1;
   const mT  = monthlyTotal('transfers',    y, m);
@@ -3320,13 +3331,16 @@ function renderWeekModal() {
       <div class="form-row">
         <label>Transfers <span class="text-xs text-light">— patients transferred in this week, by source</span></label>
         <div class="wk-src-grid">
-          ${(settings.transferSources||[]).map((src,i) => `
+          ${_weekModalSrcList.map((src,i) => {
+            const isLegacy = !(settings.transferSources||[]).includes(src);
+            return `
             <div>
-              <div style="font-size:.65rem;color:var(--light);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em">${esc(src)}</div>
+              <div style="font-size:.65rem;color:var(--light);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em">${esc(src)}${isLegacy ? ' <span style="color:var(--amber)">(archived)</span>' : ''}</div>
               <input type="number" id="wkSrc_${i}" min="0" step="1"
                 value="${existing?.sources?.[src] ?? 0}" placeholder="0"
                 oninput="calcTransferTotal()">
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
         </div>
         <div style="margin-top:8px;padding:7px 10px;background:var(--bg);border-radius:6px;display:flex;align-items:center;gap:10px">
           <span style="font-size:.68rem;color:var(--light);text-transform:uppercase;letter-spacing:.05em">Total Transfers</span>
@@ -3380,8 +3394,7 @@ function wkSnapMonday() {
 }
 
 function calcTransferTotal() {
-  const srcs  = settings.transferSources || [];
-  const total = srcs.reduce((sum, _, i) => sum + (parseInt(document.getElementById('wkSrc_' + i)?.value) || 0), 0);
+  const total = _weekModalSrcList.reduce((sum, _, i) => sum + (parseInt(document.getElementById('wkSrc_' + i)?.value) || 0), 0);
   const el    = document.getElementById('wkTransfersTotal');
   if (el) el.textContent = total;
 }
@@ -3393,13 +3406,13 @@ function saveWeekEntry() {
   const feeMarkup    = parseFloat(document.getElementById('wkFM')?.value) || 0;
   const weeklyNote   = (document.getElementById('wkNote')?.value || '').trim();
 
-  // Collect per-source transfer counts
-  const srcs = settings.transferSources || [];
+  // Collect per-source transfer counts (current + legacy sources, so renamed/
+  // removed sources keep their data and the total is never silently zeroed)
   const sourcesData = {};
   let totalTransfers = 0;
-  srcs.forEach((src, i) => {
+  _weekModalSrcList.forEach((src, i) => {
     const v = parseInt(document.getElementById('wkSrc_' + i)?.value) || 0;
-    sourcesData[src] = v;
+    if (v !== 0 || (settings.transferSources||[]).includes(src)) sourcesData[src] = v;
     totalTransfers += v;
   });
 
