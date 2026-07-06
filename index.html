@@ -163,19 +163,29 @@ input:focus{border-color:var(--navy)}
 @media(max-width:520px){.wk-src-grid{grid-template-columns:1fr}}
 
 /* EHC MISSION HEADER */
-.ehc-mission{background:var(--navy);border-radius:12px;padding:28px 28px 24px;margin-bottom:20px;color:#fff}
-.ehc-mission-headline{font-size:1.35rem;font-weight:800;line-height:1.3;margin-bottom:20px;letter-spacing:-.01em}
-.ehc-cd-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.ehc-cd-box{background:rgba(255,255,255,.12);border-radius:10px;padding:16px 18px}
-.ehc-cd-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.65);margin-bottom:8px}
-.ehc-cd-num{font-size:2.6rem;font-weight:900;color:#FFB74D;line-height:1;margin-bottom:4px}
-.ehc-cd-sub{font-size:.82rem;color:rgba(255,255,255,.85);line-height:1.35}
+/* ── EHC "Code Red" mission hero ── */
+.ehc-mission{background:var(--navy);border-radius:18px;padding:34px 40px 40px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,122,110,.38);box-shadow:0 0 0 4px rgba(224,82,82,.10)}
+.ehc-mission-headline{font-size:2rem;font-weight:800;line-height:1.25;margin-bottom:12px;letter-spacing:-.01em}
+.ehc-subline{display:flex;align-items:center;gap:10px;font-size:.97rem;font-weight:600;color:#ffd9d4;margin-bottom:26px;flex-wrap:wrap}
+.ehc-subline strong{color:#fff;font-weight:800}
+.ehc-tag{display:inline-flex;align-items:center;gap:7px;font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#ff7a6e;border:1px solid rgba(255,122,110,.45);background:rgba(224,82,82,.14);padding:4px 10px;border-radius:999px;flex:none}
+.ehc-dot{width:7px;height:7px;border-radius:50%;background:#ff7a6e;flex:none;animation:ehcPulse 2s ease-in-out infinite}
+@keyframes ehcPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,122,110,.45)}50%{opacity:.55;box-shadow:0 0 0 6px rgba(255,122,110,0)}}
+@media(prefers-reduced-motion:reduce){.ehc-dot{animation:none}}
+.ehc-cd-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ehc-cd-box{background:rgba(255,255,255,.10);border-radius:12px;padding:24px 28px 26px}
+.ehc-cd-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.62);margin-bottom:10px}
+.ehc-cd-num{font-size:3.4rem;font-weight:800;color:#ff7a6e;line-height:1;margin-bottom:6px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ehc-cd-sub{font-size:.98rem;color:rgba(255,255,255,.92);line-height:1.4}
 .ehc-note-card{border-left:4px solid var(--teal)}
+@media(max-width:640px){
+  .ehc-cd-grid{grid-template-columns:1fr}
+}
 @media(max-width:520px){
-  .ehc-mission{padding:20px 16px}
-  .ehc-mission-headline{font-size:1.05rem}
-  .ehc-cd-num{font-size:1.9rem}
-  .ehc-cd-box{padding:12px 14px}
+  .ehc-mission{padding:22px 18px 24px;border-radius:14px}
+  .ehc-mission-headline{font-size:1.25rem}
+  .ehc-cd-num{font-size:2.4rem}
+  .ehc-cd-box{padding:16px 18px}
 }
 
 /* CELEBRATION */
@@ -3077,6 +3087,20 @@ function renderEHC() {
     }
   }
 
+  // ── Code Red subline (derived from the same mission countdown) ──
+  let sublineStrong;
+  if (!missionEnd) {
+    sublineStrong = 'Set mission date in Settings';
+  } else {
+    const endDate2  = new Date(missionEnd + 'T00:00:00');
+    const todayS2   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const daysLeft2 = Math.ceil((endDate2 - todayS2) / 86400000);
+    sublineStrong = daysLeft2 <= 0 ? 'Mission complete'
+                  : daysLeft2 <= 60 ? 'Under 60 days'
+                  : `${daysLeft2} days remaining`;
+  }
+  const sublineHtml = `<span class="ehc-tag"><span class="ehc-dot"></span>Code Red</span><span><strong>${sublineStrong}</strong></span>`;
+
   // ── Patient countdown ─────────────────────────────────────────
   const bpAbs        = settings.bpAbsoluteTarget || 0;
   const atBP         = allTimeBP();
@@ -3153,6 +3177,7 @@ function renderEHC() {
     <!-- ── Mission Header ─────────────────────────────────────── -->
     <div class="ehc-mission">
       <div class="ehc-mission-headline">Mission: Stay Open. Bring It Home.</div>
+      <div class="ehc-subline">${sublineHtml}</div>
       <div class="ehc-cd-grid">
         <div class="ehc-cd-box">
           <div class="ehc-cd-label">Mission Countdown</div>
