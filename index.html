@@ -451,6 +451,7 @@ input:focus{border-color:var(--navy)}
 <div id="page-monthly"   class="page"></div>
 <div id="page-expenses"  class="page"></div>
 <div id="page-forecast"  class="page"></div>
+<div id="page-insights"  class="page"></div>
 <div id="page-settings"  class="page"></div>
 <div id="page-weekly"   class="page"></div>
 <div id="page-ehc"      class="page"></div>
@@ -514,12 +515,13 @@ const TRUSTED_EMAILS = [
   'eslam.elbana@gmail.com',
   'escarpment.pharmacy@gmail.com',
 ];
-const ALL_PAGES   = ['Dashboard','EHC','Forecast','Weekly Metrics','Monthly Data','Expenses','Settings'];
+const ALL_PAGES   = ['Dashboard','EHC','Forecast','Insights','Weekly Metrics','Monthly Data','Expenses','Settings'];
 // Ordered definition used to build the nav and admin checkboxes
 const PAGE_MAP = [
   { id:'dashboard', label:'Dashboard',      name:'Dashboard'      },
   { id:'ehc',       label:'EHC',            name:'EHC'            },
   { id:'forecast',  label:'Forecast',       name:'Forecast'       },
+  { id:'insights',  label:'Insights',       name:'Insights'       },
   { id:'weekly',    label:'Weekly Metrics', name:'Weekly Metrics' },
   { id:'monthly',   label:'Monthly Data',   name:'Monthly Data'   },
   { id:'expenses',  label:'Expenses',       name:'Expenses'       },
@@ -961,6 +963,7 @@ function renderPage(page) {
     case 'monthly':   renderMonthly();   break;
     case 'expenses':  renderExpenses();  break;
     case 'forecast':  renderForecast();  break;
+    case 'insights':  renderInsights();  break;
     case 'weekly':    renderWeekly();    break;
     case 'ehc':       renderEHC();       break;
     case 'settings':  renderSettings();  break;
@@ -1473,6 +1476,212 @@ function dashCharts(sorted, sel){
       plugins:{ legend:{display:false},
         tooltip:{backgroundColor:C.navy,padding:11,cornerRadius:9,titleFont:{weight:'700'},bodyFont:{size:12},callbacks:{label:x=>' Rx Count: '+Math.round(x.parsed.y).toLocaleString('en-CA')}} },
       scales:{ x:{grid:{display:false},ticks:{font:{size:11.5}}}, y:{grid:{color:C.line},border:{display:false},beginAtZero:true,ticks:{precision:0,font:{size:11}}} } }
+  });
+}
+
+// ================================================================
+// PAGE: INSIGHTS — auto-computed analysis of monthly data
+// ================================================================
+function renderInsights() {
+  const el = document.getElementById('page-insights');
+  const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+
+  if (sorted.length < 2) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:48px 20px;color:var(--light)">
+      Insights need at least 2 months of data. Add months in <strong>Monthly Data</strong>.</div>`;
+    return;
+  }
+
+  const iSign = n => (n < 0 ? '-$' : '+$') + Math.abs(Math.round(n)).toLocaleString('en-CA');
+  const iPct  = n => (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
+
+  // Per-month derived metrics
+  const M = sorted.map(m => {
+    const d   = calcMonthData(m);
+    const cnt = Number(m.rxCount) || 0;
+    return {
+      key: m.monthKey, label: monthKeyToLabel(m.monthKey),
+      rx: parseFloat(m.rxSales) || 0, cnt,
+      dispGP: d.rxGP + d.frontGP,          // fee+markup + front store (the "core engine")
+      rxGP: d.rxGP, rebate: d.rebate, gp: d.totalGP, exp: d.totalExp, net: d.netProfit,
+      perRx:  cnt > 0 ? (parseFloat(m.rxSales) || 0) / cnt : null,
+      gpPerRx: cnt > 0 ? d.totalGP / cnt : null,
+      margin: (parseFloat(m.rxSales) || 0) > 0 ? d.rxGP / parseFloat(m.rxSales) * 100 : null,
+    };
+  });
+
+  const last = M[M.length - 1], prev = M[M.length - 2], first = M[0];
+
+  // ── MoM decomposition ─────────────────────────────────────────
+  const dDisp = last.dispGP - prev.dispGP;
+  const dReb  = last.rebate - prev.rebate;
+  const dExp  = -(last.exp - prev.exp);   // sign flipped: higher expenses hurt net
+  const dNet  = last.net - prev.net;
+
+  // ── Headline metrics ──────────────────────────────────────────
+  const gpPerScript = last.gpPerRx;                       // GP per script (latest)
+  const gap = Math.max(0, last.exp - last.gp);            // GP shortfall to break even
+  const scriptsNeeded = (gpPerScript && gap > 0) ? Math.ceil(gap / gpPerScript) : null;
+
+  // Break-even ETA at last-3-months GP growth pace vs current expenses
+  const gpGrowths = [];
+  for (let i = Math.max(1, M.length - 3); i < M.length; i++) {
+    if (M[i-1].gp > 0) gpGrowths.push(M[i].gp / M[i-1].gp - 1);
+  }
+  const g3 = gpGrowths.length ? gpGrowths.reduce((s,v)=>s+v,0) / gpGrowths.length : 0;
+  let beEta = null;
+  if (last.net >= 0) beEta = 0;
+  else if (g3 > 0) { let gp = last.gp; for (let i = 1; i <= 36; i++) { gp *= (1 + g3); if (gp >= last.exp) { beEta = i; break; } } }
+  const beEtaLabel = beEta === 0 ? 'Profitable ✓' : beEta !== null ? beEta + ' mo' : '—';
+  const beEtaDate  = (beEta && beEta > 0) ? (() => { const [y,mo] = last.key.split('-').map(Number); const d = new Date(y, mo-1+beEta, 1); return d.toLocaleString('en-CA',{month:'short',year:'numeric'}); })() : null;
+
+  // Script growth (latest MoM)
+  const scriptMoM = (prev.cnt > 0 && last.cnt > 0) ? (last.cnt / prev.cnt - 1) * 100 : null;
+
+  // Rebate stats (skip zero months)
+  const rebs = M.map(x => x.rebate).filter(v => v > 0);
+  const rebAvg = rebs.length ? rebs.reduce((s,v)=>s+v,0)/rebs.length : 0;
+  const rebMax = rebs.length ? Math.max(...rebs) : 0;
+
+  // Expense creep
+  const expCreep = first.exp > 0 ? (last.exp / first.exp - 1) * 100 : 0;
+
+  // ── Auto-generated insight bullets ────────────────────────────
+  const bullets = [];
+  if (dNet >= 0) bullets.push({icon:'📈', tone:'var(--teal)', text:`Net improved ${iSign(dNet)} in ${last.label} vs ${prev.label}.`});
+  else if (dDisp > 0) bullets.push({icon:'⚠️', tone:'var(--amber)', text:`Net slipped ${iSign(dNet)} in ${last.label} — but the core dispensing business gained ${iSign(dDisp)}. The regression came from ${dExp < 0 ? 'higher expenses (' + iSign(dExp) + ')' : ''}${dExp < 0 && dReb < 0 ? ' and ' : ''}${dReb < 0 ? 'a weaker rebate (' + iSign(dReb) + ')' : ''}.`});
+  else bullets.push({icon:'🔻', tone:'var(--red)', text:`Net declined ${iSign(dNet)} in ${last.label}, including a drop in core dispensing GP (${iSign(dDisp)}).`});
+
+  if (scriptMoM !== null) {
+    if (scriptMoM < 5) bullets.push({icon:'🐌', tone:'var(--amber)', text:`Script growth nearly stalled: ${iPct(scriptMoM)} (${prev.cnt.toLocaleString('en-CA')} → ${last.cnt.toLocaleString('en-CA')}). Scripts are the metric your transfers & blister-pack work drives — watch next month.`});
+    else bullets.push({icon:'💪', tone:'var(--teal)', text:`Scripts grew ${iPct(scriptMoM)} (${prev.cnt.toLocaleString('en-CA')} → ${last.cnt.toLocaleString('en-CA')}).`});
+  }
+  if (last.margin !== null && M.length >= 4 && M[M.length-4].margin !== null) {
+    const m3ago = M[M.length-4];
+    const dm = last.margin - m3ago.margin;
+    bullets.push({icon: dm >= 0 ? '🧪' : '⚠️', tone: dm >= 0 ? 'var(--teal)' : 'var(--amber)', text:`Rx margin (fee + markup as % of Rx sales) is ${last.margin.toFixed(1)}%, ${dm >= 0 ? 'up' : 'down'} from ${m3ago.margin.toFixed(1)}% in ${m3ago.label}.`});
+  }
+  if (expCreep > 5) bullets.push({icon:'💸', tone:'var(--amber)', text:`Expenses have crept ${iPct(expCreep)} since ${first.label} (${fmt(first.exp)} → ${fmt(last.exp)}). Each $1k of creep pushes break-even out roughly a month at the current pace.`});
+  if (gap > 0 && rebMax - last.rebate > gap * 0.5) bullets.push({icon:'🎲', tone:'var(--navy)', text:`Rebates swing between ${fmt(Math.min(...rebs))} and ${fmt(rebMax)} (avg ${fmt(rebAvg)}). A best-case rebate month would close ${fmt(Math.min(gap, rebMax - last.rebate))} of the ${fmt(gap)} break-even gap on its own.`});
+  if (gap === 0) bullets.push({icon:'🎉', tone:'var(--teal)', text:`${last.label} was profitable — gross profit covered all expenses.`});
+
+  const bulletHtml = bullets.map(b => `
+    <div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
+      <span style="flex:none">${b.icon}</span>
+      <span style="font-size:.9rem;line-height:1.55;color:var(--text)">${b.text}</span>
+    </div>`).join('');
+
+  // ── Decomposition rows ────────────────────────────────────────
+  const decompRow = (lbl, val, note) => `
+    <div class="gp-row" style="padding:7px 0">
+      <span>${lbl}${note ? ` <span class="text-xs text-light">${note}</span>` : ''}</span>
+      <span style="font-weight:700" class="${val >= 0 ? 'pos' : 'neg'}">${iSign(val)}</span>
+    </div>`;
+
+  // ── Trend table rows ──────────────────────────────────────────
+  const trendRows = [...M].reverse().map(x => `
+    <tr>
+      <td style="font-weight:600">${x.label}</td>
+      <td>${fmt(x.rx)}</td>
+      <td>${x.cnt ? x.cnt.toLocaleString('en-CA') : '—'}</td>
+      <td>${x.perRx !== null ? '$' + x.perRx.toFixed(2) : '—'}</td>
+      <td>${x.gpPerRx !== null ? '$' + x.gpPerRx.toFixed(2) : '—'}</td>
+      <td>${x.margin !== null ? x.margin.toFixed(1) + '%' : '—'}</td>
+      <td class="${x.net >= 0 ? 'pos' : 'neg'}">${fmt(x.net)}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div class="kpi-grid mb-20" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">GP per Script</div>
+        <div class="kpi-val-wrap"><div class="kpi-value">${gpPerScript !== null ? '$' + gpPerScript.toFixed(2) : '—'}</div></div>
+        <div class="kpi-sub">${last.label}${gpPerScript === null ? ' — add Rx Count in Monthly Data' : ''}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Scripts to Break Even</div>
+        <div class="kpi-val-wrap"><div class="kpi-value ${gap === 0 ? 'pos' : ''}" style="${gap === 0 ? '' : 'color:var(--amber)'}">${gap === 0 ? '✓ There' : (scriptsNeeded !== null ? '+' + scriptsNeeded.toLocaleString('en-CA') : '—')}</div></div>
+        <div class="kpi-sub">${gap === 0 ? 'GP covers expenses' : scriptsNeeded !== null ? `more scripts/month covers the ${fmt(gap)} gap` : 'needs Rx Count data'}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Break-even ETA</div>
+        <div class="kpi-val-wrap"><div class="kpi-value ${beEta === 0 ? 'pos' : ''}">${beEtaLabel}</div></div>
+        <div class="kpi-sub">${beEta === 0 ? 'net profit is positive' : beEtaDate ? `≈ ${beEtaDate} at ${iPct(g3*100)}/mo GP pace` : 'needs positive GP growth'}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Rx Margin</div>
+        <div class="kpi-val-wrap"><div class="kpi-value">${last.margin !== null ? last.margin.toFixed(1) + '%' : '—'}</div></div>
+        <div class="kpi-sub">fee + markup as % of Rx sales</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Expense Creep</div>
+        <div class="kpi-val-wrap"><div class="kpi-value" style="color:${expCreep > 5 ? 'var(--amber)' : 'var(--navy)'}">${iPct(expCreep)}</div></div>
+        <div class="kpi-sub">since ${first.label} (${fmt(first.exp)} → ${fmt(last.exp)})</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="weekly-pb-grid">
+      <div class="card">
+        <div class="card-title">What Changed — ${last.label} vs ${prev.label}</div>
+        <div class="gp-summary" style="margin-top:0">
+          ${decompRow('Core dispensing GP', dDisp, '(fee + markup + front store)')}
+          ${decompRow('Rebate', dReb, '')}
+          ${decompRow('Expenses', dExp, '(negative = costs went up)')}
+          <div class="gp-divider"></div>
+          <div class="gp-row gp-total"><span>Net change</span><span class="${dNet >= 0 ? 'pos' : 'neg'}">${iSign(dNet)}</span></div>
+        </div>
+        ${dNet < 0 && dDisp > 0 ? `<div style="font-size:.82rem;color:var(--light);margin-top:10px;font-style:italic">The core business improved — the net slip came from the items above it.</div>` : ''}
+      </div>
+      <div class="card">
+        <div class="card-title">Auto Insights</div>
+        ${bulletHtml || '<div class="text-sm text-light">Nothing notable this month.</div>'}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Per-Script Economics — GP per Script vs Revenue per Script</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="insPerScriptChart"></canvas></div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="card-title" style="padding:18px 18px 0">Monthly Detail</div>
+      <div class="tbl-wrap">
+        <table class="data-tbl">
+          <thead><tr><th>Month</th><th>Rx Sales</th><th>Scripts</th><th>$ / Script</th><th>GP / Script</th><th>Rx Margin</th><th>Net Profit</th></tr></thead>
+          <tbody>${trendRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  renderInsightsChart(M);
+}
+
+function renderInsightsChart(M) {
+  destroyChart('insPerScript');
+  const canvas = document.getElementById('insPerScriptChart');
+  if (!canvas) return;
+  const withCnt = M; // keep all months; null values create gaps
+  charts.insPerScript = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: withCnt.map(x => x.label),
+      datasets: [
+        { label:'Revenue per script', data: withCnt.map(x => x.perRx), borderColor:'#1B3A6B', backgroundColor:'rgba(27,58,107,.08)',
+          borderWidth:2.5, pointRadius:4, fill:true, tension:.3, spanGaps:false },
+        { label:'GP per script', data: withCnt.map(x => x.gpPerRx), borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,.06)',
+          borderWidth:2.5, pointRadius:4, fill:true, tension:.3, spanGaps:false },
+      ],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top', labels:{boxWidth:12, font:{size:11}}},
+        tooltip:{callbacks:{label:ctx => ` ${ctx.dataset.label}: $${(ctx.parsed.y ?? 0).toFixed(2)}`}},
+      },
+      scales:{
+        x:{grid:{display:false}},
+        y:{beginAtZero:true, ticks:{callback:v => '$' + v}},
+      },
+    },
   });
 }
 
