@@ -894,7 +894,7 @@ function updSCurve(scenario, field, rawVal) {
 // FORMATTING
 // ================================================================
 function fmt(n) {
-  if (n === null || n === undefined || isNaN(n)) return '$0';
+  if (n === null || n === undefined || isNaN(n) || !isFinite(n)) return '$0';
   const a = Math.abs(n);
   return (n < 0 ? '-' : '') + '$' + a.toLocaleString('en-CA', {minimumFractionDigits:0,maximumFractionDigits:0});
 }
@@ -1482,9 +1482,31 @@ function dashCharts(sorted, sel){
 // ================================================================
 // PAGE: INSIGHTS — auto-computed analysis of monthly data
 // ================================================================
+
+// Ordinary least squares fit for y = a + b*x. Returns null when x has no variance.
+function insOLS(xs, ys) {
+  const n = xs.length;
+  if (n < 3) return null;
+  const mx = xs.reduce((s,v)=>s+v,0)/n, my = ys.reduce((s,v)=>s+v,0)/n;
+  const sxx = xs.reduce((s,x)=>s+(x-mx)*(x-mx),0);
+  if (sxx <= 0) return null;
+  const sxy = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+  const b = sxy/sxx, a = my - b*mx;
+  const sst = ys.reduce((s,y)=>s+(y-my)*(y-my),0);
+  const ssr = ys.reduce((s,y,i)=>s+Math.pow(y-(a+b*xs[i]),2),0);
+  return { a, b, r2: sst > 0 ? 1 - ssr/sst : 0 };
+}
+
 function renderInsights() {
   const el = document.getElementById('page-insights');
-  const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
+  // Destroy before any early return so a stale chart never survives a re-render
+  destroyChart('insPerScript');
+
+  // De-duplicate by monthKey (last write wins) so a duplicate entry can't
+  // become its own "previous month" and zero out the comparison card.
+  const byKey = new Map();
+  [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey)).forEach(m => byKey.set(m.monthKey, m));
+  const sorted = [...byKey.values()];
 
   if (sorted.length < 2) {
     el.innerHTML = `<div class="card" style="text-align:center;padding:48px 20px;color:var(--light)">
@@ -1492,25 +1514,34 @@ function renderInsights() {
     return;
   }
 
-  const iSign = n => (n < 0 ? '-$' : '+$') + Math.abs(Math.round(n)).toLocaleString('en-CA');
+  const iSign = n => (Math.round(n) === 0 ? '$0' : (n < 0 ? '-$' : '+$') + Math.abs(Math.round(n)).toLocaleString('en-CA'));
   const iPct  = n => (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
+  const per   = n => '$' + n.toFixed(2);
 
   // Per-month derived metrics
   const M = sorted.map(m => {
     const d   = calcMonthData(m);
     const cnt = Number(m.rxCount) || 0;
+    const rx  = parseFloat(m.rxSales) || 0;
     return {
-      key: m.monthKey, label: monthKeyToLabel(m.monthKey),
-      rx: parseFloat(m.rxSales) || 0, cnt,
-      dispGP: d.rxGP + d.frontGP,          // fee+markup + front store (the "core engine")
-      rxGP: d.rxGP, rebate: d.rebate, gp: d.totalGP, exp: d.totalExp, net: d.netProfit,
-      perRx:  cnt > 0 ? (parseFloat(m.rxSales) || 0) / cnt : null,
-      gpPerRx: cnt > 0 ? d.totalGP / cnt : null,
-      margin: (parseFloat(m.rxSales) || 0) > 0 ? d.rxGP / parseFloat(m.rxSales) * 100 : null,
+      key: m.monthKey, label: monthKeyToLabel(m.monthKey), rx, cnt,
+      dispGP: d.rxGP + d.frontGP,
+      rxGP: d.rxGP, frontGP: d.frontGP, rebate: d.rebate,
+      gp: d.totalGP, exp: d.totalExp, net: d.netProfit,
+      cogs: rx - d.rxGP,                                   // drug acquisition cost
+      perRx:     cnt > 0 ? rx / cnt : null,                // revenue per script
+      rxGpPerRx: cnt > 0 ? d.rxGP / cnt : null,            // dispensing GP per script (same Rx basis)
+      gpPerRx:   cnt > 0 ? d.totalGP / cnt : null,         // total GP per script (incl. rebate + front)
+      margin:    rx > 0 ? d.rxGP / rx * 100 : null,
     };
   });
 
   const last = M[M.length - 1], prev = M[M.length - 2], first = M[0];
+
+  // Distinguish "no expense data" from "zero expenses" — otherwise a blank
+  // expense field makes every profitability signal report success.
+  const hasExp = last.exp > 0;
+  const gap = hasExp ? Math.max(0, last.exp - last.gp) : null;
 
   // ── MoM decomposition ─────────────────────────────────────────
   const dDisp = last.dispGP - prev.dispGP;
@@ -1518,52 +1549,157 @@ function renderInsights() {
   const dExp  = -(last.exp - prev.exp);   // sign flipped: higher expenses hurt net
   const dNet  = last.net - prev.net;
 
-  // ── Headline metrics ──────────────────────────────────────────
-  const gpPerScript = last.gpPerRx;                       // GP per script (latest)
-  const gap = Math.max(0, last.exp - last.gp);            // GP shortfall to break even
-  const scriptsNeeded = (gpPerScript && gap > 0) ? Math.ceil(gap / gpPerScript) : null;
+  // ── Marginal economics ────────────────────────────────────────
+  // Blended GP/script overstates what ONE more script earns: front-store GP is a
+  // fixed block, and operating expenses themselves scale with volume. Fit both
+  // lines against script count and use the contribution margin instead.
+  const fitRows = M.filter(x => x.cnt > 0);
+  const fitX    = fitRows.map(x => x.cnt);
+  const gpFit   = fitRows.length >= 4 ? insOLS(fitX, fitRows.map(x => x.gp))  : null;
+  const expFit  = fitRows.length >= 4 ? insOLS(fitX, fitRows.map(x => x.exp)) : null;
 
-  // Break-even ETA at last-3-months GP growth pace vs current expenses
+  let contribPerScript = null, breakEvenScripts = null, marginalBasis = null;
+  if (gpFit && expFit && gpFit.r2 >= 0.5) {
+    const c  = gpFit.b - expFit.b;
+    const be = (expFit.a - gpFit.a) / c;
+    if (c > 0 && isFinite(be) && be > 0 && be < 1e6) {
+      contribPerScript = c; breakEvenScripts = be; marginalBasis = 'contribution';
+    }
+  }
+  if (contribPerScript === null && last.rxGpPerRx > 0) {
+    contribPerScript = last.rxGpPerRx; marginalBasis = 'dispensing';
+  }
+
+  let scriptsNeeded = null;
+  if (gap !== null && gap > 0) {
+    if (marginalBasis === 'contribution' && last.cnt > 0) {
+      scriptsNeeded = Math.max(0, Math.ceil(breakEvenScripts - last.cnt));
+    } else if (contribPerScript > 0) {
+      scriptsNeeded = Math.ceil(gap / contribPerScript);
+    }
+  }
+  const scriptsSub = gap === null ? `add expenses for ${last.label}`
+    : gap === 0 ? 'GP covers expenses'
+    : scriptsNeeded === null ? (last.cnt > 0 ? 'GP per script is not positive' : 'needs Rx Count data')
+    : marginalBasis === 'contribution'
+      ? `more scripts/mo · ${per(contribPerScript)} contribution each (${per(gpFit.b)} GP − ${per(expFit.b)} cost)`
+      : `more scripts/mo at ${per(contribPerScript)} dispensing GP each`;
+
+  // ── Growth pace + break-even ETA (expenses are NOT held fixed) ─
   const gpGrowths = [];
   for (let i = Math.max(1, M.length - 3); i < M.length; i++) {
     if (M[i-1].gp > 0) gpGrowths.push(M[i].gp / M[i-1].gp - 1);
   }
   const g3 = gpGrowths.length ? gpGrowths.reduce((s,v)=>s+v,0) / gpGrowths.length : 0;
-  let beEta = null;
-  if (last.net >= 0) beEta = 0;
-  else if (g3 > 0) { let gp = last.gp; for (let i = 1; i <= 36; i++) { gp *= (1 + g3); if (gp >= last.exp) { beEta = i; break; } } }
-  const beEtaLabel = beEta === 0 ? 'Profitable ✓' : beEta !== null ? beEta + ' mo' : '—';
-  const beEtaDate  = (beEta && beEta > 0) ? (() => { const [y,mo] = last.key.split('-').map(Number); const d = new Date(y, mo-1+beEta, 1); return d.toLocaleString('en-CA',{month:'short',year:'numeric'}); })() : null;
+  const expGrowth = (first.exp > 0 && M.length > 1)
+    ? Math.max(0, Math.pow(last.exp / first.exp, 1/(M.length-1)) - 1) : 0;
 
-  // Script growth (latest MoM)
+  let beEta = null, remainingBurn = null;
+  if (hasExp) {
+    if (last.net >= 0) beEta = 0;
+    else if (g3 > 0) {
+      let gp = last.gp, ex = last.exp, tot = 0;
+      for (let i = 1; i <= 60; i++) {
+        gp *= (1 + g3); ex *= (1 + expGrowth);
+        const n = gp - ex;
+        if (n >= 0) { beEta = i; break; }
+        tot += n;
+      }
+      if (beEta !== null) remainingBurn = tot;
+    }
+  }
+  const beEtaLabel = !hasExp ? '—' : beEta === 0 ? 'Profitable ✓' : beEta !== null ? beEta + ' mo' : '—';
+  const beEtaDate  = (beEta && beEta > 0) ? (() => {
+    const [y,mo] = last.key.split('-').map(Number);
+    return new Date(y, mo-1+beEta, 1).toLocaleString('en-CA',{month:'short',year:'numeric'});
+  })() : null;
+  const beEtaSub = !hasExp ? `add expenses for ${last.label}`
+    : beEta === 0 ? 'net profit is positive'
+    : beEtaDate ? `≈ ${beEtaDate} · GP ${iPct(g3*100)}/mo vs expenses ${iPct(expGrowth*100)}/mo`
+    : 'needs positive GP growth';
+
+  // ── Cash: burned to date + projected remaining ────────────────
+  const cumNet = M.reduce((s,x) => s + x.net, 0);
+
+  // ── Script growth, rebate rate, expense creep ─────────────────
   const scriptMoM = (prev.cnt > 0 && last.cnt > 0) ? (last.cnt / prev.cnt - 1) * 100 : null;
-
-  // Rebate stats (skip zero months)
-  const rebs = M.map(x => x.rebate).filter(v => v > 0);
-  const rebAvg = rebs.length ? rebs.reduce((s,v)=>s+v,0)/rebs.length : 0;
-  const rebMax = rebs.length ? Math.max(...rebs) : 0;
-
-  // Expense creep
-  const expCreep = first.exp > 0 ? (last.exp / first.exp - 1) * 100 : 0;
+  const rebRows = M.filter(x => x.rebate > 0 && x.cogs > 0).slice(-3);
+  const rebRate = rebRows.length >= 2
+    ? rebRows.reduce((s,x)=>s+x.rebate,0) / rebRows.reduce((s,x)=>s+x.cogs,0) * 100 : null;
+  const expCreep = first.exp > 0 && hasExp ? (last.exp / first.exp - 1) * 100 : 0;
 
   // ── Auto-generated insight bullets ────────────────────────────
   const bullets = [];
-  if (dNet >= 0) bullets.push({icon:'📈', tone:'var(--teal)', text:`Net improved ${iSign(dNet)} in ${last.label} vs ${prev.label}.`});
-  else if (dDisp > 0) bullets.push({icon:'⚠️', tone:'var(--amber)', text:`Net slipped ${iSign(dNet)} in ${last.label} — but the core dispensing business gained ${iSign(dDisp)}. The regression came from ${dExp < 0 ? 'higher expenses (' + iSign(dExp) + ')' : ''}${dExp < 0 && dReb < 0 ? ' and ' : ''}${dReb < 0 ? 'a weaker rebate (' + iSign(dReb) + ')' : ''}.`});
-  else bullets.push({icon:'🔻', tone:'var(--red)', text:`Net declined ${iSign(dNet)} in ${last.label}, including a drop in core dispensing GP (${iSign(dDisp)}).`});
+  if (!hasExp) {
+    bullets.push({icon:'⚠️', text:`No expenses recorded for ${last.label}, so profitability, break-even and cash figures are unavailable. Add them in <strong>Monthly Data</strong>.`});
+  } else if (dNet >= 0) {
+    bullets.push({icon:'📈', text:`Net improved ${iSign(dNet)} in ${last.label} vs ${prev.label}.`});
+  } else if (dDisp > 0) {
+    const causes = [];
+    if (dExp < 0) causes.push(`higher expenses (${iSign(dExp)})`);
+    if (dReb < 0) causes.push(`a weaker rebate (${iSign(dReb)})`);
+    bullets.push({icon:'⚠️', text:`Net slipped ${iSign(dNet)} in ${last.label} — but the core dispensing business gained ${iSign(dDisp)}${causes.length ? '. The regression came from ' + causes.join(' and ') : ''}.`});
+  } else {
+    bullets.push({icon:'🔻', text:`Net declined ${iSign(dNet)} in ${last.label}, including a drop in core dispensing GP (${iSign(dDisp)}).`});
+  }
+
+  // The entire gap expressed per prescription — usually the most actionable framing
+  if (gap !== null && gap > 0 && last.cnt > 0) {
+    const shortfall = gap / last.cnt;
+    bullets.push({icon:'🎯', text:`Your entire ${fmt(gap)} gap is <strong>${per(shortfall)} per prescription</strong>. At ${last.cnt.toLocaleString('en-CA')} scripts/month, capturing ${per(shortfall)} more dispensing GP per script closes it with no new patients.`});
+  }
+
+  // Drug purchases — typically the largest cash line, and invisible elsewhere
+  if (last.cogs > 0 && hasExp) {
+    const share  = last.cogs / (last.cogs + last.exp) * 100;
+    const onePct = last.cogs * 0.01;
+    const gapNote = (gap !== null && gap > 0) ? ` — ${(onePct/gap*100).toFixed(0)}% of the gap` : '';
+    bullets.push({icon:'📦', text:`Drug purchases ran ${fmt(last.cogs)} in ${last.label} — ${share.toFixed(0)}% of all cash out and ${(last.cogs/last.exp).toFixed(2)}× your operating expenses. A 1% better acquisition cost is worth ${fmt(onePct)}/mo${gapNote}.`});
+  }
 
   if (scriptMoM !== null) {
-    if (scriptMoM < 5) bullets.push({icon:'🐌', tone:'var(--amber)', text:`Script growth nearly stalled: ${iPct(scriptMoM)} (${prev.cnt.toLocaleString('en-CA')} → ${last.cnt.toLocaleString('en-CA')}). Scripts are the metric your transfers & blister-pack work drives — watch next month.`});
-    else bullets.push({icon:'💪', tone:'var(--teal)', text:`Scripts grew ${iPct(scriptMoM)} (${prev.cnt.toLocaleString('en-CA')} → ${last.cnt.toLocaleString('en-CA')}).`});
+    if (scriptMoM < 0) {
+      bullets.push({icon:'🔻', text:`Scripts fell ${iPct(scriptMoM)} (${prev.cnt.toLocaleString('en-CA')} → ${last.cnt.toLocaleString('en-CA')}) — the first thing to fix.`});
+    } else if (scriptMoM < 5) {
+      bullets.push({icon:'🐌', text:`Script growth nearly stalled: ${iPct(scriptMoM)} (${prev.cnt.toLocaleString('en-CA')} → ${last.cnt.toLocaleString('en-CA')}). Scripts are what your transfers & blister-pack work drives — watch next month.`});
+    } else {
+      bullets.push({icon:'💪', text:`Scripts grew ${iPct(scriptMoM)} (${prev.cnt.toLocaleString('en-CA')} → ${last.cnt.toLocaleString('en-CA')}).`});
+    }
   }
-  if (last.margin !== null && M.length >= 4 && M[M.length-4].margin !== null) {
-    const m3ago = M[M.length-4];
-    const dm = last.margin - m3ago.margin;
-    bullets.push({icon: dm >= 0 ? '🧪' : '⚠️', tone: dm >= 0 ? 'var(--teal)' : 'var(--amber)', text:`Rx margin (fee + markup as % of Rx sales) is ${last.margin.toFixed(1)}%, ${dm >= 0 ? 'up' : 'down'} from ${m3ago.margin.toFixed(1)}% in ${m3ago.label}.`});
+
+  // Rebate framed as a purchase discount, not a lottery
+  if (rebRate !== null) {
+    bullets.push({icon:'💊', text:`Rebates are running at ${rebRate.toFixed(1)}% of drug purchases over the last ${rebRows.length} months — a purchase discount that scales with buying, not a windfall. Month-to-month swings are mostly payment timing.`});
   }
-  if (expCreep > 5) bullets.push({icon:'💸', tone:'var(--amber)', text:`Expenses have crept ${iPct(expCreep)} since ${first.label} (${fmt(first.exp)} → ${fmt(last.exp)}). Each $1k of creep pushes break-even out roughly a month at the current pace.`});
-  if (gap > 0 && rebMax - last.rebate > gap * 0.5) bullets.push({icon:'🎲', tone:'var(--navy)', text:`Rebates swing between ${fmt(Math.min(...rebs))} and ${fmt(rebMax)} (avg ${fmt(rebAvg)}). A best-case rebate month would close ${fmt(Math.min(gap, rebMax - last.rebate))} of the ${fmt(gap)} break-even gap on its own.`});
-  if (gap === 0) bullets.push({icon:'🎉', tone:'var(--teal)', text:`${last.label} was profitable — gross profit covered all expenses.`});
+
+  // Margin compared to its own distribution rather than one cherry-picked month
+  const margins = M.map(x => x.margin).filter(v => v !== null);
+  if (margins.length >= 4 && last.margin !== null) {
+    const mMean = margins.reduce((s,v)=>s+v,0)/margins.length;
+    const mSd   = Math.sqrt(margins.reduce((s,v)=>s+Math.pow(v-mMean,2),0)/margins.length);
+    const dev   = last.margin - mMean;
+    const isPct = settings.rxGPMethod !== 'fee_markup';
+    if (isPct) {
+      bullets.push({icon:'ℹ️', text:`Rx margin shows ${last.margin.toFixed(1)}%, but GP method is set to <strong>% of Rx Sales</strong> — this is your setting, not a measured margin. Switch to Fee + Markup to track real margin.`});
+    } else if (mSd > 0 && Math.abs(dev) > mSd) {
+      bullets.push({icon: dev > 0 ? '🧪' : '⚠️', text:`Rx margin ${last.margin.toFixed(1)}% is ${dev > 0 ? 'above' : 'below'} its ${mMean.toFixed(1)}% average by more than one standard deviation (±${mSd.toFixed(1)}) — a genuine move, not noise.`});
+    } else {
+      bullets.push({icon:'📊', text:`Rx margin is ${last.margin.toFixed(1)}%, in line with its ${mMean.toFixed(1)}% ± ${mSd.toFixed(1)} average — no real trend either way.`});
+    }
+  }
+
+  if (expCreep > 5) {
+    let clause = '';
+    if (gap !== null && gap > 0 && g3 > 0 && hasExp && beEta) {
+      const moPer1k = 1000 / (last.exp * Math.log(1 + g3));
+      if (isFinite(moPer1k) && moPer1k > 0) {
+        clause = ` At the current GP pace each $1k of creep delays break-even about ${moPer1k.toFixed(1)} month${moPer1k >= 1.05 ? 's' : ''}.`;
+      }
+    }
+    bullets.push({icon:'💸', text:`Expenses have crept ${iPct(expCreep)} since ${first.label} (${fmt(first.exp)} → ${fmt(last.exp)}).${clause}`});
+  }
+
+  if (gap === 0 && hasExp) bullets.push({icon:'🎉', text:`${last.label} was profitable — gross profit covered all expenses.`});
 
   const bulletHtml = bullets.map(b => `
     <div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
@@ -1571,21 +1707,20 @@ function renderInsights() {
       <span style="font-size:.9rem;line-height:1.55;color:var(--text)">${b.text}</span>
     </div>`).join('');
 
-  // ── Decomposition rows ────────────────────────────────────────
   const decompRow = (lbl, val, note) => `
     <div class="gp-row" style="padding:7px 0">
       <span>${lbl}${note ? ` <span class="text-xs text-light">${note}</span>` : ''}</span>
-      <span style="font-weight:700" class="${val >= 0 ? 'pos' : 'neg'}">${iSign(val)}</span>
+      <span style="font-weight:700" class="${Math.round(val) === 0 ? '' : val > 0 ? 'pos' : 'neg'}">${iSign(val)}</span>
     </div>`;
 
-  // ── Trend table rows ──────────────────────────────────────────
   const trendRows = [...M].reverse().map(x => `
     <tr>
       <td style="font-weight:600">${x.label}</td>
       <td>${fmt(x.rx)}</td>
+      <td>${x.cogs > 0 ? fmt(x.cogs) : '—'}</td>
       <td>${x.cnt ? x.cnt.toLocaleString('en-CA') : '—'}</td>
-      <td>${x.perRx !== null ? '$' + x.perRx.toFixed(2) : '—'}</td>
-      <td>${x.gpPerRx !== null ? '$' + x.gpPerRx.toFixed(2) : '—'}</td>
+      <td>${x.perRx !== null ? per(x.perRx) : '—'}</td>
+      <td>${x.rxGpPerRx !== null ? per(x.rxGpPerRx) : '—'}</td>
       <td>${x.margin !== null ? x.margin.toFixed(1) + '%' : '—'}</td>
       <td class="${x.net >= 0 ? 'pos' : 'neg'}">${fmt(x.net)}</td>
     </tr>`).join('');
@@ -1593,29 +1728,39 @@ function renderInsights() {
   el.innerHTML = `
     <div class="kpi-grid mb-20" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
       <div class="kpi-card kpi-std">
-        <div class="kpi-label">GP per Script</div>
-        <div class="kpi-val-wrap"><div class="kpi-value">${gpPerScript !== null ? '$' + gpPerScript.toFixed(2) : '—'}</div></div>
-        <div class="kpi-sub">${last.label}${gpPerScript === null ? ' — add Rx Count in Monthly Data' : ''}</div>
+        <div class="kpi-label">Dispensing GP / Script</div>
+        <div class="kpi-val-wrap"><div class="kpi-value">${last.rxGpPerRx !== null ? per(last.rxGpPerRx) : '—'}</div></div>
+        <div class="kpi-sub">${last.rxGpPerRx === null ? 'add Rx Count in Monthly Data' : `${last.label} · ${per(last.gpPerRx)} incl. rebate &amp; front store`}</div>
       </div>
       <div class="kpi-card kpi-std">
         <div class="kpi-label">Scripts to Break Even</div>
-        <div class="kpi-val-wrap"><div class="kpi-value ${gap === 0 ? 'pos' : ''}" style="${gap === 0 ? '' : 'color:var(--amber)'}">${gap === 0 ? '✓ There' : (scriptsNeeded !== null ? '+' + scriptsNeeded.toLocaleString('en-CA') : '—')}</div></div>
-        <div class="kpi-sub">${gap === 0 ? 'GP covers expenses' : scriptsNeeded !== null ? `more scripts/month covers the ${fmt(gap)} gap` : 'needs Rx Count data'}</div>
+        <div class="kpi-val-wrap"><div class="kpi-value ${gap === 0 ? 'pos' : ''}" style="${gap === 0 || gap === null ? '' : 'color:var(--amber)'}">${gap === null ? '—' : gap === 0 ? '✓ There' : (scriptsNeeded !== null ? '+' + scriptsNeeded.toLocaleString('en-CA') : '—')}</div></div>
+        <div class="kpi-sub">${scriptsSub}</div>
       </div>
       <div class="kpi-card kpi-std">
         <div class="kpi-label">Break-even ETA</div>
         <div class="kpi-val-wrap"><div class="kpi-value ${beEta === 0 ? 'pos' : ''}">${beEtaLabel}</div></div>
-        <div class="kpi-sub">${beEta === 0 ? 'net profit is positive' : beEtaDate ? `≈ ${beEtaDate} at ${iPct(g3*100)}/mo GP pace` : 'needs positive GP growth'}</div>
+        <div class="kpi-sub">${beEtaSub}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Cash to Break Even</div>
+        <div class="kpi-val-wrap"><div class="kpi-value" style="color:${remainingBurn === null ? 'var(--navy)' : 'var(--red)'}">${remainingBurn !== null ? fmt(remainingBurn) : (cumNet >= 0 ? '✓ None' : '—')}</div></div>
+        <div class="kpi-sub">${remainingBurn !== null ? `more to burn · ${fmt(cumNet)} cumulative to date` : `${fmt(cumNet)} cumulative net to date`}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Drug Purchases</div>
+        <div class="kpi-val-wrap"><div class="kpi-value">${last.cogs > 0 ? fmt(last.cogs) : '—'}</div></div>
+        <div class="kpi-sub">${last.cogs > 0 && hasExp ? `${(last.cogs/(last.cogs+last.exp)*100).toFixed(0)}% of cash out · ${(last.cogs/last.exp).toFixed(2)}× expenses` : 'Rx sales minus dispensing GP'}</div>
       </div>
       <div class="kpi-card kpi-std">
         <div class="kpi-label">Rx Margin</div>
         <div class="kpi-val-wrap"><div class="kpi-value">${last.margin !== null ? last.margin.toFixed(1) + '%' : '—'}</div></div>
-        <div class="kpi-sub">fee + markup as % of Rx sales</div>
+        <div class="kpi-sub">${settings.rxGPMethod === 'fee_markup' ? 'fee + markup as % of Rx sales' : 'from your % of Rx Sales setting — not measured'}</div>
       </div>
       <div class="kpi-card kpi-std">
         <div class="kpi-label">Expense Creep</div>
-        <div class="kpi-val-wrap"><div class="kpi-value" style="color:${expCreep > 5 ? 'var(--amber)' : 'var(--navy)'}">${iPct(expCreep)}</div></div>
-        <div class="kpi-sub">since ${first.label} (${fmt(first.exp)} → ${fmt(last.exp)})</div>
+        <div class="kpi-val-wrap"><div class="kpi-value" style="color:${expCreep > 5 ? 'var(--amber)' : 'var(--navy)'}">${hasExp ? iPct(expCreep) : '—'}</div></div>
+        <div class="kpi-sub">${hasExp ? `since ${first.label} (${fmt(first.exp)} → ${fmt(last.exp)})` : `add expenses for ${last.label}`}</div>
       </div>
     </div>
 
@@ -1627,7 +1772,7 @@ function renderInsights() {
           ${decompRow('Rebate', dReb, '')}
           ${decompRow('Expenses', dExp, '(negative = costs went up)')}
           <div class="gp-divider"></div>
-          <div class="gp-row gp-total"><span>Net change</span><span class="${dNet >= 0 ? 'pos' : 'neg'}">${iSign(dNet)}</span></div>
+          <div class="gp-row gp-total"><span>Net change</span><span class="${Math.round(dNet) === 0 ? '' : dNet > 0 ? 'pos' : 'neg'}">${iSign(dNet)}</span></div>
         </div>
         ${dNet < 0 && dDisp > 0 ? `<div style="font-size:.82rem;color:var(--light);margin-top:10px;font-style:italic">The core business improved — the net slip came from the items above it.</div>` : ''}
       </div>
@@ -1638,15 +1783,16 @@ function renderInsights() {
     </div>
 
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title">Per-Script Economics — GP per Script vs Revenue per Script</div>
+      <div class="card-title">Per-Script Economics</div>
       <div class="chart-wrap" style="height:260px"><canvas id="insPerScriptChart"></canvas></div>
+      <div style="font-size:.72rem;color:var(--light);margin-top:8px">Revenue and dispensing GP share the same Rx basis, so the gap between them is drug cost per script. Total GP per script (dashed) adds rebate and front-store GP, which do not scale one-for-one with prescriptions.</div>
     </div>
 
     <div class="card" style="padding:0;overflow:hidden">
       <div class="card-title" style="padding:18px 18px 0">Monthly Detail</div>
       <div class="tbl-wrap">
         <table class="data-tbl">
-          <thead><tr><th>Month</th><th>Rx Sales</th><th>Scripts</th><th>$ / Script</th><th>GP / Script</th><th>Rx Margin</th><th>Net Profit</th></tr></thead>
+          <thead><tr><th>Month</th><th>Rx Sales</th><th>Drug Cost</th><th>Scripts</th><th>$ / Script</th><th>Disp GP / Script</th><th>Rx Margin</th><th>Net Profit</th></tr></thead>
           <tbody>${trendRows}</tbody>
         </table>
       </div>
@@ -1659,23 +1805,26 @@ function renderInsightsChart(M) {
   destroyChart('insPerScript');
   const canvas = document.getElementById('insPerScriptChart');
   if (!canvas) return;
-  const withCnt = M; // keep all months; null values create gaps
   charts.insPerScript = new Chart(canvas, {
     type: 'line',
     data: {
-      labels: withCnt.map(x => x.label),
+      labels: M.map(x => x.label),
       datasets: [
-        { label:'Revenue per script', data: withCnt.map(x => x.perRx), borderColor:'#1B3A6B', backgroundColor:'rgba(27,58,107,.08)',
+        { label:'Revenue per script', data: M.map(x => x.perRx), borderColor:'#1B3A6B', backgroundColor:'rgba(27,58,107,.08)',
           borderWidth:2.5, pointRadius:4, fill:true, tension:.3, spanGaps:false },
-        { label:'GP per script', data: withCnt.map(x => x.gpPerRx), borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,.06)',
+        { label:'Dispensing GP per script', data: M.map(x => x.rxGpPerRx), borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,.10)',
           borderWidth:2.5, pointRadius:4, fill:true, tension:.3, spanGaps:false },
+        { label:'Total GP per script (incl. rebate + front)', data: M.map(x => x.gpPerRx), borderColor:'#BA7517',
+          borderWidth:2, borderDash:[5,4], pointRadius:3, fill:false, tension:.3, spanGaps:false },
       ],
     },
     options: {
       responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{position:'top', labels:{boxWidth:12, font:{size:11}}},
-        tooltip:{callbacks:{label:ctx => ` ${ctx.dataset.label}: $${(ctx.parsed.y ?? 0).toFixed(2)}`}},
+        tooltip:{callbacks:{label:ctx => ctx.parsed.y === null || ctx.parsed.y === undefined
+          ? ` ${ctx.dataset.label}: no Rx count`
+          : ` ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`}},
       },
       scales:{
         x:{grid:{display:false}},
@@ -1720,7 +1869,7 @@ function renderMonthly() {
       <tr>
         <td><strong>${monthKeyToLabel(m.monthKey)}</strong></td>
         <td>${fmt(m.rxSales)}</td>
-        <td>${m.rxCount != null && m.rxCount !== '' ? Number(m.rxCount).toLocaleString('en-CA') : '—'}</td>
+        <td>${Number(m.rxCount) ? Number(m.rxCount).toLocaleString('en-CA') : '—'}</td>
         <td>${fmt(m.frontSales)}</td>
         <td>${fmt(m.rebate)}</td>
         <td>${fmt(d.totalGP)}</td>
@@ -3892,9 +4041,31 @@ async function bootstrapUsersIfNeeded() {
   // Fetch all default-user docs in parallel to see which are missing
   const snapshots = await Promise.all(DEFAULT_USERS.map(u => col.doc(u.email).get()));
   const toCreate  = DEFAULT_USERS.filter((u, i) => !snapshots[i].exists);
-  if (!toCreate.length) return; // nothing to do
-  await Promise.all(toCreate.map(u => col.doc(u.email).set(u, opts)));
-  console.log('[Bootstrap] Created missing user docs:', toCreate.map(u => u.email));
+  if (toCreate.length) {
+    await Promise.all(toCreate.map(u => col.doc(u.email).set(u, opts)));
+    console.log('[Bootstrap] Created missing user docs:', toCreate.map(u => u.email));
+  }
+
+  // Backfill pages for full-access roles. When a new page is added to ALL_PAGES,
+  // existing permission docs still hold the old list, so those users would never
+  // see it. Restricted users (e.g. clinic staff) are deliberately left alone.
+  const backfills = [];
+  DEFAULT_USERS.forEach((u, i) => {
+    const snap = snapshots[i];
+    if (!snap.exists) return;                      // just created above with full list
+    const cur  = snap.data() || {};
+    const role = cur.role || '';
+    if (role !== 'Owner' && role !== 'Full Access') return;
+    const have   = Array.isArray(cur.pages) ? cur.pages : [];
+    const merged = [...new Set([...have, ...ALL_PAGES])];
+    if (merged.length !== have.length) {
+      backfills.push({ email: u.email, merged });
+    }
+  });
+  if (backfills.length) {
+    await Promise.all(backfills.map(b => col.doc(b.email).set({ pages: b.merged }, opts)));
+    console.log('[Bootstrap] Backfilled pages for:', backfills.map(b => b.email));
+  }
 }
 
 // ── Admin panel helpers (owner only) ─────────────────────────────
