@@ -725,6 +725,16 @@ function calcRollingAvgGrowth() {
 
   const avg = rates.reduce((s,r) => s + r, 0) / rates.length;
 
+  // Compound (geometric) monthly rate across the same window. Averaging
+  // month-over-month percentages arithmetically overstates compounding — e.g.
+  // +100% then -50% averages to +25% but nets to 0% — so anything that projects
+  // forward must use this figure, not the simple mean.
+  const firstGP = calcMonthData(slice[0]).totalGP;
+  const lastGP  = calcMonthData(slice[slice.length-1]).totalGP;
+  const cagr = (firstGP > 0 && lastGP > 0 && slice.length > 1)
+    ? (Math.pow(lastGP / firstGP, 1/(slice.length-1)) - 1) * 100
+    : avg;
+
   // Trend: compare first-half avg vs second-half avg of the growth rates
   let trend = 'stable';
   if (rates.length >= 2) {
@@ -736,7 +746,8 @@ function calcRollingAvgGrowth() {
     else if (diff < -0.5) trend = 'decelerating';
   }
 
-  return {rate: parseFloat(avg.toFixed(1)), count: slice.length, trend, rates};
+  return {rate: parseFloat(cagr.toFixed(1)), arithRate: parseFloat(avg.toFixed(1)),
+          count: slice.length, trend, rates};
 }
 
 // If realisticIsAuto is true, keep the Realistic rate synced to the rolling average.
@@ -1044,7 +1055,9 @@ function renderDashboard(animate){
   if(gv.last!==null && gv.avg!==null){
     const accel=gv.trend==='accelerating', slow=gv.trend==='decelerating';
     chip = `<span class="k-chip ${accel?'up':slow?'down':'flat'}">${accel?'↗ Accelerating':slow?'↘ Slowing':'→ Stable'}</span>`;
-    growthAvgStr = fPct(gv.avg)+' / mo';
+    // Show the same compound rate the projections use, so the page never
+    // displays one growth number and forecasts with another.
+    growthAvgStr = fPct(gv.cagr!==null ? gv.cagr : gv.avg)+' / mo';
     growthCls = gv.avg>=0?'pos':'neg';
     growthSub = 'Last month '+fPct(gv.last)+' vs '+monthKeyToLabel(sorted[sel-1].monthKey);
   }
@@ -1058,7 +1071,7 @@ function renderDashboard(animate){
   let goalHtml;
   if(c.isProfit){
     const arrivalStr = c.value>=1000000 ? '🎉' : (c.arrival1M || '—');
-    const arrivalSub = c.value>=1000000 ? "You're there!" : (c.arrival1M ? 'Based on '+fPct(c.g)+'/mo net growth' : 'Grow net profit to project a date');
+    const arrivalSub = c.value>=1000000 ? "You're there!" : (c.arrival1M ? 'GP '+fPct(c.g)+'/mo vs expenses '+fPct(c.expGrowth)+'/mo' : 'Grow net profit to project a date');
     goalHtml = `
       <div class="goal-top">
         <div class="goal-value">
@@ -1092,7 +1105,7 @@ function renderDashboard(animate){
         <div class="goal-arrival">
           <div class="mini-label">Est. break-even</div>
           <div class="midnum">${c.beDate || '—'}</div>
-          <div class="hint">${c.beMonths!==null ? 'At '+fPct(c.g)+'/mo growth' : 'Need positive growth to project'}</div>
+          <div class="hint">${c.beMonths!==null ? 'GP '+fPct(c.g)+'/mo vs expenses '+fPct(c.expGrowth)+'/mo' : 'Need positive growth to project'}</div>
         </div>
       </div>
       <div class="ring-wrap">
@@ -1174,7 +1187,7 @@ function renderDashboard(animate){
       <section class="kpi card">
         <div class="k-top"><span class="k-label">Monthly Expenses</span></div>
         <div class="k-num num navytxt">${fmt(c.expenses)}</div>
-        <div class="k-sub">${settings.expenseMethod==='lump'?'Lump sum total':'Itemized operating total'}</div>
+        <div class="k-sub">${(parseFloat(m.expenses)||0) > 0 ? 'Recorded for '+monthKeyToLabel(m.monthKey) : (settings.expenseMethod==='lump'?'Lump sum total':'Itemized operating total')}</div>
       </section>
       <section class="kpi card">
         <div class="k-top"><span class="k-label">Months to Break-even</span></div>
@@ -1348,13 +1361,22 @@ function dashRatesUpTo(sorted, idx){
 }
 
 function dashGrowthCalc(sorted, idx){
-  const start=Math.max(1, idx-5); const rates=[];
+  // 6-month window ending on the selected month = 5 month-over-month rates.
+  // Matches calcRollingAvgGrowth() so the dashboard and the Forecast page can
+  // never disagree about what "6-month growth" means.
+  const start=Math.max(1, idx-4); const rates=[];
   for(let k=start;k<=idx;k++){ const p=calcMonthData(sorted[k-1]).totalGP, cu=calcMonthData(sorted[k]).totalGP; if(p>0) rates.push((cu-p)/p); }
   const avg = rates.length? rates.reduce((s,r)=>s+r,0)/rates.length : null;
+  // Compound rate over the same span — used for every forward projection.
+  let cagr = null;
+  if(rates.length){
+    const f=calcMonthData(sorted[start-1]).totalGP, l=calcMonthData(sorted[idx]).totalGP;
+    if(f>0 && l>0) cagr = Math.pow(l/f, 1/(idx-start+1)) - 1;
+  }
   let last=null; if(idx>=1){ const p=calcMonthData(sorted[idx-1]).totalGP; if(p>0) last=(calcMonthData(sorted[idx]).totalGP-p)/p; }
   let trend='stable';
   if(rates.length>=2){ const mid=Math.ceil(rates.length/2); const fa=rates.slice(0,mid).reduce((s,r)=>s+r,0)/mid; const la=rates.slice(-mid).reduce((s,r)=>s+r,0)/mid; const diff=la-fa; if(diff>0.005)trend='accelerating'; else if(diff<-0.005)trend='decelerating'; }
-  return { avg, last, trend };
+  return { avg, cagr, last, trend };
 }
 
 function dashAddMonths(monthKey, n){
@@ -1365,13 +1387,25 @@ function dashAddMonths(monthKey, n){
 function dashCompute(sorted, idx){
   const m = sorted[idx];
   const d = calcMonthData(m);
-  const expenses = calcTotalExpenses();
+  // Use the SELECTED MONTH's own expenses, so every figure on this panel agrees
+  // with the Net Profit shown beside it. calcTotalExpenses() is a single current
+  // setting, so using it made the ring read "GP X vs Y needed" while the net was
+  // computed from a different Y. Fall back to the setting only if the month has none.
+  const monthExp = parseFloat(m.expenses) || 0;
+  const expenses = monthExp > 0 ? monthExp : calcTotalExpenses();
   const vm = settings.valuationMultiple || 3;
   const target = 1000000;
   const rates = dashRatesUpTo(sorted, idx);
   const combined = rates.rxGPRate + rates.rebRate;
   const growth = dashGrowthCalc(sorted, idx);
-  const g = growth.avg!==null ? growth.avg : (settings.growthRates.realistic||3)/100;
+  // Compound rate for projections; fall back to the simple mean, then to settings.
+  const g = growth.cagr!==null ? growth.cagr
+          : growth.avg!==null ? growth.avg
+          : (settings.growthRates.realistic||3)/100;
+  // Trailing expense growth — holding costs flat while GP compounds is optimistic.
+  const firstExp = parseFloat(sorted[0].expenses) || 0;
+  const expGrowth = (idx > 0 && firstExp > 0 && monthExp > 0)
+    ? Math.max(0, Math.pow(monthExp/firstExp, 1/idx) - 1) : 0;
 
   // Valuation is based on NET profit run-rate: monthly net profit × 12 × multiple.
   // Until the pharmacy is profitable, the panel shows a break-even forecast instead.
@@ -1380,9 +1414,23 @@ function dashCompute(sorted, idx){
   const value = Math.max(0, monthlyNet) * 12 * vm;
   const pct = Math.min(100, Math.max(0, value/target*100));
 
-  // Months to $1M (only meaningful once profitable): grow net profit at avg growth.
+  // Months to $1M (only meaningful once profitable). Net profit is the thin
+  // difference between two large numbers, so it CANNOT be compounded at the GP
+  // growth rate — that ignores operating leverage and was pricing the milestone
+  // roughly 6x too far out. Grow gross profit and expenses separately instead,
+  // and take the net each month.
   let m1=null;
-  if(isProfit){ if(value>=target) m1=0; else { let nv=monthlyNet; for(let s3=1;s3<=120;s3++){ nv*=(1+g); if(nv*12*vm>=target){ m1=s3; break; } } } }
+  if(isProfit){
+    if(value>=target) m1=0;
+    else {
+      const reqNet = target/(12*vm);
+      let gpF=d.totalGP, exF=expenses;
+      for(let s3=1;s3<=120;s3++){
+        gpF*=(1+g); exF*=(1+expGrowth);
+        if(gpF-exF>=reqNet){ m1=s3; break; }
+      }
+    }
+  }
   const arrival1M = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
 
   const rx = parseFloat(m.rxSales)||0;
@@ -1401,13 +1449,13 @@ function dashCompute(sorted, idx){
   // Months to break-even: grow current GP run-rate at avg growth until it covers expenses.
   let beMonths=null;
   if(d.netProfit>=0) beMonths=0;
-  else if(g>0){ let gp=d.totalGP; for(let s2=1;s2<=120;s2++){ gp*=(1+g); if(gp-expenses>=0){ beMonths=s2; break; } } }
+  else if(g>0){ let gp=d.totalGP, ex=expenses; for(let s2=1;s2<=120;s2++){ gp*=(1+g); ex*=(1+expGrowth); if(gp-ex>=0){ beMonths=s2; break; } } }
   // Break-even forecast detail: progress = current GP vs the GP needed to cover expenses.
   const beDate = (beMonths && beMonths>0) ? dashAddMonths(m.monthKey, beMonths) : null;
   const bePct  = expenses>0 ? Math.min(100, Math.max(0, d.totalGP/expenses*100)) : 0;
   const beGpGap = Math.max(0, expenses - d.totalGP);
 
-  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, arrival1M, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, g, growth };
+  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, arrival1M, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, g, expGrowth, growth };
 }
 
 function dashCharts(sorted, sel){
