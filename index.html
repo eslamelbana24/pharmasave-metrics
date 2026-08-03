@@ -4092,11 +4092,47 @@ function setAuthLoading(on) {
   if (emailBtn) emailBtn.style.display = on ? 'none' : 'block';
 }
 
+// Google sign-in must lead with the POPUP flow.
+//
+// This app is served from metrics.escarpmentpharmasave.ca, but Firebase's auth
+// handler lives on escarpment-financials.firebaseapp.com — a different origin.
+// signInWithRedirect hands off to that other origin and needs to read state back
+// afterwards, which Chrome and Safari now block or partition as third-party
+// storage. The result is a silent failure: you go to Google, pick an account,
+// come back, and the app still shows the sign-in screen with no error at all.
+// (Firebase's own guidance is to use the popup unless you can proxy /__/auth/ on
+// your own domain, which GitHub Pages cannot do.)
+//
+// Redirect is kept only for the one case the popup genuinely cannot serve — a
+// browser that blocks or does not support popups.
 function doSignIn() {
-  document.getElementById('authError').textContent = '';
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
   setAuthLoading(true);
-  auth.signInWithRedirect(provider).catch(err => {
-    document.getElementById('authError').textContent = 'Google sign-in failed: ' + err.message;
+
+  const REDIRECT_FALLBACK = [
+    'auth/popup-blocked',
+    'auth/operation-not-supported-in-this-environment',
+    'auth/web-storage-unsupported',
+  ];
+  // Closing the popup or double-clicking the button is a normal user action,
+  // not an error worth shouting about.
+  const BENIGN = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
+
+  auth.signInWithPopup(provider).catch(err => {
+    if (BENIGN.includes(err.code)) { setAuthLoading(false); return; }
+
+    if (REDIRECT_FALLBACK.includes(err.code)) {
+      errEl.style.color = '#fca5a5';
+      errEl.textContent = 'Popup blocked — redirecting you to Google…';
+      auth.signInWithRedirect(provider).catch(err2 => {
+        errEl.textContent = 'Google sign-in failed: ' + (err2.message || err2.code);
+        setAuthLoading(false);
+      });
+      return;
+    }
+
+    errEl.textContent = 'Google sign-in failed: ' + (err.message || err.code);
     setAuthLoading(false);
   });
 }
