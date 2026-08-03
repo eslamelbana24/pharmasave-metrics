@@ -523,6 +523,12 @@ const TRUSTED_EMAILS = [
   'escarpment.pharmacy@gmail.com',
 ];
 const ALL_PAGES   = ['Dashboard','EHC','Forecast','Insights','Weekly Metrics','Monthly Data','Expenses','Settings'];
+
+// Months of history used to MEASURE growth (a window of N months yields N-1
+// month-over-month rates). Single source of truth: the dashboard, the Forecast
+// page, the expense-drift rate and the Insights break-even ETA all read this, so
+// they can never disagree about what "average growth" means. Change it here only.
+const GROWTH_WINDOW_MONTHS = 3;
 // Ordered definition used to build the nav and admin checkboxes
 const PAGE_MAP = [
   { id:'dashboard', label:'Dashboard',      name:'Dashboard'      },
@@ -709,7 +715,7 @@ function latestMonth() {
 
 function calcRollingAvgGrowth() {
   const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
-  const slice  = sorted.slice(-6);
+  const slice  = sorted.slice(-GROWTH_WINDOW_MONTHS);
 
   if (slice.length < 2) return {rate: null, count: slice.length, trend: null, rates: []};
 
@@ -1213,7 +1219,7 @@ function renderDashboard(animate){
         <div class="k-sub">${beKpiSub}</div>
       </section>
       <section class="kpi card">
-        <div class="k-top"><span class="k-label">Growth · avg / mo</span>${chip}</div>
+        <div class="k-top"><span class="k-label">Growth · ${GROWTH_WINDOW_MONTHS}-mo avg / mo</span>${chip}</div>
         <div class="k-num num ${growthCls}">${growthAvgStr}</div>
         <div class="k-sub">${growthSub}</div>
       </section>
@@ -1379,10 +1385,10 @@ function dashRatesUpTo(sorted, idx){
 }
 
 function dashGrowthCalc(sorted, idx){
-  // 6-month window ending on the selected month = 5 month-over-month rates.
-  // Matches calcRollingAvgGrowth() so the dashboard and the Forecast page can
-  // never disagree about what "6-month growth" means.
-  const start=Math.max(1, idx-4); const rates=[];
+  // Window of GROWTH_WINDOW_MONTHS ending on the selected month, i.e. N-1
+  // month-over-month rates. Matches calcRollingAvgGrowth() so the dashboard and
+  // the Forecast page can never disagree about what "average growth" means.
+  const start=Math.max(1, idx-(GROWTH_WINDOW_MONTHS-2)); const rates=[];
   for(let k=start;k<=idx;k++){ const p=calcMonthData(sorted[k-1]).totalGP, cu=calcMonthData(sorted[k]).totalGP; if(p>0) rates.push((cu-p)/p); }
   const avg = rates.length? rates.reduce((s,r)=>s+r,0)/rates.length : null;
   // Compound rate over the same span — used for every forward projection.
@@ -1427,11 +1433,11 @@ function dashCompute(sorted, idx){
   const g = growth.cagr!==null ? growth.cagr
           : growth.avg!==null ? growth.avg
           : (settings.growthRates.realistic||3)/100;
-  // Trailing expense growth, measured over the SAME 6-month window as g so the two
+  // Trailing expense growth, measured over the SAME window as g so the two
   // rates driving the moving-target loop are comparable and adding old history
   // cannot silently re-time the milestone. Deflation is preserved, not clamped to
   // zero — a pharmacy actively cutting costs should get credit for it.
-  const expAnchorIdx = Math.max(0, idx - 5);
+  const expAnchorIdx = Math.max(0, idx - (GROWTH_WINDOW_MONTHS-1));
   const anchorExp = parseFloat(sorted[expAnchorIdx].expenses) || 0;
   const expSpan = idx - expAnchorIdx;
   const expGrowth = (expSpan > 0 && anchorExp > 0 && monthExp > 0)
@@ -1700,13 +1706,23 @@ function renderInsights() {
       : `more scripts/mo at ${per(contribPerScript)} dispensing GP each`;
 
   // ── Growth pace + break-even ETA (expenses are NOT held fixed) ─
+  const gStart = Math.max(1, M.length - (GROWTH_WINDOW_MONTHS-1));
   const gpGrowths = [];
-  for (let i = Math.max(1, M.length - 3); i < M.length; i++) {
+  for (let i = gStart; i < M.length; i++) {
     if (M[i-1].gp > 0) gpGrowths.push(M[i].gp / M[i-1].gp - 1);
   }
-  const g3 = gpGrowths.length ? gpGrowths.reduce((s,v)=>s+v,0) / gpGrowths.length : 0;
-  const expGrowth = (first.exp > 0 && M.length > 1)
-    ? Math.max(0, Math.pow(last.exp / first.exp, 1/(M.length-1)) - 1) : 0;
+  // Compound, not the mean of percentages — averaging rates then compounding them
+  // overstates growth (+100% then -50% averages to +25% but nets to 0%).
+  const gSpan = M.length - gStart;
+  const g3 = (gpGrowths.length && M[gStart-1].gp > 0 && last.gp > 0)
+    ? Math.pow(last.gp / M[gStart-1].gp, 1/gSpan) - 1
+    : (gpGrowths.length ? gpGrowths.reduce((s,v)=>s+v,0)/gpGrowths.length : 0);
+  // Expense drift over the SAME window as the growth rate above, so the two rates
+  // driving this projection are comparable — and so adding older history cannot
+  // silently re-time the estimate. Deflation is preserved, not clamped to zero.
+  const eAnchor = M[gStart-1];
+  const expGrowth = (gSpan > 0 && eAnchor && eAnchor.exp > 0 && last.exp > 0)
+    ? Math.pow(last.exp / eAnchor.exp, 1/gSpan) - 1 : 0;
 
   let beEta = null, remainingBurn = null;
   if (hasExp) {
