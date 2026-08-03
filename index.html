@@ -1783,6 +1783,27 @@ function renderInsights() {
       <td class="${x.net >= 0 ? 'pos' : 'neg'}">${fmt(x.net)}</td>
     </tr>`).join('');
 
+  // Break-even tiles only have something to say while the pharmacy is still
+  // losing money. Once gross profit covers expenses they drop off the strip.
+  // gap === null means expenses simply aren't recorded yet — that's a data gap,
+  // not success, so the tiles stay visible (and prompt for the missing input).
+  const beTiles = gap === 0 ? '' : `
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Scripts to Break Even</div>
+        <div class="kpi-val-wrap"><div class="kpi-value" style="${gap === null ? '' : 'color:var(--amber)'}">${gap === null ? '—' : (scriptsNeeded !== null ? '+' + scriptsNeeded.toLocaleString('en-CA') : '—')}</div></div>
+        <div class="kpi-sub">${scriptsSub}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Break-even ETA</div>
+        <div class="kpi-val-wrap"><div class="kpi-value">${beEtaLabel}</div></div>
+        <div class="kpi-sub">${beEtaSub}</div>
+      </div>
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Cash to Break Even</div>
+        <div class="kpi-val-wrap"><div class="kpi-value" style="color:${remainingBurn === null ? 'var(--navy)' : 'var(--red)'}">${remainingBurn !== null ? fmt(remainingBurn) : '—'}</div></div>
+        <div class="kpi-sub">${remainingBurn !== null ? `more to burn · ${fmt(cumNet)} cumulative to date` : `${fmt(cumNet)} cumulative net to date`}</div>
+      </div>`;
+
   el.innerHTML = `
     <div class="kpi-grid mb-20" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
       <div class="kpi-card kpi-std">
@@ -1797,21 +1818,7 @@ function renderInsights() {
         <div class="kpi-val-wrap"><div class="kpi-value">${last.rxGpPerRx !== null ? per(last.rxGpPerRx) : '—'}</div></div>
         <div class="kpi-sub">${last.rxGpPerRx === null ? 'add Rx Count in Monthly Data' : `${last.label} · ${per(last.gpPerRx)} incl. rebate &amp; front store`}</div>
       </div>
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Scripts to Break Even</div>
-        <div class="kpi-val-wrap"><div class="kpi-value ${gap === 0 ? 'pos' : ''}" style="${gap === 0 || gap === null ? '' : 'color:var(--amber)'}">${gap === null ? '—' : gap === 0 ? '✓ There' : (scriptsNeeded !== null ? '+' + scriptsNeeded.toLocaleString('en-CA') : '—')}</div></div>
-        <div class="kpi-sub">${scriptsSub}</div>
-      </div>
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Break-even ETA</div>
-        <div class="kpi-val-wrap"><div class="kpi-value ${beEta === 0 ? 'pos' : ''}">${beEtaLabel}</div></div>
-        <div class="kpi-sub">${beEtaSub}</div>
-      </div>
-      <div class="kpi-card kpi-std">
-        <div class="kpi-label">Cash to Break Even</div>
-        <div class="kpi-val-wrap"><div class="kpi-value" style="color:${remainingBurn === null ? 'var(--navy)' : 'var(--red)'}">${remainingBurn !== null ? fmt(remainingBurn) : (cumNet >= 0 ? '✓ None' : '—')}</div></div>
-        <div class="kpi-sub">${remainingBurn !== null ? `more to burn · ${fmt(cumNet)} cumulative to date` : `${fmt(cumNet)} cumulative net to date`}</div>
-      </div>
+      ${beTiles}
       <div class="kpi-card kpi-std">
         <div class="kpi-label">Drug Purchases</div>
         <div class="kpi-val-wrap"><div class="kpi-value">${last.cogs > 0 ? fmt(last.cogs) : '—'}</div></div>
