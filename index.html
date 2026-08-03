@@ -1036,7 +1036,7 @@ function renderDashboard(animate){
   const sel = dashSel;
   const c = dashCompute(sorted, sel);
   const m = c.m, d = c.d;
-  const profitable = d.netProfit>=0;
+  const profitable = c.isProfit;
   const rx = parseFloat(m.rxSales)||0;
   const fSign=n=>(n<0?'-$':'+$')+Math.abs(Math.round(n)).toLocaleString('en-CA');
   const fPct=n=>(n>=0?'+':'')+(n*100).toFixed(1)+'%';
@@ -1071,7 +1071,18 @@ function renderDashboard(animate){
   let goalHtml;
   if(c.isProfit){
     const arrivalStr = c.value>=1000000 ? '🎉' : (c.arrival1M || '—');
-    const arrivalSub = c.value>=1000000 ? "You're there!" : (c.arrival1M ? 'GP '+fPct(c.g)+'/mo vs expenses '+fPct(c.expGrowth)+'/mo' : 'Grow net profit to project a date');
+    // c.g is measured on GROSS PROFIT and applied to Rx sales (the owner's choice),
+    // so name the rate's source rather than implying Rx sales were measured.
+    const blockedMsg = {
+      rates:  'Set a measured Rx margin in Settings to project',
+      growth: 'Need positive growth to project',
+      sales:  'Need recorded Rx sales to project',
+      outrun: 'Expenses are outgrowing sales — not reachable on this trend',
+      faraway:'More than 10 years out at this pace',
+    }[c.m1Blocked] || 'Not enough data to project';
+    const arrivalSub = c.value>=1000000 ? "You're there!"
+      : c.arrival1M ? 'Rx sales at '+fPct(c.g)+'/mo (GP pace) vs expenses '+fPct(c.expGrowth)+'/mo'
+      : blockedMsg;
     goalHtml = `
       <div class="goal-top">
         <div class="goal-value">
@@ -1114,7 +1125,7 @@ function renderDashboard(animate){
           <circle class="ring-fill" id="dashRing" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
           <text class="ring-pct" id="dashRingPct" x="60" y="66" text-anchor="middle" font-size="22">0%</text>
         </svg>
-        <div class="ring-meta">GP of <b>${fmt(c.d.totalGP)}</b> vs <b>${fmt(c.expenses)}</b> needed/mo.<br>Currently <b>${fSign(c.d.netProfit)}</b>/mo.<br>${fmt(c.beGpGap)} more GP/mo to break even.</div>
+        <div class="ring-meta">GP of <b>${fmt(c.d.totalGP)}</b> vs <b>${fmt(c.expenses)}</b> needed/mo.<br>Currently <b>${fSign(c.monthlyNet)}</b>/mo.<br>${fmt(c.beGpGap)} more GP/mo to break even.</div>
       </div>`;
   }
 
@@ -1128,7 +1139,7 @@ function renderDashboard(animate){
       ? `<div class="t-flag pos">🎉 Already at $1M valuation Rx level</div>`
       : `<div class="t-flag warn">You are ${fmt(Math.abs(c.awayMillion))} away in monthly Rx sales</div>`);
   const rateSrc = c.rates.source==='avg' ? c.rates.window+'-mo real avg' : 'manual';
-  const assumptions = `Assumes front-store GP of ${fmt(c.frontGP)}/month (this month) · Rx GP ${(c.rates.rxGPRate*100).toFixed(1)}% · Rebate ${(c.rates.rebRate*100).toFixed(1)}% (${rateSrc}) · Expenses ${fmt(c.expenses)}/month · Valuation = trailing-avg monthly GP × 12 × ${c.vm}.`;
+  const assumptions = `Assumes front-store GP of ${fmt(c.frontGP)}/month (this month) · Rx GP ${(c.rates.rxGPRate*100).toFixed(1)}% · Rebate ${(c.rates.rebRate*100).toFixed(1)}% (${rateSrc}) · Expenses ${fmt(c.expenses)}/month · Valuation = monthly net profit × 12 × ${c.vm}. Both targets are priced at this month's expenses; the arrival estimate lets expenses grow ${(c.expGrowth*100).toFixed(1)}%/month, so the sales required drift upward as you approach them.`;
 
   // momentum
   let momentum;
@@ -1145,7 +1156,7 @@ function renderDashboard(animate){
 
   const projGPcls = c.projGP>=0?'pos':'neg';
   const projNetCls = c.projNet>=0?'pos':'neg';
-  const netCls = d.netProfit>=0?'pos':'neg';
+  const netCls = c.monthlyNet>=0?'pos':'neg';
 
   el.innerHTML = `
   <div class="dash2" data-density="${dashDensity}">
@@ -1172,7 +1183,7 @@ function renderDashboard(animate){
         <div class="eyebrow">This month · ${monthKeyToLabel(m.monthKey)}</div>
         <div class="hero-net">
           <div class="lbl">Net Profit</div>
-          <div class="bignum num ${netCls}" id="dashNet">${fSign(d.netProfit)}</div>
+          <div class="bignum num ${netCls}" id="dashNet">${fSign(c.monthlyNet)}</div>
           <div class="sub">${profitable ? 'Gross Profit minus Expenses — in the black' : 'Gross Profit minus Expenses ('+fmt(d.totalGP)+' − '+fmt(c.expenses)+')'}</div>
         </div>
         <div class="hero-now-row">
@@ -1233,13 +1244,13 @@ function renderDashboard(animate){
         ${canTargets ? `
         <div class="target-block">
           <div class="t-lbl">Rx sales to break even</div>
-          <div class="t-num num">${fmt(c.beRx)}</div>
+          <div class="t-num num">${fmt(Math.max(0, c.beRx))}</div>
           <div class="t-desc">GP at this level covers all ${fmt(c.expenses)} in monthly expenses.</div>
           ${beFlag}
         </div>
         <div class="target-block">
           <div class="t-lbl">Rx sales for $1M valuation</div>
-          <div class="t-num num">${fmt(c.valRx)}</div>
+          <div class="t-num num">${fmt(Math.max(0, c.valRx))}</div>
           <div class="t-desc">Generates the net profit needed for a $1M pharmacy value.</div>
           ${mFlag}
         </div>
@@ -1295,11 +1306,11 @@ function renderDashboard(animate){
 
   // animated counters
   if(animate && _dashPrev){
-    dashAnimateNum(document.getElementById('dashNet'), _dashPrev.net, d.netProfit, fSign);
+    dashAnimateNum(document.getElementById('dashNet'), _dashPrev.net, c.monthlyNet, fSign);
     // only animate the valuation figure when both states are the $1M valuation (a number)
     if(c.isProfit && _dashPrev.isProfit) dashAnimateNum(document.getElementById('dashValue'), _dashPrev.value, c.value, fmt);
   }
-  _dashPrev = { net:d.netProfit, value:c.value, isProfit:c.isProfit };
+  _dashPrev = { net:c.monthlyNet, value:c.value, isProfit:c.isProfit };
 
   // events
   document.getElementById('dashMonthpick').addEventListener('click', e=>{
@@ -1393,69 +1404,95 @@ function dashCompute(sorted, idx){
   // computed from a different Y. Fall back to the setting only if the month has none.
   const monthExp = parseFloat(m.expenses) || 0;
   const expenses = monthExp > 0 ? monthExp : calcTotalExpenses();
-  const vm = settings.valuationMultiple || 3;
+  const vmRaw = parseFloat(settings.valuationMultiple);
+  const vm = (isFinite(vmRaw) && vmRaw > 0) ? vmRaw : 3;
   const target = 1000000;
   const rates = dashRatesUpTo(sorted, idx);
   const combined = rates.rxGPRate + rates.rebRate;
+  // The margin is only trustworthy when it was measured (avg basis) or when GP is
+  // genuinely entered as a % of Rx sales. Under fee+markup with a manual basis,
+  // `combined` is just settings.rxGPPct — a number the Settings page itself calls
+  // "not measured". The Rx-sales targets already hide behind this; so must the ETA.
+  const ratesOK = combined > 0 && (settings.rxGPMethod === 'pct' || rates.source === 'avg');
   const growth = dashGrowthCalc(sorted, idx);
   // Compound rate for projections; fall back to the simple mean, then to settings.
   const g = growth.cagr!==null ? growth.cagr
           : growth.avg!==null ? growth.avg
           : (settings.growthRates.realistic||3)/100;
-  // Trailing expense growth — holding costs flat while GP compounds is optimistic.
-  const firstExp = parseFloat(sorted[0].expenses) || 0;
-  const expGrowth = (idx > 0 && firstExp > 0 && monthExp > 0)
-    ? Math.max(0, Math.pow(monthExp/firstExp, 1/idx) - 1) : 0;
+  // Trailing expense growth, measured over the SAME 6-month window as g so the two
+  // rates driving the moving-target loop are comparable and adding old history
+  // cannot silently re-time the milestone. Deflation is preserved, not clamped to
+  // zero — a pharmacy actively cutting costs should get credit for it.
+  const expAnchorIdx = Math.max(0, idx - 5);
+  const anchorExp = parseFloat(sorted[expAnchorIdx].expenses) || 0;
+  const expSpan = idx - expAnchorIdx;
+  const expGrowth = (expSpan > 0 && anchorExp > 0 && monthExp > 0)
+    ? Math.pow(monthExp/anchorExp, 1/expSpan) - 1 : 0;
 
   // Valuation is based on NET profit run-rate: monthly net profit × 12 × multiple.
   // Until the pharmacy is profitable, the panel shows a break-even forecast instead.
-  const monthlyNet = d.netProfit;
+  // Derive net from the SAME `expenses` every other figure here uses. Reading it
+  // from d.netProfit instead would use m.expenses directly, which is 0 for a month
+  // with a blank expense field — that made a loss-making month report a huge
+  // valuation and flip the panel to the $1M model.
+  const monthlyNet = d.totalGP - expenses;
   const isProfit = monthlyNet >= 0;
   const value = Math.max(0, monthlyNet) * 12 * vm;
   const pct = Math.min(100, Math.max(0, value/target*100));
 
-  // Months to $1M (only meaningful once profitable). Net profit is the thin
-  // difference between two large numbers, so it CANNOT be compounded at the GP
-  // growth rate — that ignores operating leverage and was pricing the milestone
-  // roughly 6x too far out. Grow gross profit and expenses separately instead,
-  // and take the net each month.
-  let m1=null;
-  if(isProfit){
-    if(value>=target) m1=0;
-    else {
-      const reqNet = target/(12*vm);
-      let gpF=d.totalGP, exF=expenses;
-      for(let s3=1;s3<=120;s3++){
-        gpF*=(1+g); exF*=(1+expGrowth);
-        if(gpF-exF>=reqNet){ m1=s3; break; }
-      }
-    }
-  }
-  const arrival1M = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
-
   const rx = parseFloat(m.rxSales)||0;
   const targetRx = rx*(1+g);
   const frontGP = d.frontGP;
+
+  // Months to $1M valuation (only shown once profitable). Modelled on Rx SALES,
+  // which is the lever the pharmacy actually pulls:
+  //   net profit needed = $1M / multiple / 12
+  //   Rx sales needed   = (net needed + expenses - front-store GP) / combined margin
+  //                       i.e. break-even sales PLUS the sales that fund that net
+  // Rx sales are then compounded at the trailing growth rate until they reach it.
+  // The target is recomputed every month because expenses keep rising — it is a
+  // moving goalpost, not a fixed line.
+  const reqNet1M = target/(12*vm);
+  let m1=null, m1Blocked=null;   // m1Blocked explains WHY there is no date
+  if(isProfit){
+    if(value>=target) m1=0;
+    else if(!ratesOK)   m1Blocked='rates';       // margin isn't measured — can't price a target
+    else if(!(g>0))     m1Blocked='growth';      // flat or shrinking
+    else if(!(rx>0))    m1Blocked='sales';       // nothing to compound
+    else {
+      let rxF=rx, exF=expenses;
+      for(let s3=1;s3<=120;s3++){
+        rxF*=(1+g); exF*=(1+expGrowth);
+        if(rxF >= (reqNet1M + exF - frontGP)/combined){ m1=s3; break; }
+      }
+      // Ran the full horizon without converging: costs are outrunning sales, or
+      // the milestone is simply more than 10 years out. Saying "need positive
+      // growth" here would be flatly wrong — growth IS positive.
+      if(m1===null) m1Blocked = (expGrowth >= g) ? 'outrun' : 'faraway';
+    }
+  }
+  const arrival1M = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
   let projGP, projNet;
   if(rates.source==='avg'){ projGP = targetRx*combined + frontGP; projNet = projGP - expenses; }
   else { const nd=calcMonthData({...m, rxSales:targetRx}); projGP=nd.totalGP; projNet=nd.netProfit; }
 
   const beRx = combined>0 ? (expenses - frontGP)/combined : null;
   const needMore = beRx!==null ? beRx-rx : null;
-  const reqMonthlyNP=(target/vm)/12; const reqTotalGP=reqMonthlyNP+expenses;
-  const valRx = combined>0 ? (reqTotalGP - frontGP)/combined : null;
+  // Rx sales required for a $1M valuation AT TODAY'S COSTS (the ETA above lets
+  // this target drift upward as expenses grow).
+  const valRx = combined>0 ? (reqNet1M + expenses - frontGP)/combined : null;
   const awayMillion = valRx!==null ? valRx-rx : null;
 
   // Months to break-even: grow current GP run-rate at avg growth until it covers expenses.
   let beMonths=null;
-  if(d.netProfit>=0) beMonths=0;
+  if(monthlyNet>=0) beMonths=0;
   else if(g>0){ let gp=d.totalGP, ex=expenses; for(let s2=1;s2<=120;s2++){ gp*=(1+g); ex*=(1+expGrowth); if(gp-ex>=0){ beMonths=s2; break; } } }
   // Break-even forecast detail: progress = current GP vs the GP needed to cover expenses.
   const beDate = (beMonths && beMonths>0) ? dashAddMonths(m.monthKey, beMonths) : null;
   const bePct  = expenses>0 ? Math.min(100, Math.max(0, d.totalGP/expenses*100)) : 0;
   const beGpGap = Math.max(0, expenses - d.totalGP);
 
-  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, arrival1M, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, g, expGrowth, growth };
+  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, m1Blocked, arrival1M, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, g, expGrowth, growth };
 }
 
 function dashCharts(sorted, sel){
