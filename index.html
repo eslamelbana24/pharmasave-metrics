@@ -1676,6 +1676,9 @@ function renderInsights() {
   // ── Cash: burned to date + projected remaining ────────────────
   const cumNet = M.reduce((s,x) => s + x.net, 0);
 
+  // ── Average Rx value (gross Rx sales ÷ prescriptions) ─────────
+  const avgRxDelta = (last.perRx !== null && prev.perRx !== null) ? last.perRx - prev.perRx : null;
+
   // ── Script growth, rebate rate, expense creep ─────────────────
   const scriptMoM = (prev.cnt > 0 && last.cnt > 0) ? (last.cnt / prev.cnt - 1) * 100 : null;
   const rebRows = M.filter(x => x.rebate > 0 && x.cogs > 0).slice(-3);
@@ -1782,6 +1785,13 @@ function renderInsights() {
 
   el.innerHTML = `
     <div class="kpi-grid mb-20" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <div class="kpi-card kpi-std">
+        <div class="kpi-label">Avg Rx Value</div>
+        <div class="kpi-val-wrap"><div class="kpi-value">${last.perRx !== null ? per(last.perRx) : '—'}</div></div>
+        <div class="kpi-sub">${last.perRx === null ? 'add Rx Count in Monthly Data'
+          : avgRxDelta === null ? `${last.label} · Rx sales ÷ prescriptions`
+          : `${last.label} · ${(avgRxDelta >= 0 ? '+' : '−') + per(Math.abs(avgRxDelta))} vs ${prev.label}`}</div>
+      </div>
       <div class="kpi-card kpi-std">
         <div class="kpi-label">Dispensing GP / Script</div>
         <div class="kpi-val-wrap"><div class="kpi-value">${last.rxGpPerRx !== null ? per(last.rxGpPerRx) : '—'}</div></div>
