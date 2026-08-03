@@ -1075,6 +1075,7 @@ function renderDashboard(animate){
     // so name the rate's source rather than implying Rx sales were measured.
     const blockedMsg = {
       rates:  'Set a measured Rx margin in Settings to project',
+      nodata: 'Not enough history to project',
       growth: 'Need positive growth to project',
       sales:  'Need recorded Rx sales to project',
       outrun: 'Expenses are outgrowing sales — not reachable on this trend',
@@ -1134,9 +1135,15 @@ function renderDashboard(animate){
   const beFlag = c.beRx===null ? '' : (beAbove
       ? `<div class="t-flag pos">✓ Already above break-even Rx level</div>`
       : `<div class="t-flag warn">You need ${fmt(c.needMore)} more in Rx sales</div>`);
+  // The sales target is priced off the TRAILING margin, but the valuation is the
+  // month's own realized net. A high-sales/low-margin month (one specialty script
+  // at a flat fee) can clear the sales bar without producing the profit, so never
+  // celebrate on sales alone — require the actual valuation to be there too.
   const mAbove = c.awayMillion!==null && c.awayMillion<=0;
   const mFlag = c.valRx===null ? '' : (mAbove
-      ? `<div class="t-flag pos">🎉 Already at $1M valuation Rx level</div>`
+      ? (c.value >= 1000000
+          ? `<div class="t-flag pos">🎉 Already at $1M valuation Rx level</div>`
+          : `<div class="t-flag warn">Rx sales are at the target, but this month's margin puts the valuation at ${fmt(c.value)} — the gap is margin, not volume</div>`)
       : `<div class="t-flag warn">You are ${fmt(Math.abs(c.awayMillion))} away in monthly Rx sales</div>`);
   const rateSrc = c.rates.source==='avg' ? c.rates.window+'-mo real avg' : 'manual';
   const assumptions = `Assumes front-store GP of ${fmt(c.frontGP)}/month (this month) · Rx GP ${(c.rates.rxGPRate*100).toFixed(1)}% · Rebate ${(c.rates.rebRate*100).toFixed(1)}% (${rateSrc}) · Expenses ${fmt(c.expenses)}/month · Valuation = monthly net profit × 12 × ${c.vm}. Both targets are priced at this month's expenses; the arrival estimate lets expenses grow ${(c.expGrowth*100).toFixed(1)}%/month, so the sales required drift upward as you approach them.`;
@@ -1416,6 +1423,7 @@ function dashCompute(sorted, idx){
   const ratesOK = combined > 0 && (settings.rxGPMethod === 'pct' || rates.source === 'avg');
   const growth = dashGrowthCalc(sorted, idx);
   // Compound rate for projections; fall back to the simple mean, then to settings.
+  const gMeasured = growth.cagr!==null || growth.avg!==null;
   const g = growth.cagr!==null ? growth.cagr
           : growth.avg!==null ? growth.avg
           : (settings.growthRates.realistic||3)/100;
@@ -1456,6 +1464,7 @@ function dashCompute(sorted, idx){
   let m1=null, m1Blocked=null;   // m1Blocked explains WHY there is no date
   if(isProfit){
     if(value>=target) m1=0;
+    else if(!gMeasured) m1Blocked='nodata';      // g is an assumed setting, not measured
     else if(!ratesOK)   m1Blocked='rates';       // margin isn't measured — can't price a target
     else if(!(g>0))     m1Blocked='growth';      // flat or shrinking
     else if(!(rx>0))    m1Blocked='sales';       // nothing to compound
@@ -1472,9 +1481,18 @@ function dashCompute(sorted, idx){
     }
   }
   const arrival1M = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
+  // Switch on whether GP actually scales with Rx sales, not on the rate source.
+  // Under fee+markup calcMonthData ignores rxSales entirely (rxGP is the entered
+  // dollars), so re-running it with a higher targetRx returned identical output —
+  // the "next month at +12%" tile was silently showing this month's GP unchanged.
   let projGP, projNet;
-  if(rates.source==='avg'){ projGP = targetRx*combined + frontGP; projNet = projGP - expenses; }
-  else { const nd=calcMonthData({...m, rxSales:targetRx}); projGP=nd.totalGP; projNet=nd.netProfit; }
+  if(settings.rxGPMethod === 'pct'){
+    const nd = calcMonthData({...m, rxSales:targetRx});
+    projGP = nd.totalGP;
+  } else {
+    projGP = targetRx*combined + frontGP;
+  }
+  projNet = projGP - expenses;
 
   const beRx = combined>0 ? (expenses - frontGP)/combined : null;
   const needMore = beRx!==null ? beRx-rx : null;
@@ -1486,7 +1504,7 @@ function dashCompute(sorted, idx){
   // Months to break-even: grow current GP run-rate at avg growth until it covers expenses.
   let beMonths=null;
   if(monthlyNet>=0) beMonths=0;
-  else if(g>0){ let gp=d.totalGP, ex=expenses; for(let s2=1;s2<=120;s2++){ gp*=(1+g); ex*=(1+expGrowth); if(gp-ex>=0){ beMonths=s2; break; } } }
+  else if(g>0 && gMeasured){ let gp=d.totalGP, ex=expenses; for(let s2=1;s2<=120;s2++){ gp*=(1+g); ex*=(1+expGrowth); if(gp-ex>=0){ beMonths=s2; break; } } }
   // Break-even forecast detail: progress = current GP vs the GP needed to cover expenses.
   const beDate = (beMonths && beMonths>0) ? dashAddMonths(m.monthKey, beMonths) : null;
   const bePct  = expenses>0 ? Math.min(100, Math.max(0, d.totalGP/expenses*100)) : 0;
@@ -1503,8 +1521,12 @@ function dashCharts(sorted, sel){
   Chart.defaults.color = C.muted;
   const labels = sorted.map(m=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m.monthKey.split('-')[1])-1]);
   const A = sorted.map(m=>calcMonthData(m));
-  const exp = calcTotalExpenses();
-  const vm = settings.valuationMultiple||3;
+  // Same expense base and multiple as the goal panel, so the chart's reference
+  // lines cannot disagree with the targets shown beside them.
+  const selExp = parseFloat((sorted[sel]||{}).expenses) || 0;
+  const exp = selExp > 0 ? selExp : calcTotalExpenses();
+  const vmRawC = parseFloat(settings.valuationMultiple);
+  const vm = (isFinite(vmRawC) && vmRawC > 0) ? vmRawC : 3;
   const targetMonthlyGP = (1000000/vm)/12 + exp;
 
   // streams line
