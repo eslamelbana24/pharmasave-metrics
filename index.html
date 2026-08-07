@@ -171,9 +171,13 @@ input:focus{border-color:var(--navy)}
 
 /* EHC MISSION HEADER */
 /* ── EHC "Code Red" mission hero ── */
-.ehc-mission{background:var(--navy);border-radius:18px;padding:34px 40px 40px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,122,110,.38);box-shadow:0 0 0 4px rgba(224,82,82,.10)}
+.ehc-mission{background:var(--navy);border-radius:18px;padding:34px 40px 40px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.10)}
+/* Code Red is an ALERT state, applied only inside the countdown threshold — an
+   alarm that is always on carries no information. */
+.ehc-mission.code-red{border-color:rgba(255,122,110,.38);box-shadow:0 0 0 4px rgba(224,82,82,.10)}
 .ehc-mission-headline{font-size:2rem;font-weight:800;line-height:1.25;margin-bottom:12px;letter-spacing:-.01em}
-.ehc-subline{display:flex;align-items:center;gap:10px;font-size:.97rem;font-weight:600;color:#ffd9d4;margin-bottom:26px;flex-wrap:wrap}
+.ehc-subline{display:flex;align-items:center;gap:10px;font-size:.97rem;font-weight:600;color:rgba(255,255,255,.78);margin-bottom:26px;flex-wrap:wrap}
+.ehc-mission.code-red .ehc-subline{color:#ffd9d4}
 .ehc-subline strong{color:#fff;font-weight:800}
 .ehc-tag{display:inline-flex;align-items:center;gap:7px;font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#ff7a6e;border:1px solid rgba(255,122,110,.45);background:rgba(224,82,82,.14);padding:4px 10px;border-radius:999px;flex:none}
 .ehc-dot{width:7px;height:7px;border-radius:50%;background:#ff7a6e;flex:none;animation:ehcPulse 2s ease-in-out infinite}
@@ -182,7 +186,8 @@ input:focus{border-color:var(--navy)}
 .ehc-cd-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .ehc-cd-box{background:rgba(255,255,255,.10);border-radius:12px;padding:24px 28px 26px}
 .ehc-cd-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.62);margin-bottom:10px}
-.ehc-cd-num{font-size:3.4rem;font-weight:800;color:#ff7a6e;line-height:1;margin-bottom:6px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ehc-cd-num{font-size:3.4rem;font-weight:800;color:#fbd98a;line-height:1;margin-bottom:6px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ehc-mission.code-red .ehc-cd-num{color:#ff7a6e}
 .ehc-cd-sub{font-size:.98rem;color:rgba(255,255,255,.92);line-height:1.4}
 .ehc-note-card{border-left:4px solid var(--teal)}
 @media(max-width:640px){
@@ -529,6 +534,10 @@ const ALL_PAGES   = ['Dashboard','EHC','Forecast','Insights','Weekly Metrics','M
 // page, the expense-drift rate and the Insights break-even ETA all read this, so
 // they can never disagree about what "average growth" means. Change it here only.
 const GROWTH_WINDOW_MONTHS = 3;
+
+// Days remaining on the EHC mission at which the hero switches into its
+// "Code Red" alert treatment (red glow, pulsing pill, red countdown numbers).
+const CODE_RED_DAYS = 60;
 // Ordered definition used to build the nav and admin checkboxes
 const PAGE_MAP = [
   { id:'dashboard', label:'Dashboard',      name:'Dashboard'      },
@@ -3577,34 +3586,32 @@ function renderEHC() {
   const y = now.getFullYear(), m = now.getMonth() + 1;
 
   // ── Mission countdown ─────────────────────────────────────────
+  // Computed once and reused: the big number, the subline and the Code Red state
+  // are three views of the same figure and must never disagree.
   const missionEnd = settings.ehcMissionEndDate || '';
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysLeft   = missionEnd
+    ? Math.ceil((new Date(missionEnd + 'T00:00:00') - todayStart) / 86400000)
+    : null;
+  const codeRed = daysLeft !== null && daysLeft > 0 && daysLeft <= CODE_RED_DAYS;
+
   let missionHtml;
-  if (!missionEnd) {
+  if (daysLeft === null) {
     missionHtml = `<div class="ehc-cd-num" style="font-size:1rem;line-height:1.5">—</div><div class="ehc-cd-sub">Set in Settings</div>`;
+  } else if (daysLeft <= 0) {
+    missionHtml = `<div style="font-size:.95rem;font-weight:700;color:#fff;line-height:1.4">Mission Complete</div><div class="ehc-cd-sub" style="margin-top:4px">Awaiting next mission</div>`;
   } else {
-    const endDate    = new Date(missionEnd + 'T00:00:00');
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const daysLeft   = Math.ceil((endDate - todayStart) / 86400000);
-    if (daysLeft <= 0) {
-      missionHtml = `<div style="font-size:.95rem;font-weight:700;color:#fff;line-height:1.4">Mission Complete</div><div class="ehc-cd-sub" style="margin-top:4px">Awaiting next mission</div>`;
-    } else {
-      missionHtml = `<div class="ehc-cd-num">${daysLeft}</div><div class="ehc-cd-sub">${daysLeft === 1 ? 'day' : 'days'} remaining</div>`;
-    }
+    missionHtml = `<div class="ehc-cd-num">${daysLeft}</div><div class="ehc-cd-sub">${daysLeft === 1 ? 'day' : 'days'} remaining</div>`;
   }
 
-  // ── Code Red subline (derived from the same mission countdown) ──
-  let sublineStrong;
-  if (!missionEnd) {
-    sublineStrong = 'Set mission date in Settings';
-  } else {
-    const endDate2  = new Date(missionEnd + 'T00:00:00');
-    const todayS2   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const daysLeft2 = Math.ceil((endDate2 - todayS2) / 86400000);
-    sublineStrong = daysLeft2 <= 0 ? 'Mission complete'
-                  : daysLeft2 <= 60 ? 'Under 60 days'
-                  : `${daysLeft2} days remaining`;
-  }
-  const sublineHtml = `<span class="ehc-tag"><span class="ehc-dot"></span>Code Red</span><span><strong>${sublineStrong}</strong></span>`;
+  // ── Subline: the Code Red pill appears only inside the threshold ──
+  const sublineStrong = daysLeft === null ? 'Set mission date in Settings'
+                      : daysLeft <= 0     ? 'Mission complete'
+                      : codeRed           ? `Under ${CODE_RED_DAYS} days`
+                      : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} remaining`;
+  const sublineHtml =
+    (codeRed ? `<span class="ehc-tag"><span class="ehc-dot"></span>Code Red</span>` : '') +
+    `<span><strong>${sublineStrong}</strong></span>`;
 
   // ── Patient countdown ─────────────────────────────────────────
   const bpAbs        = settings.bpAbsoluteTarget || 0;
@@ -3680,7 +3687,7 @@ function renderEHC() {
   el.innerHTML = `
 
     <!-- ── Mission Header ─────────────────────────────────────── -->
-    <div class="ehc-mission">
+    <div class="ehc-mission${codeRed ? ' code-red' : ''}">
       <div class="ehc-mission-headline">Mission: Stay Open. Bring It Home.</div>
       <div class="ehc-subline">${sublineHtml}</div>
       <div class="ehc-cd-grid">
