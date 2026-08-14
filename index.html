@@ -4208,7 +4208,12 @@ function doSignOut() {
 // Returns the data object or null if the user is not in the system.
 async function fetchUserRecord(email) {
   const doc = await db.collection(FS_USERS).doc(email).get();
-  return doc.exists ? doc.data() : null;
+  if (!doc.exists) return null;
+  const data = doc.data() || {};
+  // Removed staff keep a tombstone doc so the bootstrap cannot resurrect them;
+  // it must still read as no access, hitting the normal "Access denied" path.
+  if (data.removed === true) return null;
+  return data;
 }
 
 // Default users that should always exist in Firestore.
@@ -4249,8 +4254,15 @@ async function bootstrapUsersIfNeeded() {
     const snap = snapshots[i];
     if (!snap.exists) return;                      // just created above with full list
     const cur  = snap.data() || {};
-    const role = cur.role || '';
-    if (role !== 'Owner' && role !== 'Full Access') return;
+    if (cur.removed === true) return;               // never re-widen a removed account
+    // Decide from what THIS entry is defined to grant, not from the role string
+    // stored in Firestore. The admin panel lets role and pages be set
+    // independently, so a stale or mistaken role of 'Full Access' on a clinic
+    // account would otherwise silently hand it all eight pages on the next
+    // owner login — overriding the pages the owner had actually chosen.
+    const intended = DEFAULT_USERS[i];
+    const grantsAll = Array.isArray(intended.pages) && ALL_PAGES.every(p => intended.pages.includes(p));
+    if (!grantsAll) return;
     const have   = Array.isArray(cur.pages) ? cur.pages : [];
     const merged = [...new Set([...have, ...ALL_PAGES])];
     if (merged.length !== have.length) {
@@ -4269,7 +4281,7 @@ let _adminUsers = []; // cached list for the admin panel
 
 async function loadAdminUsers() {
   const snap = await db.collection(FS_USERS).get();
-  _adminUsers = snap.docs.map(d => d.data());
+  _adminUsers = snap.docs.map(d => d.data()).filter(u => u && u.removed !== true);
   _adminUsers.sort((a,b) => a.email.localeCompare(b.email));
   renderAdminUserList();
 }
@@ -4347,7 +4359,14 @@ async function saveEditUser(email) {
 async function removeUser(email) {
   if (email === OWNER_EMAIL) return;
   if (!confirm(`Remove ${email}?\n\nThey will lose access immediately on next page load.`)) return;
-  await db.collection(FS_USERS).doc(email).delete();
+  // Tombstone rather than hard-delete. bootstrapUsersIfNeeded() recreates any
+  // DEFAULT_USERS doc that is merely MISSING, so deleting a listed staff member
+  // was silently undone the next time the owner signed in — they got their
+  // access back. A tombstone doc still exists, so the bootstrap skips it.
+  await db.collection(FS_USERS).doc(email).set(
+    { email, removed: true, pages: [], role: 'Removed', removedAt: new Date().toISOString() },
+    { merge: true }
+  );
   await loadAdminUsers();
 }
 
