@@ -4221,6 +4221,11 @@ const DEFAULT_USERS = [
   { email: 'doctormetwally84@gmail.com',             pages: [...ALL_PAGES], role: 'Full Access',  authMethod: 'google' },
   { email: 'tatjana.dsouza@escarpmenthealth.ca',     pages: ['EHC'],        role: 'Clinic Staff', authMethod: 'email', mustChangePassword: true },
   { email: 'tatjana.dsouza@gmail.com',               pages: ['EHC'],        role: 'Clinic Staff', authMethod: 'google' },
+  // escarpmenthealth.ca is on Microsoft 365, not Google Workspace, so a work
+  // address cannot use "Sign in with Google" — clinic staff on that domain are
+  // email/password. The Firebase Auth account must be created in the console
+  // first; this record only grants what that account may see once it signs in.
+  { email: 'vanessa.silaphet@escarpmenthealth.ca',   pages: ['EHC'],        role: 'Clinic Staff', authMethod: 'email', mustChangePassword: true },
 ];
 
 // Ensures every entry in DEFAULT_USERS exists in Firestore.
