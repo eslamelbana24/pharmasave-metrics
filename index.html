@@ -193,7 +193,10 @@ input:focus{border-color:var(--navy)}
 .ehero-ring .sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:8px;font-variant-numeric:tabular-nums}
 .ehero-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.61,.36,1)}
 
-.epace{border-top:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.10);padding:26px 48px 34px}
+/* colour lives on .epace, not on the hero wrapper: the strip also renders
+   standalone on Weekly Metrics, where it would otherwise inherit the page's
+   dark body text and render the numbers nearly invisible on navy. */
+.epace{border-top:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.10);padding:26px 48px 34px;color:#fff}
 .ehero .epace{margin:0}
 .epace-solo{background:var(--navy);border-radius:20px;margin-bottom:16px;border-top:none}
 .epace-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 22px;gap:12px;flex-wrap:wrap}
