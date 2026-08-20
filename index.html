@@ -487,6 +487,7 @@ input:focus{border-color:var(--navy)}
         onkeydown="if(event.key==='Enter')doChangePassword()">
       <div id="pwChangeError" style="color:var(--red);font-size:0.8rem;min-height:1em"></div>
       <button onclick="doChangePassword()" class="btn btn-primary" style="width:100%">Save New Password</button>
+      <button onclick="signOutFromPwChange()" class="btn btn-ghost" style="width:100%">Sign out / use a different account</button>
     </div>
   </div>
 </div>
@@ -4265,13 +4266,34 @@ async function doChangePassword() {
   if (pw1 !== pw2)     { errEl.textContent = 'Passwords do not match.'; return; }
   try {
     await auth.currentUser.updatePassword(pw1);
-    // Clear the mustChangePassword flag in Firestore
+    // The password is already changed at this point. If clearing the flag is
+    // refused (e.g. Firestore rules deny the user writing their own doc), do NOT
+    // leave them stuck seeing this overlay on every future sign-in — let them
+    // through and tell them, rather than swallowing the error.
     const email = auth.currentUser.email;
-    await db.collection(FS_USERS).doc(email).update({ mustChangePassword: false }).catch(() => {});
+    let flagCleared = true;
+    try {
+      await db.collection(FS_USERS).doc(email).update({ mustChangePassword: false });
+    } catch (e) {
+      flagCleared = false;
+      console.warn('[Auth] could not clear mustChangePassword:', e.code || e.message);
+    }
+    if (userRecord) userRecord.mustChangePassword = false;
     document.getElementById('pwChangeOverlay').style.display = 'none';
+    if (!flagCleared) {
+      alert('Your password was changed successfully.\n\nOne thing: this prompt may appear again next sign-in, because the app could not save that you have set it. Ask the owner to clear it for you.');
+    }
   } catch (err) {
     errEl.textContent = 'Could not update password: ' + (err.message || err.code);
   }
+}
+
+// The password overlay sits above the header, so without this there is no way to
+// leave an account that still owes a password change — Sign Out is covered by it.
+async function signOutFromPwChange() {
+  document.getElementById('pwChangeOverlay').style.display = 'none';
+  try { await auth.signOut(); } catch (e) { console.warn('[Auth] sign-out failed:', e); }
+  location.reload();
 }
 
 function doSignOut() {
