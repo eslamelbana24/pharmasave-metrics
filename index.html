@@ -170,67 +170,70 @@ input:focus{border-color:var(--navy)}
 @media(max-width:520px){.wk-src-grid{grid-template-columns:1fr}}
 
 /* EHC MISSION HEADER */
-/* ── WHOOP-style monthly progress rings (EHC + Weekly Metrics) ── */
-.mrings{background:var(--navy);border-radius:16px;padding:24px 26px 20px;margin-bottom:16px;color:#fff}
-.mrings-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-.mrings-title{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
-.mrings-elapsed{font-size:.72rem;color:rgba(255,255,255,.45)}
-.mrings-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.mring{display:flex;flex-direction:column;align-items:center;text-align:center}
-.mring svg{width:100%;max-width:132px;height:auto;display:block}
-.mring-track{stroke:rgba(255,255,255,.13)}
-.mring-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.61,.36,1)}
-.mring-pace{stroke:rgba(255,255,255,.9);stroke-width:2.5;stroke-linecap:round}
-.mring-pct{font-size:27px;font-weight:800;fill:#fff;font-variant-numeric:tabular-nums}
-.mring-name{font-size:.7rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-top:10px}
-.mring-detail{font-size:1rem;font-weight:700;color:#fff;margin-top:3px;font-variant-numeric:tabular-nums}
-.mring-status{font-size:.72rem;font-weight:600;margin-top:3px}
-.mrings-foot{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.14)}
-.mrings-foot-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px;flex-wrap:wrap}
-.mrings-foot-lbl{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6)}
-.mrings-foot-val{font-size:.85rem;color:rgba(255,255,255,.85);font-variant-numeric:tabular-nums}
-.mrings-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden}
-.mrings-bar-fill{height:100%;border-radius:999px;background:#F5B944;width:0;transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
-@media(max-width:640px){
-  .mrings{padding:20px 16px 16px}
-  .mrings-row{grid-template-columns:1fr;gap:22px}
-  .mring svg{max-width:150px}
-  /* stack the header so the day/pace line can never be clipped on a phone */
-  .mrings-head{flex-direction:column;align-items:flex-start;gap:3px}
-  .mrings-foot-top{flex-direction:column;align-items:flex-start;gap:3px}
+/* ── EHC hero + monthly pace strip (Claude Design: "EHC Hero Redesign") ──
+   One navy card: a large goal ring on the left, the mission copy on the right,
+   and a darker pace strip underneath carrying the three monthly metrics.
+   The pace strip is shared with Weekly Metrics so both pages stay identical. */
+.ehero{background:var(--navy);border-radius:20px;color:#fff;overflow:hidden;margin-bottom:16px}
+.ehero.code-red{box-shadow:0 0 0 4px rgba(224,82,82,.10);outline:1px solid rgba(255,122,110,.38);outline-offset:-1px}
+.ehero-top{display:grid;grid-template-columns:340px 1fr;gap:56px;align-items:center;padding:44px 48px 40px}
+.ehero-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 0 14px}
+.ehero-h1{margin:0 0 18px;font-size:44px;line-height:1.05;font-weight:800;letter-spacing:-.02em;overflow-wrap:break-word}
+.ehero-lede{margin:0;font-size:18px;line-height:1.5;color:rgba(255,255,255,.86);max-width:44ch}
+.ehero-lede b{color:#fff;font-weight:800}
+.ehero-meta{display:flex;align-items:center;gap:14px;margin-top:24px;font-size:13.5px;color:rgba(255,255,255,.55);flex-wrap:wrap}
+.ehero-chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.10);border-radius:999px;padding:7px 14px}
+.ehero-chip .dot{width:7px;height:7px;border-radius:50%;background:#F5A623;flex:none}
+.ehero.code-red .ehero-chip .dot{background:#ff7a6e;animation:ehcPulse 2s ease-in-out infinite}
+.ehero-ring{position:relative;width:340px;height:340px;justify-self:center;max-width:100%}
+.ehero-ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.ehero-ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;padding:0 30px}
+.ehero-ring .big{font-size:88px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ehero-ring .cap{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.ehero-ring .sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:8px;font-variant-numeric:tabular-nums}
+.ehero-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.61,.36,1)}
+
+.epace{border-top:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.10);padding:26px 48px 34px}
+.ehero .epace{margin:0}
+.epace-solo{background:var(--navy);border-radius:20px;margin-bottom:16px;border-top:none}
+.epace-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 22px;gap:12px;flex-wrap:wrap}
+.epace-head .t{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.epace-head .r{font-size:13.5px;color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums}
+.epace-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.emetric{display:flex;align-items:center;gap:18px;background:rgba(255,255,255,.06);border-radius:14px;padding:18px 22px}
+.emring{position:relative;width:76px;height:76px;flex:none}
+.emring svg{transform:rotate(-90deg);display:block}
+.emring .v{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+.emring-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.61,.36,1)}
+.emetric .k{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 0 6px}
+.emetric .n{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.emetric .n span{color:rgba(255,255,255,.55);font-weight:700;font-size:17px}
+.emetric .s{font-size:13px;font-weight:700;margin-top:5px}
+.epace-foot{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.6)}
+
+@media(max-width:900px){
+  .ehero-top{grid-template-columns:1fr;gap:26px;padding:30px 22px 26px;text-align:center}
+  .ehero-ring{width:250px;height:250px;margin:0 auto}
+  .ehero-ring .big{font-size:64px}
+  .ehero-h1{font-size:32px}
+  .ehero-lede{max-width:none;font-size:16px}
+  .ehero-meta{justify-content:center}
+  .epace{padding:22px 20px 26px}
+  .epace-grid{grid-template-columns:1fr;gap:12px}
+}
+@media(max-width:480px){
+  /* the headline is user-editable, so leave room for a longer one */
+  .ehero-h1{font-size:26px}
+  .ehero-ring{width:210px;height:210px}
+  .ehero-ring .big{font-size:54px}
 }
 @media(prefers-reduced-motion:reduce){
-  .mring-arc,.mrings-bar-fill{transition:none}
+  .ehero-arc,.emring-arc{transition:none}
 }
-/* ── EHC "Code Red" mission hero ── */
-.ehc-mission{background:var(--navy);border-radius:18px;padding:34px 40px 40px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.10)}
-/* Code Red is an ALERT state, applied only inside the countdown threshold — an
-   alarm that is always on carries no information. */
-.ehc-mission.code-red{border-color:rgba(255,122,110,.38);box-shadow:0 0 0 4px rgba(224,82,82,.10)}
-.ehc-mission-headline{font-size:2rem;font-weight:800;line-height:1.25;margin-bottom:12px;letter-spacing:-.01em}
-.ehc-subline{display:flex;align-items:center;gap:10px;font-size:.97rem;font-weight:600;color:rgba(255,255,255,.78);margin-bottom:26px;flex-wrap:wrap}
-.ehc-mission.code-red .ehc-subline{color:#ffd9d4}
-.ehc-subline strong{color:#fff;font-weight:800}
-.ehc-tag{display:inline-flex;align-items:center;gap:7px;font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#ff7a6e;border:1px solid rgba(255,122,110,.45);background:rgba(224,82,82,.14);padding:4px 10px;border-radius:999px;flex:none}
-.ehc-dot{width:7px;height:7px;border-radius:50%;background:#ff7a6e;flex:none;animation:ehcPulse 2s ease-in-out infinite}
+/* Pulse for the Code Red chip dot on the EHC hero */
 @keyframes ehcPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,122,110,.45)}50%{opacity:.55;box-shadow:0 0 0 6px rgba(255,122,110,0)}}
-@media(prefers-reduced-motion:reduce){.ehc-dot{animation:none}}
-.ehc-cd-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.ehc-cd-box{background:rgba(255,255,255,.10);border-radius:12px;padding:24px 28px 26px}
-.ehc-cd-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.62);margin-bottom:10px}
-.ehc-cd-num{font-size:3.4rem;font-weight:800;color:#fbd98a;line-height:1;margin-bottom:6px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.ehc-mission.code-red .ehc-cd-num{color:#ff7a6e}
-.ehc-cd-sub{font-size:.98rem;color:rgba(255,255,255,.92);line-height:1.4}
+@media(prefers-reduced-motion:reduce){.ehero.code-red .ehero-chip .dot{animation:none}}
 .ehc-note-card{border-left:4px solid var(--teal)}
-@media(max-width:640px){
-  .ehc-cd-grid{grid-template-columns:1fr}
-}
-@media(max-width:520px){
-  .ehc-mission{padding:22px 18px 24px;border-radius:14px}
-  .ehc-mission-headline{font-size:1.25rem}
-  .ehc-cd-num{font-size:2.4rem}
-  .ehc-cd-box{padding:16px 18px}
-}
 
 /* CELEBRATION */
 .celeb-overlay{position:fixed;inset:0;background:rgba(27,58,107,.72);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
@@ -3310,117 +3313,150 @@ function getWeeklyTip() {
 }
 
 // ================================================================
-// PAGE: WEEKLY METRICS
+// EHC HERO + MONTHLY PACE STRIP
 // ================================================================
-// ================================================================
-// MONTHLY PROGRESS RINGS  (shared by EHC + Weekly Metrics)
-// ================================================================
-// One component, rendered identically on both pages. Each ring is this month's
-// running total against the monthly target (weekly target x 4.33), so it fills
-// progressively as weeks are logged. The tick on each ring marks where the
-// total should be by today if you were exactly on pace, which turns a bare
-// "8 of 22" into ahead / behind at a glance.
+// Implements the "EHC Hero Redesign" from Claude Design. The pace strip is
+// shared: EHC embeds it inside the hero card, Weekly Metrics renders it alone,
+// so both pages always agree on what monthly progress means.
 const MRING_METRICS = [
-  { key:'transfers',    name:'Transfers',     targetKey:'transfersWeeklyTarget',    color:'#6BA8F5' },
-  { key:'blisterPacks', name:'Blister Packs', targetKey:'blisterPacksWeeklyTarget', color:'#F5B944' },
-  { key:'rxCount',      name:'Rx Count',      targetKey:'rxWeeklyTarget',           color:'#35C99A' },
+  { key:'transfers',    name:'Transfers',     targetKey:'transfersWeeklyTarget',    color:'#5B9BF5' },
+  { key:'blisterPacks', name:'Blister packs', targetKey:'blisterPacksWeeklyTarget', color:'#F5A623' },
+  { key:'rxCount',      name:'Rx count',      targetKey:'rxWeeklyTarget',           color:'#22C08A' },
 ];
+const EPACE_RED = '#E05252', EPACE_GREEN = '#22C08A';
 
-function renderMetricRings() {
+// The three monthly metrics, each as a small ring plus its numbers.
+function renderPaceStrip(solo) {
   const now  = new Date();
   const y    = now.getFullYear(), m = now.getMonth() + 1;
-  const dim  = new Date(y, m, 0).getDate();            // days in this month
+  const dim  = new Date(y, m, 0).getDate();
   const pace = Math.min(1, now.getDate() / dim);       // fraction of month elapsed
+  const logged = weeksInMonth(y, m).length;            // nothing logged is not the same as behind
+  const R = 31, SW = 8, C = 2 * Math.PI * R;
 
-  const logged = weeksInMonth(y, m).length;   // nothing logged yet is not the same as behind
-  const R = 50, SW = 10, C = 2 * Math.PI * R;
-
-  const ringsHtml = MRING_METRICS.map(mm => {
+  const cards = MRING_METRICS.map(mm => {
     const actual = monthlyTotal(mm.key, y, m);
     const weekly = parseFloat(settings[mm.targetKey]) || 0;
     const target = Math.round(weekly * 4.33);
+    const fmtN   = n => Math.round(n).toLocaleString('en-CA');
 
+    let pctLabel, offset, colour, status, statusColour, nums;
     if (target <= 0) {
-      return `
-        <div class="mring">
-          <svg viewBox="0 0 120 120" role="img" aria-label="${mm.name}: no target set">
-            <circle class="mring-track" cx="60" cy="60" r="${R}" fill="none" stroke-width="${SW}"></circle>
-            <text class="mring-pct" x="60" y="69" text-anchor="middle" style="font-size:19px;fill:rgba(255,255,255,.5)">—</text>
-          </svg>
-          <div class="mring-name">${mm.name}</div>
-          <div class="mring-detail">${actual.toLocaleString('en-CA')}</div>
-          <div class="mring-status" style="color:rgba(255,255,255,.45)">Set a target in Settings</div>
-        </div>`;
+      pctLabel = '—'; offset = C; colour = 'rgba(255,255,255,.25)';
+      status = 'Set a target in Settings'; statusColour = 'rgba(255,255,255,.5)';
+      nums = `${fmtN(actual)}`;
+    } else {
+      const pct      = actual / target * 100;
+      const expected = target * pace;
+      // arc never inverts on a negative month and never laps past full
+      offset   = C * (1 - Math.max(0, Math.min(100, pct)) / 100);
+      // The design shows 0% on a negative month rather than a negative
+      // percentage; the 'Net loss this month' status carries the real story.
+      pctLabel = Math.max(0, Math.round(pct)) + '%';
+      nums     = `${fmtN(actual)} <span>/ ${fmtN(target)}</span>`;
+      colour   = actual < 0 ? EPACE_RED : mm.color;
+      if (logged === 0)      { status = 'Not logged yet';       statusColour = 'rgba(255,255,255,.5)'; }
+      else if (actual < 0)   { status = 'Net loss this month';  statusColour = EPACE_RED; }
+      else if (pct >= 100)   { status = '✓ Target hit';         statusColour = EPACE_GREEN; }
+      else if (actual >= expected) { status = 'On pace';        statusColour = EPACE_GREEN; }
+      else                   { status = fmtN(expected - actual) + ' behind pace'; statusColour = EPACE_RED; }
     }
 
-    const pct     = actual / target * 100;
-    const shown   = Math.max(0, Math.min(100, pct));   // one full lap max, never negative
-    const offset  = C * (1 - shown / 100);
-    const expected = target * pace;
-
-    let status, statusColor;
-    if (logged === 0)                  { status = 'Not logged yet';    statusColor = 'rgba(255,255,255,.45)'; }
-    else if (pct >= 100)               { status = '✓ Target hit';      statusColor = '#35C99A'; }
-    else if (actual >= expected)       { status = 'On pace';            statusColor = '#35C99A'; }
-    else if (actual >= expected * 0.75){ status = 'Slightly behind';    statusColor = '#F5B944'; }
-    else                               { status = 'Behind pace';        statusColor = '#FF8A80'; }
-
-    // Pace tick sits at the elapsed-fraction angle, 12 o'clock = start of month.
-    // Hidden once the month is over, when "expected" is simply the full target.
-    const paceTick = pace < 1 ? `
-      <line class="mring-pace" x1="60" y1="${60 - (R + SW/2 + 1)}" x2="60" y2="${60 - (R - SW/2 - 1)}"
-            transform="rotate(${(pace * 360).toFixed(2)} 60 60)"></line>` : '';
-
     return `
-      <div class="mring">
-        <svg viewBox="0 0 120 120" role="img" aria-label="${mm.name}: ${actual} of ${target}, ${Math.round(pct)}% of monthly target">
-          <circle class="mring-track" cx="60" cy="60" r="${R}" fill="none" stroke-width="${SW}"></circle>
-          <circle class="mring-arc" cx="60" cy="60" r="${R}" fill="none" stroke="${mm.color}"
-                  stroke-width="${SW}" stroke-linecap="round" transform="rotate(-90 60 60)"
-                  stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}"
-                  data-mring-offset="${offset.toFixed(2)}"></circle>
-          ${paceTick}
-          <text class="mring-pct" x="60" y="69" text-anchor="middle">${Math.round(pct)}<tspan style="font-size:15px">%</tspan></text>
-        </svg>
-        <div class="mring-name">${mm.name}</div>
-        <div class="mring-detail">${actual.toLocaleString('en-CA')} <span style="font-weight:500;color:rgba(255,255,255,.55)">/ ${target.toLocaleString('en-CA')}</span></div>
-        <div class="mring-status" style="color:${statusColor}">${status}</div>
+      <div class="emetric">
+        <div class="emring">
+          <svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${esc(mm.name)}: ${pctLabel} of the monthly target">
+            <circle cx="38" cy="38" r="${R}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="${SW}"></circle>
+            <circle class="emring-arc" cx="38" cy="38" r="${R}" fill="none" stroke="${colour}" stroke-width="${SW}"
+                    stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"
+                    data-mring-offset="${offset.toFixed(1)}"></circle>
+          </svg>
+          <div class="v">${pctLabel}</div>
+        </div>
+        <div>
+          <p class="k">${esc(mm.name)}</p>
+          <div class="n">${nums}</div>
+          <div class="s" style="color:${statusColour}">${status}</div>
+        </div>
       </div>`;
   }).join('');
 
-  // All-time blister-pack goal keeps its bar: it is a different measure from the
-  // monthly rings and the 120-pack mission target still matters.
-  const atBP  = allTimeBP();
-  const bpAbs = parseFloat(settings.bpAbsoluteTarget) || 0;
-  const atPct = bpAbs > 0 ? Math.min(100, atBP / bpAbs * 100) : 0;
-  const footer = bpAbs > 0 ? `
-    <div class="mrings-foot">
-      <div class="mrings-foot-top">
-        <span class="mrings-foot-lbl">All-time blister packs</span>
-        <span class="mrings-foot-val">${atBP.toLocaleString('en-CA')} of ${bpAbs.toLocaleString('en-CA')} · ${Math.max(0, bpAbs - atBP).toLocaleString('en-CA')} to go</span>
-      </div>
-      <div class="mrings-bar"><div class="mrings-bar-fill" data-mring-width="${atPct.toFixed(1)}"></div></div>
-    </div>` : '';
-
   return `
-    <div class="mrings">
-      <div class="mrings-head">
-        <span class="mrings-title">${now.toLocaleString('en-CA',{month:'long'})} progress</span>
-        <span class="mrings-elapsed">Day ${now.getDate()} of ${dim} · ${Math.round(pace*100)}% through the month</span>
+    <div class="epace${solo ? ' epace-solo' : ''}">
+      <div class="epace-head">
+        <div class="t">${now.toLocaleString('en-CA',{month:'long'})} pace</div>
+        <div class="r">Day ${now.getDate()} of ${dim} · ${Math.round(pace*100)}% through the month</div>
       </div>
-      <div class="mrings-row">${ringsHtml}</div>
-      ${footer}
+      <div class="epace-grid">${cards}</div>
     </div>`;
 }
 
-// Arcs render at zero and animate to their value on the next frame.
+// Weekly Metrics renders the pace strip on its own.
+function renderMetricRings() { return renderPaceStrip(true); }
+
+// EHC: goal ring + mission copy, with the pace strip beneath it in one card.
+function renderEhcHero(codeRed, daysLeft) {
+  const atBP  = allTimeBP();
+  const bpAbs = parseFloat(settings.bpAbsoluteTarget) || 0;
+  const toGo  = Math.max(0, bpAbs - atBP);
+  const pct   = bpAbs > 0 ? Math.min(100, Math.max(0, atBP / bpAbs * 100)) : 0;
+  const R = 146, SW = 22, C = 2 * Math.PI * R;
+  const n = v => Math.round(v).toLocaleString('en-CA');
+
+  let big, cap, sub, lede;
+  if (bpAbs <= 0) {
+    big = '—'; cap = 'no goal set';
+    sub = `${n(atBP)} blister packs so far`;
+    lede = 'Set a blister pack goal in Settings and this ring tracks the mission.';
+  } else if (toGo === 0) {
+    big = '✓'; cap = 'goal reached';
+    sub  = `${n(atBP)} of ${n(bpAbs)} blister packs`;
+    lede = `Goal reached — <b>${n(atBP)}</b> blister pack patients enrolled.`;
+  } else {
+    big = n(toGo); cap = toGo === 1 ? 'patient to go' : 'patients to go';
+    sub  = `${n(atBP)} of ${n(bpAbs)} blister packs`;
+    lede = `<b>${n(toGo)}</b> more blister pack patient${toGo === 1 ? '' : 's'} keeps our doors open. Every referral moves the ring.`;
+  }
+
+  const daysChip = daysLeft === null ? 'Set mission date in Settings'
+                 : daysLeft <= 0     ? 'Mission complete'
+                 : `${n(daysLeft)} day${daysLeft === 1 ? '' : 's'} remaining`;
+
+  return `
+    <div class="ehero${codeRed ? ' code-red' : ''}">
+      <div class="ehero-top">
+        <div class="ehero-ring">
+          <svg viewBox="0 0 340 340" role="img" aria-label="${bpAbs > 0 ? n(atBP)+' of '+n(bpAbs)+' blister packs' : 'no blister pack goal set'}">
+            <circle cx="170" cy="170" r="${R}" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="${SW}"></circle>
+            <circle class="ehero-arc" cx="170" cy="170" r="${R}" fill="none" stroke="#F5A623" stroke-width="${SW}"
+                    stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"
+                    data-mring-offset="${(C * (1 - pct/100)).toFixed(1)}"></circle>
+          </svg>
+          <div class="center">
+            <div class="big">${big}</div>
+            <div class="cap">${cap}</div>
+            <div class="sub">${sub}</div>
+          </div>
+        </div>
+        <div>
+          <p class="ehero-eyebrow">The mission</p>
+          <h1 class="ehero-h1">${esc((settings.ehcHeadline || '').trim() || DEFAULT_SETTINGS.ehcHeadline)}</h1>
+          <p class="ehero-lede">${lede}</p>
+          <div class="ehero-meta">
+            <span class="ehero-chip"><span class="dot"></span>${daysChip}</span>
+            ${bpAbs > 0 ? `<span>${pct.toFixed(0)}% of the way there</span>` : ''}
+          </div>
+        </div>
+      </div>
+      ${renderPaceStrip(false)}
+    </div>`;
+}
+
+// Arcs render empty and animate to their value on the next frame.
 function animateMetricRings() {
   requestAnimationFrame(() => {
     document.querySelectorAll('[data-mring-offset]').forEach(el => {
       el.style.strokeDashoffset = el.getAttribute('data-mring-offset');
-    });
-    document.querySelectorAll('[data-mring-width]').forEach(el => {
-      el.style.width = el.getAttribute('data-mring-width') + '%';
     });
   });
 }
@@ -3717,60 +3753,11 @@ function renderEHC() {
     : null;
   const codeRed = daysLeft !== null && daysLeft > 0 && daysLeft <= CODE_RED_DAYS;
 
-  let missionHtml;
-  if (daysLeft === null) {
-    missionHtml = `<div class="ehc-cd-num" style="font-size:1rem;line-height:1.5">—</div><div class="ehc-cd-sub">Set in Settings</div>`;
-  } else if (daysLeft <= 0) {
-    missionHtml = `<div style="font-size:.95rem;font-weight:700;color:#fff;line-height:1.4">Mission Complete</div><div class="ehc-cd-sub" style="margin-top:4px">Awaiting next mission</div>`;
-  } else {
-    missionHtml = `<div class="ehc-cd-num">${daysLeft}</div><div class="ehc-cd-sub">${daysLeft === 1 ? 'day' : 'days'} remaining</div>`;
-  }
-
-  // ── Subline: the Code Red pill appears only inside the threshold ──
-  const sublineStrong = daysLeft === null ? 'Set mission date in Settings'
-                      : daysLeft <= 0     ? 'Mission complete'
-                      : codeRed           ? `Under ${CODE_RED_DAYS} days`
-                      : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} remaining`;
-  const sublineHtml =
-    (codeRed ? `<span class="ehc-tag"><span class="ehc-dot"></span>Code Red</span>` : '') +
-    `<span><strong>${sublineStrong}</strong></span>`;
-
-  // ── Patient countdown ─────────────────────────────────────────
-  const bpAbs        = settings.bpAbsoluteTarget || 0;
-  const atBP         = allTimeBP();
-  const patientsLeft = bpAbs - atBP;
-  let patientHtml;
-  if (bpAbs === 0) {
-    patientHtml = `<div class="ehc-cd-num" style="font-size:1rem;line-height:1.5">—</div><div class="ehc-cd-sub">Set target in Settings</div>`;
-  } else if (patientsLeft <= 0) {
-    patientHtml = `<div class="ehc-cd-num" style="color:#6ee7b7">Goal Reached!</div><div class="ehc-cd-sub">${atBP} patients enrolled</div>`;
-  } else {
-    patientHtml = `<div class="ehc-cd-num">${patientsLeft}</div><div class="ehc-cd-sub">${patientsLeft === 1 ? 'blister pack patient' : 'blister pack patients'} away from keeping our doors open</div>`;
-  }
 
   // ── "What drove results" note ─────────────────────────────────
   const latestEntry = sorted.length ? sorted[sorted.length - 1] : null;
   const weekNote    = latestEntry?.weeklyNote?.trim() || '';
   const noteIsEmpty = !weekNote;
-
-  // ── Targets ───────────────────────────────────────────────────
-  const wTT  = settings.transfersWeeklyTarget   || 0;
-  const wBPT = settings.blisterPacksWeeklyTarget || 0;
-  const mTT  = Math.round(wTT  * 4.33);
-  const mBPT = Math.round(wBPT * 4.33);
-
-  // ── Actuals ───────────────────────────────────────────────────
-  const mT  = monthlyTotal('transfers',    y, m);
-  const mBP = monthlyTotal('blisterPacks', y, m);
-
-  function pct(val, tgt) { return tgt > 0 ? Math.min(100, (val / tgt) * 100) : 0; }
-  const tPct  = pct(mT,   mTT);
-  const bPct  = pct(mBP,  mBPT);
-  const atPct = pct(atBP, bpAbs);
-
-  function progBar(pcnt, color) {
-    return `<div class="wk-prog-bar"><div class="wk-prog-fill" style="width:${pcnt.toFixed(1)}%;background:${color}"></div></div>`;
-  }
 
   // ── Rolling avg helpers ───────────────────────────────────────
   function rollingAvg(metric) {
@@ -3808,23 +3795,8 @@ function renderEHC() {
 
   el.innerHTML = `
 
-    <!-- ── Mission Header ─────────────────────────────────────── -->
-    <div class="ehc-mission${codeRed ? ' code-red' : ''}">
-      <div class="ehc-mission-headline">${esc((settings.ehcHeadline || "").trim() || DEFAULT_SETTINGS.ehcHeadline)}</div>
-      <div class="ehc-subline">${sublineHtml}</div>
-      <div class="ehc-cd-grid">
-        <div class="ehc-cd-box">
-          <div class="ehc-cd-label">Mission Countdown</div>
-          ${missionHtml}
-        </div>
-        <div class="ehc-cd-box">
-          <div class="ehc-cd-label">Patient Countdown</div>
-          ${patientHtml}
-        </div>
-      </div>
-    </div>
-
-    ${renderMetricRings()}
+    <!-- ── Mission hero: goal ring + copy + monthly pace strip ── -->
+    ${renderEhcHero(codeRed, daysLeft)}
 
     <!-- ── What drove results ────────────────────────────────── -->
     <div class="card ehc-note-card" style="padding:18px 20px;margin-bottom:16px">
