@@ -626,6 +626,7 @@ const DEFAULT_SETTINGS = {
   bpGoalDate:               '',
   bpGoalWeeks:              26,
   ehcMissionEndDate:        '',
+  ehcHeadline:              "We're Not Going Anywhere.",
   transferSources: ['MERIT Trial','Neighbourhood','New Attachment','Doctor Referral','Marketing','Purolator'],
 };
 
@@ -2702,6 +2703,17 @@ function renderSettings() {
     <div class="card">
       <div class="card-title">EHC — Mission Settings</div>
       <div class="setting-block">
+        <div class="setting-label">EHC Headline</div>
+        <div class="form-row">
+          <label>The large line at the top of the EHC page</label>
+          <input type="text" maxlength="80" value="${esc(s.ehcHeadline ?? DEFAULT_SETTINGS.ehcHeadline)}"
+            placeholder="${esc(DEFAULT_SETTINGS.ehcHeadline)}"
+            oninput="setSetting('ehcHeadline', this.value)">
+          <div class="hint">Leave blank to fall back to &ldquo;${esc(DEFAULT_SETTINGS.ehcHeadline)}&rdquo;. Staff see this every time they open the page.</div>
+        </div>
+      </div>
+
+      <div class="setting-block">
         <div class="setting-label">EHC Mission End Date</div>
         <div class="form-row">
           <label>Mission end date — drives the "Mission ends in X days" countdown on the EHC page</label>
@@ -3798,7 +3810,7 @@ function renderEHC() {
 
     <!-- ── Mission Header ─────────────────────────────────────── -->
     <div class="ehc-mission${codeRed ? ' code-red' : ''}">
-      <div class="ehc-mission-headline">Mission: Stay Open. Bring It Home.</div>
+      <div class="ehc-mission-headline">${esc((settings.ehcHeadline || "").trim() || DEFAULT_SETTINGS.ehcHeadline)}</div>
       <div class="ehc-subline">${sublineHtml}</div>
       <div class="ehc-cd-grid">
         <div class="ehc-cd-box">
