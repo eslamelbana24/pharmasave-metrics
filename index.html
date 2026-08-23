@@ -634,6 +634,7 @@ const DEFAULT_SETTINGS = {
   bpGoalWeeks:              26,
   ehcMissionEndDate:        '',
   ehcHeadline:              "We're Not Going Anywhere.",
+  removedUsers:             [],   // emails deliberately revoked; blocks re-seeding
   transferSources: ['MERIT Trial','Neighbourhood','New Attachment','Doctor Referral','Marketing','Purolator'],
 };
 
@@ -4327,8 +4328,26 @@ async function bootstrapUsersIfNeeded() {
   const col  = db.collection(FS_USERS);
   const opts = { merge: true };
   // Fetch all default-user docs in parallel to see which are missing
+  // Migrate legacy tombstones. A doc left in users/ with removed:true still
+  // satisfies exists() in the security rules, so the account kept database
+  // access. Move the record into settings and delete the doc for real.
+  try {
+    const all    = await col.get();
+    const stale  = all.docs.filter(d => ((d.data() || {}).removed === true));
+    if (stale.length) {
+      const list   = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
+      settings.removedUsers = [...new Set([...list, ...stale.map(d => d.id)])];
+      saveSettings();
+      await Promise.all(stale.map(d => col.doc(d.id).delete()));
+      console.log('[Bootstrap] Converted tombstones to real deletions:', stale.map(d => d.id));
+    }
+  } catch (e) {
+    console.warn('[Bootstrap] tombstone migration skipped:', e.code || e.message);
+  }
+
+  const revoked   = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
   const snapshots = await Promise.all(DEFAULT_USERS.map(u => col.doc(u.email).get()));
-  const toCreate  = DEFAULT_USERS.filter((u, i) => !snapshots[i].exists);
+  const toCreate  = DEFAULT_USERS.filter((u, i) => !snapshots[i].exists && !revoked.includes(u.email));
   if (toCreate.length) {
     await Promise.all(toCreate.map(u => col.doc(u.email).set(u, opts)));
     console.log('[Bootstrap] Created missing user docs:', toCreate.map(u => u.email));
@@ -4455,6 +4474,21 @@ async function loadAdminUsers() {
   renderAdminUserList();
 }
 
+// Describe access from the pages actually granted. The stored role is just a
+// label chosen at creation time and drifts out of step the moment pages are
+// edited — showing it verbatim let a row read "Full Access" beside a single page.
+function roleLabel(u) {
+  const p = Array.isArray(u.pages) ? u.pages : [];
+  if (u.email === OWNER_EMAIL) return 'Owner';
+  if (!p.length) return 'No access';
+  if (ALL_PAGES.every(x => p.includes(x))) return 'Full Access';
+  if (p.length === 1) return p[0] + ' only';
+  return p.length + ' of ' + ALL_PAGES.length + ' pages';
+}
+
+// CSS.escape is not in older Safari; the emails here are plain attribute values.
+function cssEscape(v) { return String(v).replace(/["\\]/g, '\\$&'); }
+
 // One line of sign-in activity per user, with a stale flag after 30 days.
 const STALE_LOGIN_DAYS = 30;
 function loginLine(u) {
@@ -4497,11 +4531,11 @@ function renderAdminUserList() {
       ? `<span style="font-size:10px;font-weight:600;background:#e0f2fe;color:#0369a1;padding:1px 7px;border-radius:8px;margin-left:6px">Email</span>`
       : `<span style="font-size:10px;font-weight:600;background:#f0fdf4;color:#15803d;padding:1px 7px;border-radius:8px;margin-left:6px">Google</span>`;
     return `
-      <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div data-user-row="${esc(u.email)}" style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
           <div>
             <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${u.email}${methodBadge}</div>
-            <div style="font-size:0.75rem;color:var(--light);margin-top:2px">${u.role || 'Custom'}</div>
+            <div style="font-size:0.75rem;color:var(--light);margin-top:2px">${roleLabel(u)}</div>
             ${loginLine(u)}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -4538,7 +4572,13 @@ function openEditUser(email) {
       <button class="btn btn-primary" style="font-size:0.8rem" onclick="saveEditUser('${email}')">Save</button>
       <button class="btn btn-ghost"   style="font-size:0.8rem" onclick="loadAdminUsers()">Cancel</button>
     </div>`;
-  el.insertBefore(form, el.firstChild);
+  // Put the form where the user clicked. It used to be inserted at the top of
+  // the list regardless, so clicking Edit on anyone below the fold scrolled
+  // nothing into view and simply looked broken.
+  const row = el.querySelector(`[data-user-row="${cssEscape(email)}"]`);
+  if (row && row.parentNode) row.parentNode.insertBefore(form, row.nextSibling);
+  else el.insertBefore(form, el.firstChild);
+  form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 async function saveEditUser(email) {
@@ -4546,21 +4586,35 @@ async function saveEditUser(email) {
   if (!form) return;
   const checked = [...form.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
   if (!checked.length) { alert('User must have at least one page.'); return; }
-  await db.collection(FS_USERS).doc(email).update({ pages: checked });
+  try {
+    await db.collection(FS_USERS).doc(email).update({ pages: checked });
+  } catch (e) {
+    // Previously an unhandled rejection: the write failed and the form just sat
+    // there, so a rules denial was indistinguishable from the button not working.
+    alert('Could not save access for ' + email + ':\n' + (e.code || e.message));
+    return;
+  }
   await loadAdminUsers();
 }
 
 async function removeUser(email) {
   if (email === OWNER_EMAIL) return;
   if (!confirm(`Remove ${email}?\n\nThey will lose access immediately on next page load.`)) return;
-  // Tombstone rather than hard-delete. bootstrapUsersIfNeeded() recreates any
-  // DEFAULT_USERS doc that is merely MISSING, so deleting a listed staff member
-  // was silently undone the next time the owner signed in — they got their
-  // access back. A tombstone doc still exists, so the bootstrap skips it.
-  await db.collection(FS_USERS).doc(email).set(
-    { email, removed: true, pages: [], role: 'Removed', removedAt: new Date().toISOString() },
-    { merge: true }
-  );
+  // Record the revocation FIRST, then hard-delete.
+  //
+  // A tombstone doc was the previous approach — it stopped the bootstrap from
+  // re-seeding the account, but the Firestore rules grant pharmasave reads on
+  // exists(users/{email}), which a tombstone still satisfies. A "removed" user
+  // therefore kept full database access even after the app locked them out.
+  // Deleting for real makes exists() false; the settings list is what stops the
+  // bootstrap bringing them back.
+  try {
+    const list = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
+    if (!list.includes(email)) { settings.removedUsers = [...list, email]; saveSettings(); }
+    await db.collection(FS_USERS).doc(email).delete();
+  } catch (e) {
+    alert('Could not remove ' + email + ': ' + (e.code || e.message));
+  }
   await loadAdminUsers();
 }
 
@@ -4592,6 +4646,9 @@ async function saveNewUser() {
   const doc = { email, pages: checked, role, authMethod };
   if (authMethod === 'email') doc.mustChangePassword = true;
   await db.collection(FS_USERS).doc(email).set(doc);
+  // Deliberately re-adding someone lifts the revocation that blocks re-seeding.
+  const revoked = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
+  if (revoked.includes(email)) { settings.removedUsers = revoked.filter(x => x !== email); saveSettings(); }
   // Offer to send welcome/reset email for email-type users
   if (authMethod === 'email') {
     if (confirm(`User saved. Send a password setup email to ${email} now?\n\n(The Firebase Auth account must already be created in Firebase Console first.)`)) {
