@@ -556,6 +556,7 @@ const FS_MONTHS          = 'months';
 const FS_WEEKLY_DATA     = 'weeklyData';
 const FS_WEEKLY_TARGETS  = 'weeklyTargets';
 const FS_USERS           = 'users';      // access-control collection
+const FS_LOGINS          = 'loginActivity'; // one doc per user: last login, count, device
 
 // ── Access control ────────────────────────────────────────────────
 const OWNER_EMAIL = 'eslam.elbana@gmail.com';
@@ -4362,6 +4363,76 @@ async function bootstrapUsersIfNeeded() {
   }
 }
 
+// ── Login activity ───────────────────────────────────────────────
+// Deliberately its own collection, not a field on users/. Staff can add their own
+// login record but never read anyone else's and never touch a permission doc, so
+// users/ stays owner-write-only.
+
+// "Safari on iPhone" — enough to spot a sign-in from somewhere unexpected.
+function describeDevice() {
+  const ua = navigator.userAgent || '';
+  const browser = /Edg\//.test(ua) ? 'Edge'
+                : /OPR\//.test(ua) ? 'Opera'
+                : /Chrome\//.test(ua) && !/Chromium/.test(ua) ? 'Chrome'
+                : /Firefox\//.test(ua) ? 'Firefox'
+                : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  const os = /iPhone/.test(ua) ? 'iPhone'
+           : /iPad/.test(ua) ? 'iPad'
+           : /Android/.test(ua) ? 'Android'
+           : /Mac OS X/.test(ua) ? 'Mac'
+           : /Windows/.test(ua) ? 'Windows'
+           : /Linux/.test(ua) ? 'Linux' : '';
+  return os ? `${browser} on ${os}` : browser;
+}
+
+async function recordLogin(user) {
+  if (!user || !user.email) return;
+  try {
+    const email = user.email;
+    // Firebase's own lastSignInTime only changes on a REAL sign-in, so reloading
+    // the page on a restored session must not inflate the count. Comparing
+    // against the stored value is what distinguishes the two.
+    const sig = (user.metadata && user.metadata.lastSignInTime) || '';
+    const marker = 'loginLogged:' + email + ':' + sig;
+    try { if (sessionStorage.getItem(marker)) return; } catch (e) {}
+
+    const ref  = db.collection(FS_LOGINS).doc(email);
+    const snap = await ref.get();
+    const prev = snap.exists ? (snap.data() || {}) : {};
+    try { sessionStorage.setItem(marker, '1'); } catch (e) {}
+    if (sig && prev.lastSignInTime === sig) return;   // same sign-in, nothing new
+
+    await ref.set({
+      email,
+      lastLogin:       new Date().toISOString(),
+      lastSignInTime:  sig,
+      accountCreated:  (user.metadata && user.metadata.creationTime) || prev.accountCreated || null,
+      device:          describeDevice(),
+      method:          (user.providerData || []).some(pd => pd.providerId === 'google.com') ? 'Google' : 'Email',
+      loginCount:      firebase.firestore.FieldValue.increment(1),
+    }, { merge: true });
+  } catch (e) {
+    // Never block sign-in over an analytics write; surface it for the owner only.
+    console.warn('[Login] could not record login activity:', e.code || e.message);
+  }
+}
+
+// "2 hours ago" / "12 Aug 2026" — and the age in days for the stale check.
+function loginAgeDays(iso) {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (isNaN(t)) return null;
+  return (Date.now() - t) / 86400000;
+}
+function relTime(iso) {
+  const d = loginAgeDays(iso);
+  if (d === null) return 'never';
+  if (d < 1/24)  return 'just now';
+  if (d < 1)     { const h = Math.round(d*24); return h + (h === 1 ? ' hour ago' : ' hours ago'); }
+  if (d < 30)    { const n = Math.round(d);    return n + (n === 1 ? ' day ago'  : ' days ago'); }
+  return new Date(iso).toLocaleDateString('en-CA', { day:'numeric', month:'short', year:'numeric' });
+}
+
 // ── Admin panel helpers (owner only) ─────────────────────────────
 
 let _adminUsers = []; // cached list for the admin panel
@@ -4369,8 +4440,43 @@ let _adminUsers = []; // cached list for the admin panel
 async function loadAdminUsers() {
   const snap = await db.collection(FS_USERS).get();
   _adminUsers = snap.docs.map(d => d.data()).filter(u => u && u.removed !== true);
+  // Join in login activity. Degrades quietly: if the rules do not allow reading
+  // this collection yet, the panel simply shows "no sign-in recorded".
+  try {
+    const lsnap = await db.collection(FS_LOGINS).get();
+    const byEmail = {};
+    lsnap.docs.forEach(d => { const v = d.data() || {}; byEmail[d.id] = v; });
+    _adminUsers.forEach(u => { u._login = byEmail[u.email] || null; });
+  } catch (e) {
+    console.warn('[Login] could not read login activity:', e.code || e.message);
+    _adminUsers.forEach(u => { u._login = null; });
+  }
   _adminUsers.sort((a,b) => a.email.localeCompare(b.email));
   renderAdminUserList();
+}
+
+// One line of sign-in activity per user, with a stale flag after 30 days.
+const STALE_LOGIN_DAYS = 30;
+function loginLine(u) {
+  const L = u._login;
+  if (!L || !L.lastLogin) {
+    return `<div style="font-size:0.75rem;color:var(--light);margin-top:3px">
+              <span style="color:var(--amber);font-weight:700">Never signed in</span></div>`;
+  }
+  const age   = loginAgeDays(L.lastLogin);
+  const stale = age !== null && age >= STALE_LOGIN_DAYS;
+  const count = Number(L.loginCount) || 0;
+  const bits  = [`Last seen <strong style="color:var(--text)">${relTime(L.lastLogin)}</strong>`];
+  if (count)          bits.push(`${count.toLocaleString('en-CA')} login${count === 1 ? '' : 's'}`);
+  if (L.device)       bits.push(esc(L.device));
+  if (L.accountCreated) {
+    const c = new Date(L.accountCreated);
+    if (!isNaN(c)) bits.push(`since ${c.toLocaleDateString('en-CA',{month:'short',year:'numeric'})}`);
+  }
+  return `<div style="font-size:0.75rem;color:var(--light);margin-top:3px">
+            ${bits.join(' · ')}
+            ${stale ? `<span style="background:#fff8e6;color:var(--amber);font-weight:700;padding:1px 7px;border-radius:8px;margin-left:6px">Inactive ${Math.round(age)}d</span>` : ''}
+          </div>`;
 }
 
 function renderAdminUserList() {
@@ -4396,6 +4502,7 @@ function renderAdminUserList() {
           <div>
             <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${u.email}${methodBadge}</div>
             <div style="font-size:0.75rem;color:var(--light);margin-top:2px">${u.role || 'Custom'}</div>
+            ${loginLine(u)}
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             ${isEmail ? `<button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 10px" onclick="sendResetEmail('${u.email}')">Send Reset Email</button>` : ''}
@@ -4550,6 +4657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authError').textContent       = '';
     setLoadMsg('Checking access…');
     console.log('[Auth v4] Signed in as:', user.email);
+    recordLogin(user);   // fire-and-forget; never gates the app
 
     try {
       // ── TRUSTED EMAILS: never block on Firestore ─────────────────
