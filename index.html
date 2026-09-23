@@ -436,7 +436,7 @@ input:focus{border-color:var(--navy)}
 <nav id="mainNav"></nav>
 
 <!-- ── AUTH GATE ─────────────────────────────────────────────────── -->
-<div id="authGate" style="position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:24px;overflow-y:auto">
+<div id="authGate" style="position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;justify-content:safe center;flex-direction:column;gap:16px;padding:24px;overflow-y:auto">
   <div style="text-align:center">
     <div style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">Pharmasave Escarpment Metrics</div>
     <div style="font-size:0.88rem;color:rgba(255,255,255,.65)">Private Access</div>
@@ -457,6 +457,7 @@ input:focus{border-color:var(--navy)}
 
   <!-- Email / Password form -->
   <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:320px">
+    <div style="font-size:0.75rem;color:rgba(255,255,255,.6);text-align:center">Work email (not Gmail)? Sign in here with your email and password.</div>
     <input id="authEmail" type="email" placeholder="Email address" autocomplete="email"
       style="padding:11px 14px;border-radius:8px;border:none;font-size:0.9rem;background:rgba(255,255,255,.1);color:#fff;outline:none;width:100%;box-sizing:border-box"
       onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
@@ -467,7 +468,7 @@ input:focus{border-color:var(--navy)}
       style="padding:12px;border-radius:8px;border:none;background:var(--teal);color:#fff;font-size:0.92rem;font-weight:700;cursor:pointer;width:100%">
       Sign In
     </button>
-    <button onclick="doForgotPassword()"
+    <button onclick="doForgotPassword(this)"
       style="background:none;border:none;color:rgba(255,255,255,.55);font-size:0.78rem;cursor:pointer;padding:2px 0;text-align:center;text-decoration:underline">
       Forgot password?
     </button>
@@ -481,16 +482,16 @@ input:focus{border-color:var(--navy)}
 </div>
 
 <!-- ── PASSWORD CHANGE MODAL (first-login email users) ─────────── -->
-<div id="pwChangeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center;padding:24px">
-  <div style="background:#fff;border-radius:14px;padding:28px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+<div id="pwChangeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center;padding:24px;overflow-y:auto">
+  <div style="background:#fff;border-radius:14px;padding:28px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.25);margin:auto">
     <div style="font-size:1.05rem;font-weight:800;color:var(--navy);margin-bottom:6px">Set Your Password</div>
-    <p style="font-size:0.85rem;color:var(--light);margin-bottom:18px">You're using a temporary password. Please set a new one to continue.</p>
+    <p style="font-size:0.85rem;color:var(--light);margin-bottom:18px">Please choose your own password to continue.</p>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <input id="pwCurrent" type="password" placeholder="Current (temporary) password" autocomplete="current-password"
+      <input id="pwCurrent" type="password" placeholder="Current password" autocomplete="current-password"
         style="display:none;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;width:100%;box-sizing:border-box">
-      <input id="pwNew"     type="password" placeholder="New password (min 8 characters)"
+      <input id="pwNew"     type="password" autocomplete="new-password" placeholder="New password (min 8 characters)"
         style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;width:100%;box-sizing:border-box">
-      <input id="pwConfirm" type="password" placeholder="Confirm new password"
+      <input id="pwConfirm" type="password" autocomplete="new-password" placeholder="Confirm new password"
         style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;width:100%;box-sizing:border-box"
         onkeydown="if(event.key==='Enter')doChangePassword()">
       <div id="pwChangeError" style="color:var(--red);font-size:0.8rem;min-height:1em"></div>
@@ -541,6 +542,14 @@ const firebaseConfig = {
   messagingSenderId: '476280747619',
   appId:             '1:476280747619:web:a1300c97b5d9637ea76a56',
 };
+// If a web filter blocks www.gstatic.com the SDK never arrives and everything
+// below throws, leaving a sign-in screen whose buttons silently do nothing.
+if (typeof firebase === 'undefined' || typeof firebase.auth !== 'function' || typeof firebase.firestore !== 'function') {
+  const errEl = document.getElementById('authError');
+  if (errEl) errEl.textContent = 'Could not load the sign-in service. This network may be blocking www.gstatic.com. Try another network, or ask IT to allow it.';
+  document.querySelectorAll('#authGate button, #authGate input').forEach(el => { el.disabled = true; });
+  throw new Error('Firebase SDK failed to load');
+}
 firebase.initializeApp(firebaseConfig);
 const auth     = firebase.auth();
 const db       = firebase.firestore();
@@ -4157,8 +4166,14 @@ function friendlyAuthError(code) {
     'auth/too-many-requests':   'Too many attempts. Please wait a moment and try again.',
     'auth/network-request-failed': 'Network error. Check your connection.',
     'auth/invalid-credential':  'Incorrect email or password.',
+    'auth/invalid-login-credentials': 'Incorrect email or password.',
+    'auth/missing-password':    'Enter your password.',
+    'auth/user-disabled':       'This account has been disabled. Contact the pharmacy owner.',
+    'auth/internal-error':      'The sign-in service had a problem. Please try again.',
   };
-  return map[code] || code;
+  // No code at all means the failure never reached Firebase (e.g. the SDK is
+  // missing) — returning undefined here used to blank the message entirely.
+  return map[code] || (code ? 'Sign-in error (' + code + ').' : 'Could not reach the sign-in service. Reload the page and try again.');
 }
 
 function setAuthLoading(on) {
@@ -4167,6 +4182,36 @@ function setAuthLoading(on) {
   // Also hide/show email form buttons
   const emailBtn = document.getElementById('emailSignInBtn');
   if (emailBtn) emailBtn.style.display = on ? 'none' : 'block';
+}
+
+// Firebase fires onAuthStateChanged only when the signed-in uid CHANGES. After
+// a failed data load the user is still signed in behind the gate, so signing in
+// again as the same person never reached the handler and the spinner spun
+// forever. In exactly that case, run the handler ourselves.
+// _authGen bumps on every auth change so a run that has been overtaken (signed
+// out, or another user signed in) can tell, after an await, that it must not
+// touch the UI. _authRunning keeps a second submit from starting a parallel run.
+let _authHandler = null;
+let _authGen     = 0;
+let _authRunning = false;
+function rerunAuthIfSameUser(prevUid, cred) {
+  const u = cred && cred.user;
+  if (u && prevUid && u.uid === prevUid && _authHandler && !_authRunning) _authHandler(u);
+}
+
+// Reset emails come from Firebase's default sender, which Microsoft 365 often
+// files as Junk or quarantines. The continue URL puts a button back to the app
+// on the "password changed" page; if the domain is ever not authorised for
+// that, send the plain email rather than failing the reset.
+const RESET_SENDER   = 'noreply@escarpment-financials.firebaseapp.com';
+const RESET_CONTINUE = { url: 'https://metrics.escarpmentpharmasave.ca/' };
+async function sendPasswordReset(email) {
+  try {
+    await auth.sendPasswordResetEmail(email, RESET_CONTINUE);
+  } catch (err) {
+    if (err && /continue-uri|unauthorized-domain/.test(err.code || '')) await auth.sendPasswordResetEmail(email);
+    else throw err;
+  }
 }
 
 // Google sign-in must lead with the POPUP flow.
@@ -4185,7 +4230,9 @@ function setAuthLoading(on) {
 function doSignIn() {
   const errEl = document.getElementById('authError');
   errEl.textContent = '';
+  errEl.style.color = '#fca5a5';
   setAuthLoading(true);
+  const prevUid = auth.currentUser && auth.currentUser.uid;
 
   const REDIRECT_FALLBACK = [
     'auth/popup-blocked',
@@ -4196,7 +4243,7 @@ function doSignIn() {
   // not an error worth shouting about.
   const BENIGN = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
 
-  auth.signInWithPopup(provider).catch(err => {
+  auth.signInWithPopup(provider).then(cred => rerunAuthIfSameUser(prevUid, cred)).catch(err => {
     if (BENIGN.includes(err.code)) { setAuthLoading(false); return; }
 
     if (REDIRECT_FALLBACK.includes(err.code)) {
@@ -4215,36 +4262,51 @@ function doSignIn() {
 }
 
 async function doEmailSignIn() {
+  if (_authRunning) return;        // already checking access — a second submit would race it
+  const errEl    = document.getElementById('authError');
+  errEl.style.color = '#fca5a5';   // a "reset sent" message leaves it green
   const email    = (document.getElementById('authEmail').value    || '').trim();
   const password = (document.getElementById('authPassword').value || '');
   if (!email || !password) {
-    document.getElementById('authError').textContent = 'Enter your email and password.';
+    errEl.textContent = 'Enter your email and password.';
     return;
   }
-  document.getElementById('authError').textContent = '';
+  errEl.textContent = '';
   setAuthLoading(true);
+  const prevUid = auth.currentUser && auth.currentUser.uid;
   try {
-    await auth.signInWithEmailAndPassword(email, password);
-    // onAuthStateChanged handles the rest
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+    rerunAuthIfSameUser(prevUid, cred);   // otherwise onAuthStateChanged handles the rest
   } catch (err) {
-    document.getElementById('authError').textContent = friendlyAuthError(err.code);
+    const code = err && err.code;
+    errEl.textContent = code === 'auth/too-many-requests'
+      ? 'Too many attempts, so sign-in is paused for a while. Wait a few minutes and try again. If it stays locked, use "Forgot password?" above: resetting your password lifts an account lock.'
+      : friendlyAuthError(code);
     setAuthLoading(false);
   }
 }
 
-async function doForgotPassword() {
+async function doForgotPassword(btn) {
+  const errEl = document.getElementById('authError');
   const email = (document.getElementById('authEmail').value || '').trim();
   if (!email) {
-    document.getElementById('authError').textContent = 'Enter your email address above first.';
+    errEl.style.color = '#fca5a5';
+    errEl.textContent = 'Enter your email address above first.';
     return;
   }
+  if (btn) btn.disabled = true;   // repeated taps sent several emails
   try {
-    await auth.sendPasswordResetEmail(email);
-    document.getElementById('authError').style.color = '#86efac';
-    document.getElementById('authError').textContent = '✓ Password reset email sent — check your inbox.';
+    await sendPasswordReset(email);
+    // Firebase no longer says whether the address has an account (email
+    // enumeration protection), so a typo also "succeeds". Word it honestly.
+    errEl.style.color = '#86efac';
+    errEl.textContent = 'If ' + email + ' has an account, a reset link is on its way from ' + RESET_SENDER +
+      '. Check Junk and Quarantine too, and use the newest link.';
   } catch (err) {
-    document.getElementById('authError').style.color = '#fca5a5';
-    document.getElementById('authError').textContent = 'Could not send reset email: ' + friendlyAuthError(err.code);
+    errEl.style.color = '#fca5a5';
+    errEl.textContent = 'Could not send reset email: ' + friendlyAuthError(err && err.code);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -4256,43 +4318,49 @@ async function doChangePassword() {
   if (pw1.length < 8)  { errEl.textContent = 'Password must be at least 8 characters.'; return; }
   if (pw1 !== pw2)     { errEl.textContent = 'Passwords do not match.'; return; }
   const curEl = document.getElementById('pwCurrent');
+  const user  = auth.currentUser;
+  if (!user) {   // signed out underneath the overlay — nothing to change
+    document.getElementById('pwChangeOverlay').style.display = 'none';
+    return;
+  }
   try {
-    const user = auth.currentUser;
     // Firebase only lets a password change through within a few minutes of a
     // real sign-in. Someone arriving on a remembered session (days later, same
     // browser) is refused with requires-recent-login — so once that has happened,
     // confirm who they are with the password they already have, then retry.
     if (curEl.style.display !== 'none') {
-      if (!curEl.value) { errEl.textContent = 'Enter your current (temporary) password first.'; return; }
+      if (!curEl.value) { errEl.textContent = 'Enter your current password first.'; return; }
       const cred = firebase.auth.EmailAuthProvider.credential(user.email, curEl.value);
       await user.reauthenticateWithCredential(cred);
     }
     await user.updatePassword(pw1);
-    // The password is already changed at this point. If clearing the flag is
-    // refused (e.g. Firestore rules deny the user writing their own doc), do NOT
-    // leave them stuck seeing this overlay on every future sign-in — let them
-    // through and tell them, rather than swallowing the error.
-    const email = auth.currentUser.email;
-    let flagCleared = true;
-    try {
-      await db.collection(FS_USERS).doc(email).update({ mustChangePassword: false });
-    } catch (e) {
-      flagCleared = false;
-      console.warn('[Auth] could not clear mustChangePassword:', e.code || e.message);
-    }
+    // The password is already changed at this point. users/ is owner-write-only,
+    // so clearing the flag there is normally refused for staff — which used to
+    // bring this overlay back on every visit. Their own loginActivity doc IS
+    // writable, so record the change there too; either write is enough.
+    const email = user.email;
+    const [flagRes, markRes] = await Promise.allSettled([
+      db.collection(FS_USERS).doc(email).update({ mustChangePassword: false }),
+      db.collection(FS_LOGINS).doc(email).set({
+        passwordSetAt:  new Date().toISOString(),   // shown to the owner
+        passwordSetFor: (userRecord && userRecord.mustChangePasswordSince) || null,   // what it answered
+      }, { merge: true }),
+    ]);
+    if (flagRes.status === 'rejected') console.warn('[Auth] could not clear mustChangePassword:', flagRes.reason && (flagRes.reason.code || flagRes.reason.message));
+    if (markRes.status === 'rejected') console.warn('[Auth] could not record passwordSetAt:', markRes.reason && (markRes.reason.code || markRes.reason.message));
     if (userRecord) userRecord.mustChangePassword = false;
     document.getElementById('pwChangeOverlay').style.display = 'none';
-    if (!flagCleared) {
-      alert('Your password was changed successfully.\n\nOne thing: this prompt may appear again next sign-in, because the app could not save that you have set it. Ask the owner to clear it for you.');
+    if (flagRes.status === 'rejected' && markRes.status === 'rejected') {
+      alert('Your password was changed successfully.\n\nThis prompt may still appear next time you sign in, because the app could not save that you have set it. If it does, let the pharmacy owner know.');
     }
   } catch (err) {
     const code = err && err.code;
     if (code === 'auth/requires-recent-login') {
       curEl.style.display = 'block';
       curEl.focus();
-      errEl.textContent = 'For security, confirm your current (temporary) password, then press Save again.';
+      errEl.textContent = 'For security, enter the password you currently sign in with, then press Save again.';
     } else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials') {
-      errEl.textContent = 'That current password is not right. Use "Forgot password?" on the sign-in screen if you no longer have it.';
+      errEl.textContent = 'That password is not right. Enter the one you signed in with today, or sign out and use "Forgot password?".';
     } else if (code === 'auth/weak-password') {
       errEl.textContent = 'That password is too weak. Try a longer one.';
     } else if (code === 'auth/too-many-requests') {
@@ -4434,6 +4502,29 @@ async function bootstrapUsersIfNeeded() {
   }
 }
 
+// Has this person set their own password since they were last flagged? Staff
+// cannot clear mustChangePassword on users/ (owner-write-only), so the proof
+// lives on their own loginActivity doc. It names the flag it answered rather
+// than comparing timestamps: the owner's PC and a staff phone never agree on
+// the time, and a re-add (new mustChangePasswordSince) must ask again.
+function passwordSetSince(login, rec) {
+  if (!login || typeof login.passwordSetAt !== 'string') return false;
+  const since = rec && rec.mustChangePasswordSince;
+  return !since || login.passwordSetFor === since;
+}
+async function ownPasswordSet(email, rec) {
+  try {
+    const snap = await Promise.race([
+      db.collection(FS_LOGINS).doc(email).get(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+    ]);
+    return passwordSetSince(snap.exists ? snap.data() : null, rec);
+  } catch (e) {
+    console.warn('[Auth] could not check passwordSetAt:', e.code || e.message);
+    return false;   // unknown: show the prompt, which still works
+  }
+}
+
 // ── Login activity ───────────────────────────────────────────────
 // Deliberately its own collection, not a field on users/. Staff can add their own
 // login record but never read anyone else's and never touch a permission doc, so
@@ -4542,7 +4633,17 @@ async function loadAdminUsers() {
   try {
     const lsnap = await db.collection(FS_LOGINS).get();
     const byEmail = {};
-    lsnap.docs.forEach(d => { const v = d.data() || {}; byEmail[d.id] = v; });
+    // Staff write these docs themselves, so keep only well-typed values: one
+    // odd field must not throw inside the render and hide every user row.
+    const str = v => (typeof v === 'string' ? v : null);
+    lsnap.docs.forEach(d => {
+      const v = d.data() || {};
+      byEmail[d.id] = {
+        lastLogin: str(v.lastLogin), lastSignInTime: str(v.lastSignInTime), accountCreated: str(v.accountCreated),
+        device: str(v.device), method: str(v.method), passwordSetAt: str(v.passwordSetAt), passwordSetFor: str(v.passwordSetFor),
+        loginCount: typeof v.loginCount === 'number' ? v.loginCount : 0,
+      };
+    });
     _adminUsers.forEach(u => { u._login = byEmail[u.email] || null; });
   } catch (e) {
     console.warn('[Login] could not read login activity:', e.code || e.message);
@@ -4591,6 +4692,19 @@ function loginLine(u) {
           </div>`;
 }
 
+// Whether an email user has chosen their own password yet.
+function passwordBadge(u) {
+  if (u.authMethod !== 'email') return '';
+  const pill = (bg, fg, text, title) =>
+    `<span${title ? ` title="${esc(title)}"` : ''} style="font-size:10px;font-weight:600;background:${bg};color:${fg};padding:1px 7px;border-radius:8px;margin-left:6px">${text}</span>`;
+  if (passwordSetSince(u._login, u)) {
+    const d = new Date(u._login.passwordSetAt);
+    return pill('#f0fdf4', '#15803d', 'Own password set', isNaN(d) ? '' : 'Set ' + d.toLocaleString('en-CA'));
+  }
+  if (u.mustChangePassword) return pill('#fff8e6', 'var(--amber)', 'Awaiting password setup', 'Has not chosen their own password in the app yet');
+  return '';
+}
+
 function renderAdminUserList() {
   const el = document.getElementById('adminUserList');
   if (!el) return;
@@ -4612,7 +4726,7 @@ function renderAdminUserList() {
       <div data-user-row="${esc(u.email)}" style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
           <div>
-            <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${u.email}${methodBadge}</div>
+            <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${u.email}${methodBadge}${passwordBadge(u)}</div>
             <div style="font-size:0.75rem;color:var(--light);margin-top:2px">${roleLabel(u)}</div>
             ${loginLine(u)}
           </div>
@@ -4702,8 +4816,8 @@ function openAddUserForm() {
 
 async function sendResetEmail(email) {
   try {
-    await auth.sendPasswordResetEmail(email);
-    alert(`✓ Password reset email sent to ${email}`);
+    await sendPasswordReset(email);
+    alert(`✓ Password reset email sent to ${email}\n\nIt comes from ${RESET_SENDER}. Ask them to check Junk and Quarantine if it doesn't arrive within a few minutes, and to use the newest link.`);
   } catch (err) {
     alert('Could not send reset email: ' + (err.message || err.code));
   }
@@ -4721,7 +4835,7 @@ async function saveNewUser() {
   const checked = [...document.querySelectorAll('#newUserPageChecks input:checked')].map(c => c.value);
   if (!checked.length) { alert('Select at least one page.'); return; }
   const doc = { email, pages: checked, role, authMethod };
-  if (authMethod === 'email') doc.mustChangePassword = true;
+  if (authMethod === 'email') { doc.mustChangePassword = true; doc.mustChangePasswordSince = new Date().toISOString(); }
   await db.collection(FS_USERS).doc(email).set(doc);
   // Deliberately re-adding someone lifts the revocation that blocks re-seeding.
   try { await unrevokeUserEmail(email); } catch (e) { console.warn('[Access] could not lift revocation:', e.code || e.message); }
@@ -4769,7 +4883,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.textContent = msg;
   }
 
-  auth.onAuthStateChanged(async user => {
+  const handleUser = async (user, gen) => {
     if (!user) {
       userRecord = null;
       document.getElementById('mainNav').innerHTML            = '';
@@ -4788,6 +4902,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authLoading').style.display   = 'flex';
     document.getElementById('signInBtn').style.display     = 'none';
     document.getElementById('authError').textContent       = '';
+    document.getElementById('authError').style.color       = '#fca5a5';
     setLoadMsg('Checking access…');
     console.log('[Auth v4] Signed in as:', user.email);
     recordLogin(user);   // fire-and-forget; never gates the app
@@ -4846,8 +4961,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           rec = await withTimeout(fetchUserRecord(user.email), 8000);
         } catch (e) {
-          console.error('[Auth] fetchUserRecord failed:', e.message);
-          throw new Error('Could not reach the permissions database. Check your connection and try again.');
+          console.error('[Auth] fetchUserRecord failed:', e.code, e.message);
+          throw new Error(e.code === 'permission-denied'
+            ? 'Signed in as ' + user.email + ', but the database refused access. Contact the pharmacy owner.'
+            : 'Could not reach the permissions database (' + (e.code || e.message) + '). Check your connection and try again.');
         }
 
         if (!rec) {
@@ -4884,7 +5001,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Prompt email/password users to change their temporary password
     const isEmailUser = user.providerData.some(p => p.providerId === 'password');
-    if (isEmailUser && userRecord.mustChangePassword) {
+    const needsPw = isEmailUser && userRecord.mustChangePassword && !(await ownPasswordSet(user.email, userRecord));
+    // The app is already showing during that read, so they may have signed out
+    // (or someone else signed in) meanwhile. Only the current run may show it.
+    if (needsPw && gen === _authGen && auth.currentUser && auth.currentUser.uid === user.uid) {
       document.getElementById('pwCurrent').value = '';
       document.getElementById('pwCurrent').style.display = 'none';
       document.getElementById('pwNew').value     = '';
@@ -4892,7 +5012,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('pwChangeError').textContent = '';
       document.getElementById('pwChangeOverlay').style.display = 'flex';
     }
-  });
+  };
+  _authHandler = async user => {
+    const gen = ++_authGen;
+    if (!user) { _authRunning = false; return handleUser(null, gen); }
+    _authRunning = true;
+    try { await handleUser(user, gen); }
+    finally { if (gen === _authGen) _authRunning = false; }
+  };
+  auth.onAuthStateChanged(_authHandler);
 });
 </script>
 </body>
