@@ -486,6 +486,8 @@ input:focus{border-color:var(--navy)}
     <div style="font-size:1.05rem;font-weight:800;color:var(--navy);margin-bottom:6px">Set Your Password</div>
     <p style="font-size:0.85rem;color:var(--light);margin-bottom:18px">You're using a temporary password. Please set a new one to continue.</p>
     <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="pwCurrent" type="password" placeholder="Current (temporary) password" autocomplete="current-password"
+        style="display:none;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;width:100%;box-sizing:border-box">
       <input id="pwNew"     type="password" placeholder="New password (min 8 characters)"
         style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;width:100%;box-sizing:border-box">
       <input id="pwConfirm" type="password" placeholder="Confirm new password"
@@ -557,6 +559,7 @@ const FS_WEEKLY_DATA     = 'weeklyData';
 const FS_WEEKLY_TARGETS  = 'weeklyTargets';
 const FS_USERS           = 'users';      // access-control collection
 const FS_LOGINS          = 'loginActivity'; // one doc per user: last login, count, device
+const FS_REVOKED         = 'revokedUsers';  // pharmasave/revokedUsers {emails:[]} — owner-written
 
 // ── Access control ────────────────────────────────────────────────
 const OWNER_EMAIL = 'eslam.elbana@gmail.com';
@@ -634,7 +637,6 @@ const DEFAULT_SETTINGS = {
   bpGoalWeeks:              26,
   ehcMissionEndDate:        '',
   ehcHeadline:              "We're Not Going Anywhere.",
-  removedUsers:             [],   // emails deliberately revoked; blocks re-seeding
   transferSources: ['MERIT Trial','Neighbourhood','New Attachment','Doctor Referral','Marketing','Purolator'],
 };
 
@@ -4253,8 +4255,19 @@ async function doChangePassword() {
   errEl.textContent = '';
   if (pw1.length < 8)  { errEl.textContent = 'Password must be at least 8 characters.'; return; }
   if (pw1 !== pw2)     { errEl.textContent = 'Passwords do not match.'; return; }
+  const curEl = document.getElementById('pwCurrent');
   try {
-    await auth.currentUser.updatePassword(pw1);
+    const user = auth.currentUser;
+    // Firebase only lets a password change through within a few minutes of a
+    // real sign-in. Someone arriving on a remembered session (days later, same
+    // browser) is refused with requires-recent-login — so once that has happened,
+    // confirm who they are with the password they already have, then retry.
+    if (curEl.style.display !== 'none') {
+      if (!curEl.value) { errEl.textContent = 'Enter your current (temporary) password first.'; return; }
+      const cred = firebase.auth.EmailAuthProvider.credential(user.email, curEl.value);
+      await user.reauthenticateWithCredential(cred);
+    }
+    await user.updatePassword(pw1);
     // The password is already changed at this point. If clearing the flag is
     // refused (e.g. Firestore rules deny the user writing their own doc), do NOT
     // leave them stuck seeing this overlay on every future sign-in — let them
@@ -4273,7 +4286,22 @@ async function doChangePassword() {
       alert('Your password was changed successfully.\n\nOne thing: this prompt may appear again next sign-in, because the app could not save that you have set it. Ask the owner to clear it for you.');
     }
   } catch (err) {
-    errEl.textContent = 'Could not update password: ' + (err.message || err.code);
+    const code = err && err.code;
+    if (code === 'auth/requires-recent-login') {
+      curEl.style.display = 'block';
+      curEl.focus();
+      errEl.textContent = 'For security, confirm your current (temporary) password, then press Save again.';
+    } else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials') {
+      errEl.textContent = 'That current password is not right. Use "Forgot password?" on the sign-in screen if you no longer have it.';
+    } else if (code === 'auth/weak-password') {
+      errEl.textContent = 'That password is too weak. Try a longer one.';
+    } else if (code === 'auth/too-many-requests') {
+      errEl.textContent = 'Too many attempts. Wait a few minutes and try again.';
+    } else if (code === 'auth/network-request-failed') {
+      errEl.textContent = 'No connection. Check your internet and try again.';
+    } else {
+      errEl.textContent = 'Could not update password: ' + (err.message || code);
+    }
   }
 }
 
@@ -4327,17 +4355,33 @@ const DEFAULT_USERS = [
 async function bootstrapUsersIfNeeded() {
   const col  = db.collection(FS_USERS);
   const opts = { merge: true };
-  // Fetch all default-user docs in parallel to see which are missing
-  // Migrate legacy tombstones. A doc left in users/ with removed:true still
-  // satisfies exists() in the security rules, so the account kept database
-  // access. Move the record into settings and delete the doc for real.
+  // One-time repair: move any revocation list the previous version left inside
+  // pharmasave/settings into its own doc, then delete just that field.
   try {
-    const all    = await col.get();
-    const stale  = all.docs.filter(d => ((d.data() || {}).removed === true));
+    const sRef  = db.collection(FS_COL).doc(FS_SETTINGS);
+    const sSnap = await sRef.get();
+    const sData = sSnap.exists ? (sSnap.data() || {}) : {};
+    if ('removedUsers' in sData) {
+      const legacy = Array.isArray(sData.removedUsers) ? sData.removedUsers : [];
+      if (legacy.length) {
+        await db.collection(FS_COL).doc(FS_REVOKED)
+          .set({ emails: firebase.firestore.FieldValue.arrayUnion(...legacy) }, { merge: true });
+      }
+      await sRef.set({ removedUsers: firebase.firestore.FieldValue.delete() }, { merge: true });
+      console.log('[Bootstrap] Moved revocations out of settings:', legacy);
+    }
+  } catch (e) {
+    console.warn('[Bootstrap] settings repair skipped:', e.code || e.message);
+  }
+
+  // Legacy tombstones: a users/ doc with removed:true still satisfies exists() in
+  // the security rules, so the account kept database access. Revoke + delete.
+  try {
+    const all   = await col.get();
+    const stale = all.docs.filter(d => ((d.data() || {}).removed === true));
     if (stale.length) {
-      const list   = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
-      settings.removedUsers = [...new Set([...list, ...stale.map(d => d.id)])];
-      saveSettings();
+      await db.collection(FS_COL).doc(FS_REVOKED)
+        .set({ emails: firebase.firestore.FieldValue.arrayUnion(...stale.map(d => d.id)) }, { merge: true });
       await Promise.all(stale.map(d => col.doc(d.id).delete()));
       console.log('[Bootstrap] Converted tombstones to real deletions:', stale.map(d => d.id));
     }
@@ -4345,7 +4389,15 @@ async function bootstrapUsersIfNeeded() {
     console.warn('[Bootstrap] tombstone migration skipped:', e.code || e.message);
   }
 
-  const revoked   = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
+  // Read revocations fresh from Firestore — never from the in-memory settings,
+  // which is still empty at this point. If it cannot be read, create nobody:
+  // assuming an empty list is exactly how a removed user gets resurrected.
+  const revoked = await getRevokedUsers();
+  if (revoked === null) {
+    console.warn('[Bootstrap] revoked list unreadable — skipping user seeding');
+    return;
+  }
+  // Fetch all default-user docs in parallel to see which are missing
   const snapshots = await Promise.all(DEFAULT_USERS.map(u => col.doc(u.email).get()));
   const toCreate  = DEFAULT_USERS.filter((u, i) => !snapshots[i].exists && !revoked.includes(u.email));
   if (toCreate.length) {
@@ -4450,6 +4502,32 @@ function relTime(iso) {
   if (d < 1)     { const h = Math.round(d*24); return h + (h === 1 ? ' hour ago' : ' hours ago'); }
   if (d < 30)    { const n = Math.round(d);    return n + (n === 1 ? ' day ago'  : ' days ago'); }
   return new Date(iso).toLocaleDateString('en-CA', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// ── Revoked users ────────────────────────────────────────────────
+// Kept in their own document on purpose. The first version stored them on the
+// settings object and wrote them with saveSettings() — a FULL-DOCUMENT overwrite
+// taken from memory. The bootstrap runs before loadState(), when that object is
+// still {}, so it could replace pharmasave/settings with nothing but the list,
+// and a later save from memory could drop the list again. arrayUnion/arrayRemove
+// with merge touch only this one field and never race with the settings load.
+async function getRevokedUsers() {
+  try {
+    const snap = await db.collection(FS_COL).doc(FS_REVOKED).get();
+    const d = snap.exists ? (snap.data() || {}) : {};
+    return Array.isArray(d.emails) ? d.emails : [];
+  } catch (e) {
+    console.warn('[Access] could not read revoked users:', e.code || e.message);
+    return null;   // unknown — callers must fail closed, not assume "nobody"
+  }
+}
+function revokeUserEmail(email) {
+  return db.collection(FS_COL).doc(FS_REVOKED)
+    .set({ emails: firebase.firestore.FieldValue.arrayUnion(email) }, { merge: true });
+}
+function unrevokeUserEmail(email) {
+  return db.collection(FS_COL).doc(FS_REVOKED)
+    .set({ emails: firebase.firestore.FieldValue.arrayRemove(email) }, { merge: true });
 }
 
 // ── Admin panel helpers (owner only) ─────────────────────────────
@@ -4609,9 +4687,8 @@ async function removeUser(email) {
   // Deleting for real makes exists() false; the settings list is what stops the
   // bootstrap bringing them back.
   try {
-    const list = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
-    if (!list.includes(email)) { settings.removedUsers = [...list, email]; saveSettings(); }
-    await db.collection(FS_USERS).doc(email).delete();
+    await revokeUserEmail(email);                      // record first, so a failed
+    await db.collection(FS_USERS).doc(email).delete(); // delete cannot resurrect
   } catch (e) {
     alert('Could not remove ' + email + ': ' + (e.code || e.message));
   }
@@ -4647,8 +4724,7 @@ async function saveNewUser() {
   if (authMethod === 'email') doc.mustChangePassword = true;
   await db.collection(FS_USERS).doc(email).set(doc);
   // Deliberately re-adding someone lifts the revocation that blocks re-seeding.
-  const revoked = Array.isArray(settings.removedUsers) ? settings.removedUsers : [];
-  if (revoked.includes(email)) { settings.removedUsers = revoked.filter(x => x !== email); saveSettings(); }
+  try { await unrevokeUserEmail(email); } catch (e) { console.warn('[Access] could not lift revocation:', e.code || e.message); }
   // Offer to send welcome/reset email for email-type users
   if (authMethod === 'email') {
     if (confirm(`User saved. Send a password setup email to ${email} now?\n\n(The Firebase Auth account must already be created in Firebase Console first.)`)) {
@@ -4809,6 +4885,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prompt email/password users to change their temporary password
     const isEmailUser = user.providerData.some(p => p.providerId === 'password');
     if (isEmailUser && userRecord.mustChangePassword) {
+      document.getElementById('pwCurrent').value = '';
+      document.getElementById('pwCurrent').style.display = 'none';
       document.getElementById('pwNew').value     = '';
       document.getElementById('pwConfirm').value = '';
       document.getElementById('pwChangeError').textContent = '';
