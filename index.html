@@ -372,6 +372,22 @@ input:focus{border-color:var(--navy)}
 .dash2 .trend-side{ grid-column:span 4; padding:var(--b-pad); display:flex; flex-direction:column; }
 .dash2 .trend-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
 .dash2 .trend-head h3{ margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; color:var(--b-ink); }
+.dash2 .growth-ctl{ grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:14px 18px; }
+.dash2 .growth-ctl .gc-lab{ font-size:12.5px; font-weight:600; color:var(--b-muted); }
+.dash2 .growth-ctl .gc-desc{ margin-left:auto; font-size:13px; color:var(--b-muted); }
+.dash2 .growth-ctl .gc-desc b{ color:var(--b-ink); }
+.dash2 .ttm-card{ grid-column:1/-1; padding:var(--b-pad); }
+.dash2 .ttm-note{ font-size:12.5px; color:var(--b-muted); }
+.dash2 .ttm-scroll{ overflow-x:auto; }
+.dash2 table.ttm{ width:100%; min-width:640px; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.dash2 table.ttm th{ padding:8px 12px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--b-faint); text-align:right; border-bottom:1px solid var(--b-line-strong); white-space:nowrap; }
+.dash2 table.ttm td{ padding:12px; font-size:14.5px; font-weight:600; color:var(--b-ink); text-align:right; border-bottom:1px solid var(--b-line); white-space:nowrap; }
+.dash2 table.ttm tr:last-child td{ border-bottom:none; }
+.dash2 table.ttm th:first-child,.dash2 table.ttm td:first-child{ text-align:left; }
+.dash2 table.ttm td:first-child span{ display:block; margin-top:2px; font-size:12px; font-weight:500; color:var(--b-muted); }
+.dash2 table.ttm td small{ display:block; font-size:11px; font-weight:500; color:var(--b-faint); }
+.dash2 table.ttm td:last-child{ font-weight:800; }
+.dash2 table.ttm td.pos{ color:var(--b-teal); } .dash2 table.ttm td.neg{ color:var(--b-red); }
 .dash2 .chart-box{ position:relative; flex:1; min-height:300px; }
 .dash2 .chart-box canvas{ position:absolute; inset:0; }
 .dash2 .hidden{ display:none !important; }
@@ -775,11 +791,6 @@ const ALL_PAGES   = ['Dashboard','Projections','EHC','Insights','Weekly Metrics'
 // else starts on their first permitted page (EHC-only staff land on EHC).
 const LANDING_PAGE = 'projections';
 
-// Months of history used to MEASURE growth (a window of N months yields N-1
-// month-over-month rates). Single source of truth: the dashboard, the
-// expense-drift rate and the Insights break-even ETA all read this, so
-// they can never disagree about what "average growth" means. Change it here only.
-const GROWTH_WINDOW_MONTHS = 3;
 
 // Days remaining on the EHC mission at which the hero switches into its
 // "Code Red" alert treatment (red glow, pulsing pill, red countdown numbers).
@@ -829,6 +840,7 @@ const DEFAULT_SETTINGS = {
     optimistic:  { ceiling: 150000, monthsToCeiling: 12 },
   },
   valuationMultiple: 3,
+  growthModel: { method:'net', window:3 },   // see GROWTH TRENDS
   // Weekly Metrics targets
   transfersWeeklyTarget:    5,
   blisterPacksWeeklyTarget: 3,
@@ -963,59 +975,6 @@ function calcMonthData(m) {
   const netProfit = totalGP - totalExp;
 
   return { rxGP, frontGP, rebate, totalGP, totalExp, netProfit };
-}
-
-function calcRollingAvgGrowth() {
-  const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
-  const slice  = sorted.slice(-GROWTH_WINDOW_MONTHS);
-
-  if (slice.length < 2) return {rate: null, count: slice.length, trend: null, rates: []};
-
-  const rates = [];
-  for (let i = 1; i < slice.length; i++) {
-    const prevGP = calcMonthData(slice[i-1]).totalGP;
-    const currGP = calcMonthData(slice[i]).totalGP;
-    if (prevGP <= 0) continue; // skip division by zero
-    rates.push((currGP - prevGP) / prevGP * 100);
-  }
-
-  if (rates.length === 0) return {rate: null, count: slice.length, trend: null, rates: []};
-
-  const avg = rates.reduce((s,r) => s + r, 0) / rates.length;
-
-  // Compound (geometric) monthly rate across the same window. Averaging
-  // month-over-month percentages arithmetically overstates compounding — e.g.
-  // +100% then -50% averages to +25% but nets to 0% — so anything that projects
-  // forward must use this figure, not the simple mean.
-  const firstGP = calcMonthData(slice[0]).totalGP;
-  const lastGP  = calcMonthData(slice[slice.length-1]).totalGP;
-  const cagr = (firstGP > 0 && lastGP > 0 && slice.length > 1)
-    ? (Math.pow(lastGP / firstGP, 1/(slice.length-1)) - 1) * 100
-    : avg;
-
-  // Trend: compare first-half avg vs second-half avg of the growth rates
-  let trend = 'stable';
-  if (rates.length >= 2) {
-    const mid      = Math.ceil(rates.length / 2);
-    const firstAvg = rates.slice(0, mid).reduce((s,r)=>s+r,0) / mid;
-    const lastAvg  = rates.slice(-mid).reduce((s,r)=>s+r,0) / mid;
-    const diff = lastAvg - firstAvg;
-    if      (diff >  0.5) trend = 'accelerating';
-    else if (diff < -0.5) trend = 'decelerating';
-  }
-
-  return {rate: parseFloat(cagr.toFixed(1)), arithRate: parseFloat(avg.toFixed(1)),
-          count: slice.length, trend, rates};
-}
-
-// If realisticIsAuto is true, keep the Realistic rate synced to the rolling average.
-function syncRealisticRate() {
-  if (settings.realisticIsAuto === false) return;
-  const avg = calcRollingAvgGrowth();
-  if (avg.rate !== null) {
-    settings.growthRates.realistic = avg.rate;
-    saveSettings();
-  }
 }
 
 // ================================================================
@@ -1175,6 +1134,187 @@ const gapLabelPlugin = {
 };
 
 // ================================================================
+// GROWTH TRENDS — one model shared by Dashboard, Projections and Insights
+// ================================================================
+// How the pharmacy is projected forward. Chosen once and stored in Settings
+// (settings.growthModel), so every page and every device shows the same dates:
+//   'net' — best-fit line of net profit in $ per month (GP trend − expense trend)
+//   'rx'  — best-fit scripts per month × GP per script, less the expense trend
+//   'pct' — compound % growth of gross profit; expenses compound at their own %
+// A pharmacy adding the same dollars every month shows a FALLING percentage as
+// it grows, and compounding that % bends a straight line into a curve that runs
+// away over a year. That is why the dollar method is the default.
+const GROWTH_METHODS = [
+  { id:'net', label:'$ net profit' },
+  { id:'rx',  label:'Scripts' },
+  { id:'pct', label:'% growth' },
+];
+const GROWTH_WINDOWS = [3, 6, 12, 0];   // months of history fitted; 0 = all time
+const GROWTH_DEFAULT = { method:'net', window:3 };
+
+function growthModel() {
+  const g = settings.growthModel || {};
+  return {
+    method: GROWTH_METHODS.some(x => x.id === g.method) ? g.method : GROWTH_DEFAULT.method,
+    window: GROWTH_WINDOWS.includes(Number(g.window)) ? Number(g.window) : GROWTH_DEFAULT.window,
+  };
+}
+// Writes ONLY this field (merge), never the whole settings object from this
+// tab's memory, so a click here can't undo a Settings change made on another
+// device since this tab loaded. Unchanged values (e.g. loading a plan that
+// matches) don't write at all.
+function setGrowthModel(patch) {
+  const before = growthModel(), next = Object.assign({}, before, patch);
+  settings.growthModel = next;
+  if (next.method === before.method && next.window === before.window) return;
+  db.collection(FS_COL).doc(FS_SETTINGS).set({ growthModel: next }, { merge: true }).catch(console.error);
+}
+
+// Every month once (the last entry wins on a duplicate), oldest first, in the
+// shape the trends use. Expenses fall back to the Settings total when a month
+// has none, exactly as the dashboard's own net profit does.
+function growthRows() {
+  const byKey = new Map();
+  [...months].filter(m => /^\d{4}-\d{2}$/.test(m.monthKey || ''))
+    .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
+    .forEach(m => byKey.set(m.monthKey, m));
+  return [...byKey.values()].map((m, i) => {
+    const d = calcMonthData(m), [y, mo] = m.monthKey.split('-').map(Number);
+    const own = parseFloat(m.expenses) || 0, exp = own > 0 ? own : calcTotalExpenses();
+    return { i, t: y * 12 + mo - 1, m, key: m.monthKey, label: PJ_MN[mo - 1] + ' ' + y,
+      rx: parseFloat(m.rxSales) || 0, cnt: Number(m.rxCount) || 0, front: parseFloat(m.frontSales) || 0,
+      reb: d.rebate, gp: d.totalGP, exp, net: d.totalGP - exp };
+  });
+}
+
+// Least-squares slope through [x, y] points. Uses every month in the window, so
+// one odd month at either end cannot swing it the way first-vs-last can.
+function lsSlope(pts) {
+  const n = pts.length;
+  if (n < 2) return 0;
+  const xm = pts.reduce((a, p) => a + p[0], 0) / n, ym = pts.reduce((a, p) => a + p[1], 0) / n;
+  let sxy = 0, sxx = 0;
+  pts.forEach(([x, y]) => { sxy += (x - xm) * (y - ym); sxx += (x - xm) * (x - xm); });
+  return sxx ? sxy / sxx : 0;
+}
+
+// The trend as of rows[idx] (the dashboard's selected month, or the latest).
+// Time runs on calendar months (r.t), not row positions, so a month that was
+// never entered stretches the line instead of compressing it.
+// T.gp / exp / net / rx / cnt (k) give month k after idx (k = 0 is idx itself).
+// When the method cannot be measured, T.ok is false, T.reason says why, and the
+// functions hold everything flat so callers never see NaN.
+function growthTrend(rows, idx, gm) {
+  gm = gm || growthModel();
+  const base = rows[idx];
+  const W = rows.slice(0, idx + 1).filter(r => gm.window > 0 ? r.t > base.t - gm.window : true), from = W[0];
+  const n = base.t - from.t + 1;   // calendar months the window spans
+  // Rx Count arrived later than the dollar figures, so some months have none:
+  // per-script values come from the last 3 months that DO have one.
+  const counted = rows.slice(0, idx + 1).filter(r => r.cnt > 0), c0 = counted.length ? counted[counted.length - 1] : null;
+  const c3 = counted.slice(-3), sc = c3.reduce((a, r) => a + r.cnt, 0);
+  const gpr = sc > 0 ? c3.reduce((a, r) => a + r.gp, 0) / sc : 0;
+  const rxv = sc > 0 ? c3.reduce((a, r) => a + r.rx, 0) / sc : 0;
+  const lin = key => lsSlope(W.map(r => [r.t, r[key]]));
+  const Wc = W.filter(r => r.cnt > 0), sCnt = lsSlope(Wc.map(r => [r.t, r.cnt]));
+  const cntLin = k => c0 ? c0.cnt + sCnt * (base.t + k - c0.t) : 0;
+  const T = { method: gm.method, window: gm.window, n, from, base, gpr, rxv, ok: true, reason: '' };
+  const hold = why => {
+    T.ok = false; T.reason = why;
+    T.gp = () => base.gp; T.exp = () => base.exp; T.rx = () => base.rx; T.cnt = () => (c0 ? c0.cnt : 0);
+  };
+  if (W.length < 2) hold('Needs at least 2 months of history');
+  else if (gm.method === 'net') {
+    T.sGP = lin('gp'); T.sExp = lin('exp');
+    const sRx = lin('rx');
+    T.gp = k => base.gp + T.sGP * k;  T.exp = k => base.exp + T.sExp * k;
+    T.rx = k => base.rx + sRx * k;    T.cnt = cntLin;
+    T.perMonth = T.sGP - T.sExp;
+  } else if (gm.method === 'rx') {
+    if (Wc.length < 2 || !(gpr > 0)) hold('Needs Rx Count in at least 2 months of the window');
+    else {
+      T.sCnt = sCnt; T.sGP = sCnt * gpr; T.sExp = lin('exp');
+      T.gp = k => base.gp + T.sGP * k;  T.exp = k => base.exp + T.sExp * k;
+      T.rx = k => base.rx + sCnt * rxv * k;  T.cnt = cntLin;
+      T.perMonth = T.sGP - T.sExp;
+    }
+  } else {   // 'pct'
+    const span = base.t - from.t;
+    const cagr = (a, b) => (a > 0 && b > 0 ? Math.pow(b / a, 1 / span) - 1 : null);
+    const mean = key => {   // per-month rate across adjacent, positive months only
+      const r = [];
+      for (let j = 1; j < W.length; j++) if (W[j - 1][key] > 0 && W[j][key] > 0 && W[j].t - W[j - 1].t === 1) r.push(W[j][key] / W[j - 1][key] - 1);
+      return r.length ? r.reduce((a, v) => a + v, 0) / r.length : null;
+    };
+    // A percentage only means something from a positive base: compounding a
+    // loss (or a rate at or below −100%) flips sign month to month.
+    const g = base.gp > 0 ? (cagr(from.gp, base.gp) ?? mean('gp')) : null;
+    if (g === null || !(g > -1)) hold('Needs positive gross profit in the latest month');
+    else {
+      T.g = g; T.ge = cagr(from.exp, base.exp) ?? 0;
+      const gr = cagr(from.rx, base.rx) ?? g;
+      const gc = Wc.length >= 2 ? Math.pow(Wc[Wc.length - 1].cnt / Wc[0].cnt, 1 / (Wc[Wc.length - 1].t - Wc[0].t)) - 1 : 0;
+      T.gp = k => base.gp * Math.pow(1 + g, k);  T.exp = k => base.exp * Math.pow(1 + T.ge, k);
+      T.rx = k => base.rx * Math.pow(1 + gr, k);
+      T.cnt = k => (c0 ? c0.cnt * Math.pow(1 + gc, base.t + k - c0.t) : 0);
+    }
+  }
+  T.net = k => (k <= 0 ? base.net : T.gp(k) - T.exp(k));
+
+  // Month-over-month steps of whatever the method measures, for "last month"
+  // and the accelerating / slowing chip.
+  const step = j => W[j].t - W[j - 1].t !== 1 ? null   // a gap is not a month-over-month step
+                  : gm.method === 'pct' ? (W[j - 1].gp > 0 && W[j].gp > 0 ? W[j].gp / W[j - 1].gp - 1 : null)
+                  : gm.method === 'rx'  ? (W[j].cnt > 0 && W[j - 1].cnt > 0 ? W[j].cnt - W[j - 1].cnt : null)
+                  : W[j].net - W[j - 1].net;
+  const steps = [];
+  for (let j = 1; j < W.length; j++) { const v = step(j); if (v !== null) steps.push(v); }
+  T.last = W.length >= 2 ? step(W.length - 1) : null;
+  T.trend = 'stable';
+  if (T.ok && steps.length >= 2) {
+    const h = Math.ceil(steps.length / 2), avg = a => a.reduce((s, v) => s + v, 0) / a.length;
+    const diff = avg(steps.slice(-h)) - avg(steps.slice(0, h));
+    const tol = gm.method === 'pct' ? 0.005 : gm.method === 'rx' ? 5 : 100;   // ignore noise
+    T.trend = diff > tol ? 'accelerating' : diff < -tol ? 'decelerating' : 'stable';
+  }
+  return T;
+}
+
+// First month k (1..max) at which the trend's net profit reaches `target`.
+function growthReach(T, target, max) {
+  for (let k = 1; k <= max; k++) if (T.net(k) >= target) return k;
+  return null;
+}
+
+// The same crossing, in fractional months (straight-line between months), for
+// "how much later" comparisons that whole months would round away.
+function growthReachFrac(T, target, max) {
+  for (let k = 1; k <= max; k++) {
+    const v1 = T.net(k);
+    if (v1 >= target) { const v0 = T.net(k - 1); return k - 1 + (v1 > v0 ? Math.min(1, Math.max(0, (target - v0) / (v1 - v0))) : 1); }
+  }
+  return null;
+}
+
+// Words for the trend: the headline figure, what it measures, and the detail.
+function growthDescribe(T) {
+  const m$ = v => (v < 0 ? '−$' : '+$') + Math.round(Math.abs(v)).toLocaleString('en-CA');
+  const pc = v => (v < 0 ? '−' : '+') + Math.abs(v * 100).toFixed(1) + '%';
+  const span = T.n >= 2 ? T.from.label + ' – ' + T.base.label : T.base.label;
+  const win = T.window ? T.n + '-mo' : 'All-time';
+  if (!T.ok) return { head: '—', unit: '', detail: T.reason, span, win, exp: '', expRising: false };
+  if (T.method === 'pct') return { head: pc(T.g) + '/mo', unit: 'gross profit', span, win,
+    detail: 'Gross profit ' + pc(T.g) + '/mo, expenses ' + pc(T.ge) + '/mo, both compounding',
+    exp: pc(T.ge) + '/mo', expRising: T.ge > 0 };
+  if (T.method === 'rx') return { head: (T.sCnt < 0 ? '−' : '+') + Math.round(Math.abs(T.sCnt)).toLocaleString('en-CA') + ' scripts/mo', unit: '', span, win,
+    detail: '× $' + T.gpr.toFixed(2) + ' GP each = ' + m$(T.sGP) + '/mo GP, expenses ' + m$(T.sExp) + '/mo',
+    exp: m$(T.sExp) + '/mo', expRising: T.sExp > 0 };
+  return { head: m$(T.perMonth) + '/mo', unit: 'net profit', span, win,
+    detail: 'Gross profit ' + m$(T.sGP) + '/mo, expenses ' + m$(T.sExp) + '/mo',
+    exp: m$(T.sExp) + '/mo', expRising: T.sExp > 0 };
+}
+
+// ================================================================
 // PAGE: PROJECTIONS  (Claude Design: 'Projections v4.html' + proj/*.js)
 // ================================================================
 // Ported from the design's model.js / chart.js / levers.js, kept close to the
@@ -1192,16 +1332,7 @@ let _pj = { PM:null, st:null, plans:null, plansState:'loading', plansGen:0, pend
 
 // One row per month in the shape the design's model expects — the same eight
 // columns as the Monthly Data CSV export it was built from.
-function pjRows() {
-  return [...months].filter(m => /^\d{4}-\d{2}$/.test(m.monthKey || ''))
-    .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
-    .map((m, i) => {
-      const d = calcMonthData(m), [y, mo] = m.monthKey.split('-').map(Number);
-      return { i, key: m.monthKey, label: PJ_MN[mo - 1] + ' ' + y,
-        rx: parseFloat(m.rxSales) || 0, cnt: Number(m.rxCount) || 0, front: parseFloat(m.frontSales) || 0,
-        reb: d.rebate, gp: d.totalGP, exp: d.totalExp, net: d.netProfit };
-    });
-}
+function pjRows() { return growthRows(); }   // the same months the Dashboard projects from
 
 function pjValuationMultiple() {
   const v = parseFloat(settings.valuationMultiple);   // same fallback as the dashboard
@@ -1220,12 +1351,13 @@ function pjBuildModel(D, multiple) {
   const mIdx = i => i>=0&&i<=L ? Number(D[i].key.slice(5))-1 : (((M0+i)%12)+12)%12;   // 0-11
   const lab = (i,s) => { let m,y; if(i>=0&&i<=L){[y,m]=D[i].key.split('-').map(Number);m=MN[m-1]}else{const t=M0+i;m=MN[((t%12)+12)%12];y=Y0+Math.floor(t/12)} return s?m+" '"+String(y).slice(2):m+' '+y; };
   const win = id => WINDOWS.find(w=>w.id===id);
-  function slope(a){const n=a.length,xm=(n-1)/2,ym=a.reduce((s,v)=>s+v,0)/n;let sxy=0,sxx=0;a.forEach((y,x)=>{sxy+=(x-xm)*(y-ym);sxx+=(x-xm)*(x-xm)});return sxx?sxy/sxx:0}
-  // Rx Count was added to the data later than the dollar figures, so some months
-  // have none. The count trend fits only months that have one, at their real
-  // positions; per-Rx figures below divide dollars by scripts from the SAME months.
-  function slopeXY(pts){const n=pts.length;if(n<2)return 0;const xm=pts.reduce((a,p)=>a+p[0],0)/n,ym=pts.reduce((a,p)=>a+p[1],0)/n;let sxy=0,sxx=0;pts.forEach(([x,y])=>{sxy+=(x-xm)*(y-ym);sxx+=(x-xm)*(x-xm)});return sxx?sxy/sxx:0}
-  function fit(id){const n=Math.min(win(id).n,D.length),s=D.slice(-n);return{n,from:s[0].label,net:slope(s.map(d=>d.net)),gp:slope(s.map(d=>d.gp)),exp:slope(s.map(d=>d.exp)),cnt:slopeXY(s.filter(d=>d.cnt>0).map(d=>[d.i,d.cnt])),rx:slope(s.map(d=>d.rx))}}
+  // The window buttons and the shared growth setting speak different units.
+  const winN = id => ({all:0, year:12, six:6, three:3})[id] ?? 3;
+  const winId = n => ({0:'all', 12:'year', 6:'six', 3:'three'})[n] || 'three';
+  // The trend for a window, using the shared method (GROWTH TRENDS) — the same
+  // numbers the Dashboard and Insights show. Cached per method and window.
+  const memo = {};
+  const trendFor = id => { const gm = growthModel(), key = gm.method + ':' + id; return memo[key] || (memo[key] = growthTrend(D, L, { method: gm.method, window: winN(id) })); };
   const counted = D.filter(d => d.cnt > 0), c0 = counted.length ? counted[counted.length - 1] : null;
   const valNet = () => S.target/(12*S.multiple), value = n => n*12*S.multiple;
   const f$ = v => (v<0?'−':'')+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
@@ -1242,25 +1374,28 @@ function pjBuildModel(D, multiple) {
   const targets = () => [{id:'be',label:'Break-even',tag:'Break-even',net:0}].concat(Array.from({length:10},(_,i)=>i+1).map(n=>({id:n+'0k',label:`$${n}0K / month`,tag:`$${n}0K/mo`,net:n*1e4})));
   function valLines(max){const u=1e6/(12*S.multiple),c=Math.floor(max/u),sp=c<=5?1:c<=10?2:5,o=[];for(let m=1;m*u<=max;m++)if(m===1||m%sp===0)o.push({v:m*1e6,net:m*u,tag:`$${m}M value`});return o}
   const A = {rxPerBlister:5,frontMargin:.4};
-  function plan(id,lv){lv=lv||{};const f=fit(id),gpr=gpPerRx(),rxv=rxValue(),r0=rebRate(),d=D[L],n=(lv.blister||0)*A.rxPerBlister+(lv.rx||0),dr=lv.rebate!=null?(lv.rebate-r0)/100:0,eS=lv.flat?0:f.exp;
-    const cnt=k=>c0?c0.cnt+f.cnt*(L+k-c0.i)+n*k:0,rxs=k=>d.rx+f.rx*k+n*k*rxv;   // count runs on from the last month that has one
-    const gp=k=>d.gp+f.gp*k+n*k*gpr+dr*rxs(k)+(lv.front||0)*A.frontMargin;
-    const exp=k=>d.exp+eS*k-(lv.cut||0)+(lv.add||0);
-    const at=k=>k<=0?d.net:gp(k)-exp(k),slope=at(2)-at(1);
-    return{id,f,lv,slope,base:at(1)-slope,at,gp,exp,cnt,rxs}}
+  // The trend plus the moves. Moves add the same amount every month on top of
+  // whatever the trend does, so they work the same under every growth method.
+  function plan(id,lv){lv=lv||{};const TR=trendFor(id),gpr=gpPerRx(),rxv=rxValue(),r0=rebRate(),d=D[L],n=(lv.blister||0)*A.rxPerBlister+(lv.rx||0),dr=lv.rebate!=null?(lv.rebate-r0)/100:0;
+    const cnt=k=>TR.cnt(k)+n*k,rxs=k=>TR.rx(k)+n*k*rxv;
+    const gp=k=>TR.gp(k)+n*k*gpr+dr*rxs(k)+(lv.front||0)*A.frontMargin;
+    const exp=k=>(lv.flat?d.exp:TR.exp(k))-(lv.cut||0)+(lv.add||0);
+    const at=k=>k<=0?d.net:gp(k)-exp(k);
+    return{id,TR,lv,at,gp,exp,cnt,rxs}}
   function solve(id,lv,t,k){const p=plan(id,lv),G=t-p.at(k);if(G<=0)return{met:true,room:-G,p};
-    const gpr=gpPerRx(),rxv=rxValue(),r0=rebRate(),r=lv.rebate!=null?lv.rebate:r0,per=gpr+(r-r0)/100*rxv;
-    return{met:false,gap:G,p,need:{flat:lv.flat||p.f.exp<=0?null:p.f.exp*k,cut:(lv.cut||0)+Math.ceil(G/50)*50,blister:(lv.blister||0)+Math.ceil(G/(k*A.rxPerBlister*per)),rx:(lv.rx||0)+Math.ceil(G/(k*per)/5)*5,rebate:p.rxs(k)>0?Math.round((r+Math.ceil(G/p.rxs(k)*1000)/10)*10)/10:Infinity,front:(lv.front||0)+Math.ceil(G/A.frontMargin/100)*100}}}
-  function project(id,sc){sc=sc||{};const f=fit(id),s=(sc.flat?f.gp:f.net)+(sc.rx||0)*gpPerRx(),b=D[L].net+(sc.cut||0);return{id,f,slope:s,base:b,at:k=>k<=0?D[L].net:b+s*k}}
+    const gpr=gpPerRx(),rxv=rxValue(),r0=rebRate(),r=lv.rebate!=null?lv.rebate:r0,per=gpr+(r-r0)/100*rxv,rise=p.TR.exp(k)-D[L].exp;
+    return{met:false,gap:G,p,need:{flat:lv.flat||rise<=0?null:rise,cut:(lv.cut||0)+Math.ceil(G/50)*50,blister:(lv.blister||0)+Math.ceil(G/(k*A.rxPerBlister*per)),rx:(lv.rx||0)+Math.ceil(G/(k*per)/5)*5,rebate:p.rxs(k)>0?Math.round((r+Math.ceil(G/p.rxs(k)*1000)/10)*10)/10:Infinity,front:(lv.front||0)+Math.ceil(G/A.frontMargin/100)*100}}}
+  function project(id){return plan(id,{})}   // the trend alone
+  // Walk forward month by month: the % method curves, so there is no closed form.
   function arrival(p,t){
     if(D[L].net>=t){let i=L;while(i>0&&D[i-1].net>=t)i--;return{reached:true,i,label:lab(i),short:lab(i,true)}}
-    let k=1;if(p.at(1)<t){if(p.slope<=0)return{never:true};k=Math.max(1,Math.ceil((t-p.base)/p.slope))}
-    if(k>240)return{never:true};
+    let k=0;for(let j=1;j<=240;j++)if(p.at(j)>=t){k=j;break}
+    if(!k)return{never:true};
     const v0=p.at(k-1),v1=p.at(k),xf=L+k-1+(v1>v0?Math.min(1,Math.max(0,(t-v0)/(v1-v0))):1);
     return{k,i:L+k,xf,label:lab(L+k),short:lab(L+k,true),away:k-1}}
   function ring(o){const s=o.size,w=o.stroke,h=s/2,r=(s-w)/2-2,c=2*Math.PI*r,p=Math.max(0,Math.min(1,o.pct));
     return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:${o.track||'var(--track,rgba(255,255,255,.09))'}" stroke-width="${w}"></circle>${p>0?`<circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="${o.color}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 ${h} ${h})" style="filter:drop-shadow(0 0 ${o.glow||5}px ${o.color}88)"></circle>`:''}</svg>`}
-  return {D,L,M0,lastAbs:ly*12+(lm-1),hasCnt:!!c0,mIdx,S,A,WINDOWS,win,lab,fit,valNet,value,targets,valLines,gpPerRx,rxValue,rebRate,project,plan,solve,arrival,f$,fs,fK,f2,ring};
+  return {D,L,M0,lastAbs:ly*12+(lm-1),hasCnt:!!c0,mIdx,S,A,WINDOWS,win,winN,winId,trendFor,lab,valNet,value,targets,valLines,gpPerRx,rxValue,rebRate,project,plan,solve,arrival,f$,fs,fK,f2,ring};
 }
 
 // ── chart.js ─────────────────────────────────────────────────────
@@ -1270,19 +1405,22 @@ function pjRenderChart(PM, el, o) {
  const isF=m=>o.focus?m.id===o.focus:!!m.goal;
  const cw=Math.round(el.clientWidth),W=cw?Math.max(260,cw):360,H=o.fill?Math.max(280,Math.round(el.clientHeight)):(o.height||420),cmp=o.compact||W<700;
  const pad={l:50,r:cmp?96:150,t:30,b:34},pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
- const p=PM.project(o.wid),ps=o.plan||(o.scenario?PM.project(o.wid,o.scenario):null),lead=ps||p;
+ const p=PM.project(o.wid),ps=o.plan||null,lead=ps||p;
  let mk=o.target?o.target.k:0;
  ms.forEach(m=>{if(o.target&&!isF(m))return;const a=PM.arrival(lead,m.net);if(a.k)mk=Math.max(mk,a.k);if(isF(m)&&ps){const b=PM.arrival(p,m.net);if(b.k)mk=Math.max(mk,b.k)}});
  const hz=Math.min(o.target?84:36,Math.max(12,mk+(o.target?6:3))),N=L+hz;
- const upw=!ps||lead.at(hz)>=p.at(hz),PC=upw?GR:RD,top=Math.max(lead.at(hz),p.at(hz));
- const vals=D.map(d=>d.net).concat([lead.at(hz),p.at(hz),lead.at(1)],ms.filter(m=>!o.target||isF(m)||m.net<=top).map(m=>m.net));
+ const upw=!ps||lead.at(hz)>=p.at(hz),PC=upw?GR:RD;
+ // Range from every month drawn: a % trend can peak mid-horizon and come back down.
+ let pmin=Infinity,pmax=-Infinity;for(let k=0;k<=hz;k++)for(const q of [lead,p]){const v=q.at(k);if(v<pmin)pmin=v;if(v>pmax)pmax=v}
+ const top=pmax;
+ const vals=D.map(d=>d.net).concat([pmin,pmax],ms.filter(m=>!o.target||isF(m)||m.net<=top).map(m=>m.net));
  const lo=Math.min(...vals),hi=Math.max(...vals);
  const y0=Math.floor(lo/5000)*5000,y1=Math.ceil((hi+(hi-lo)*.04)/5000)*5000;
  const X=i=>pad.l+i/N*pw,Y=v=>pad.t+(y1-v)/(y1-y0)*ph,z=Y(0);
  const u='c'+Math.random().toString(36).slice(2,8);
  const minN=Math.min(...D.map(d=>d.net)),maxN=Math.max(0,...D.map(d=>d.net));
  const P=pts=>pts.map((q,j)=>(j?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join('');
- const qp=q=>[[X(L),Y(q.at(0))],[X(L+1),Y(q.at(1))],[X(N),Y(q.at(hz))]];
+ const qp=q=>{const o=[];for(let k=0;k<=hz;k++)o.push([X(L+k),Y(q.at(k))]);return o};   // every month: the % method curves
  const boxes=[],labs=[];
  const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
  const pr=(x,y,t,an)=>{const w=t.length*6.8+14;return{x:an==='end'?x-w+7:an==='middle'?x-w/2:x-7,y:y-13,w,h:19}};
@@ -1389,12 +1527,13 @@ function pjCleanPlan(id, p) {
   const r = Number(src.rebate);
   lv.rebate = src.rebate != null && isFinite(r) ? Math.min(PJ_MAX.rebate, Math.max(0, r)) : null;
   const plan = { id: String(id), name: String(p.name || 'Untitled plan').slice(0, 48), w: String(p.w || 'six'), goal: String(p.goal || '10k'),
+                 m: GROWTH_METHODS.some(x => x.id === p.m) ? p.m : undefined,
                  k: isFinite(Number(p.k)) ? Number(p.k) : 6, lv,
                  savedAt: typeof p.savedAt === 'string' ? p.savedAt : '', savedBy: typeof p.savedBy === 'string' ? p.savedBy : '' };
   if (isFinite(Number(p.t)) && p.t !== null && p.t !== '') plan.t = Number(p.t);
   return plan;
 }
-const pjPlanDoc   = p => { const d = { name: p.name, w: p.w, goal: p.goal, k: p.k, lv: Object.assign({}, PJ_LV0, p.lv), savedAt: p.savedAt, savedBy: p.savedBy }; if (typeof p.t === 'number') d.t = p.t; return d; };
+const pjPlanDoc   = p => { const d = { name: p.name, w: p.w, goal: p.goal, k: p.k, lv: Object.assign({}, PJ_LV0, p.lv), savedAt: p.savedAt, savedBy: p.savedBy }; if (typeof p.t === 'number') d.t = p.t; if (p.m) d.m = p.m; return d; };
 const pjSortPlans = a => a.sort((x, y) => (x.savedAt || '').localeCompare(y.savedAt || '') || x.name.localeCompare(y.name));
 
 async function pjFetchPlans() {
@@ -1493,7 +1632,7 @@ ${lever('rebate', 'Rebate rate', 8, 16, 0.1, 11)}
 <section class="lc-sec lc-plans"><div class="plans"><span class="eyebrow">Saved plans</span><div class="plist" data-k="plist"></div><div class="pact"><button class="pbtn" data-act="save-open">+ Save this plan</button><form class="psave" hidden><input data-name type="text" maxlength="48" aria-label="Plan name" /><button class="pbtn pri" type="submit">Save</button><button class="pbtn" type="button" data-act="save-cancel">Cancel</button></form></div></div></section>
 </aside>
 <div class="lc-stage">
-<section class="pjc lc-chart"><div class="chead"><div class="legend"><span><i class="lg"></i>Actual</span><span><i class="lg trend"></i>Current trend</span><span><i class="lg green"></i>Your plan</span><span><i class="lg val"></i>Valuation ($1M, $2M…)</span><span><i class="lgt"></i>Goal</span></div><div class="cseg"><p class="segcap" data-k="cap"></p><div data-k="seg"></div></div></div><div class="chart" data-k="chart" data-fill="1"></div></section>
+<section class="pjc lc-chart"><div class="chead"><div class="legend"><span><i class="lg"></i>Actual</span><span><i class="lg trend"></i>Current trend</span><span><i class="lg green"></i>Your plan</span><span><i class="lg val"></i>Valuation ($1M, $2M…)</span><span><i class="lgt"></i>Goal</span></div><div class="cseg"><p class="segcap" data-k="cap"></p><div data-k="mseg"></div><div data-k="seg"></div></div></div><div class="chart" data-k="chart" data-fill="1"></div></section>
 <div class="mgrid" data-k="miles"></div>
 <section class="pjc tcard"><div class="thead"><h2>Monthly targets</h2><p data-k="tsum"></p></div><div class="tscroll"><table class="tt"><thead><tr><th>Month</th><th>Rx count</th><th>Rx sales</th><th>Gross profit</th><th>Expense budget</th><th>Net profit</th><th>Valuation</th></tr></thead><tbody data-k="trows"></tbody><tfoot data-k="tfoot"></tfoot></table></div></section>
 <p class="method" data-k="method"></p>
@@ -1543,14 +1682,14 @@ function pjMovesList(lv) {
   return m;
 }
 function pjDefName() { const m = pjMovesList(_pj.st.lv); const s = m.length ? m.slice(0,2).join(', ') + (m.length > 2 ? ` +${m.length-2} more` : '') : 'trend only'; return s[0].toUpperCase() + s.slice(1); }
-const pjSnap = x => JSON.stringify({w:x.w,goal:x.goal,t:_pj.PM.lastAbs+pjPlanOff(x),lv:Object.assign({},PJ_LV0,x.lv)});
+const pjSnap = x => JSON.stringify({w:x.w,m:x.m||growthModel().method,goal:x.goal,t:_pj.PM.lastAbs+pjPlanOff(x),lv:Object.assign({},PJ_LV0,x.lv)});
 function pjGoalTags() { return Object.fromEntries(_pj.PM.targets().slice(1).map(m => [m.id, m.tag])); }
 function pjDrawPlans() {
   const PM = _pj.PM, L = PM.L, GS = pjGoalTags(), cur = pjSnap(_pj.st), pd = _pj.pendingDel, plans = _pj.plans || [];
   const note = _pj.plansState === 'error' ? '<span class="pnone">Couldn\'t load shared plans. Check your connection and reopen this page.</span>' : '';
   const when = p => { const d = p.savedAt ? new Date(p.savedAt) : null; return (p.savedBy ? 'Saved by ' + p.savedBy : 'Saved') + (d && !isNaN(d) ? ' on ' + d.toLocaleDateString('en-CA', {month:'short', day:'numeric', year:'numeric'}) : ''); };
   pjSet('plist', plans.length ? note + plans.map(p => { const n = pjMovesList(Object.assign({},PJ_LV0,p.lv)).length, w = PM.win(p.w) || PM.win('six'), id = pjEsc(p.id);
-    return `<div class="pchip${pjSnap(p)===cur?' on':''}"><button class="pload" data-act="load" data-id="${id}" title="${pjEsc(when(p))}"><b>${pjEsc(p.name)}</b><span>${GS[p.goal]||GS['10k']} by ${PM.lab(L+pjPlanOff(p))} · ${w.label} · ${n?`${n} move${n>1?'s':''}`:'no moves'}</span></button><button class="pdel${pd===p.id?' arm':''}" data-act="del" data-id="${id}" aria-label="Delete ${pjEsc(p.name)}">${pd===p.id?'Delete':'×'}</button></div>`; }).join('')
+    return `<div class="pchip${pjSnap(p)===cur?' on':''}"><button class="pload" data-act="load" data-id="${id}" title="${pjEsc(when(p))}"><b>${pjEsc(p.name)}</b><span>${GS[p.goal]||GS['10k']} by ${PM.lab(L+pjPlanOff(p))} · ${w.label}${p.m ? ' · ' + GROWTH_METHODS.find(x => x.id === p.m).label : ''} · ${n?`${n} move${n>1?'s':''}`:'no moves'}</span></button><button class="pdel${pd===p.id?' arm':''}" data-act="del" data-id="${id}" aria-label="Delete ${pjEsc(p.name)}">${pd===p.id?'Delete':'×'}</button></div>`; }).join('')
     : note || (_pj.plans === null ? '<span class="pnone">Loading saved plans…</span>' : '<span class="pnone">None yet. Save a plan to come back to it or show it in a meeting. Saved plans are shared across your devices.</span>'));
 }
 function pjOpenSave(on) { const f = pjQ('.psave'), b = pjQ('[data-act="save-open"]'), i = pjQ('[data-name]'); if (!f) return; f.hidden = !on; b.hidden = on; if (on) { i.value = pjDefName(); i.focus(); i.select(); } }
@@ -1582,12 +1721,14 @@ function pjDraw() {
  st.t=PM.lastAbs+st.k;   // keep the absolute goal month in step with the stepper
  const {f$,fs,fK,f2}=PM,D=PM.D,L=PM.L,q=pjQ,set=pjSet,mo=pjMo,MAX=PJ_MAX,rate=pjRate;
  const seg=w=>'<div class="seg" role="group" aria-label="Trend window">'+PM.WINDOWS.map(x=>`<button data-w="${x.id}" class="${x.id===w?'on':''}" aria-pressed="${x.id===w}">${x.label}</button>`).join('')+'</div>';
- const cap=w=>{const f=PM.fit(w);return `<b>${fs(f.net)}/mo</b> net profit trend · ${f.from} – ${D[L].label}`};
+ const cap=w=>{const g=growthDescribe(PM.trendFor(w));return g.head==='—'?g.detail:`<b>${g.head}</b>${g.unit?' '+g.unit:''} trend · ${g.span}`};
+ const mseg=()=>'<div class="seg" role="group" aria-label="Growth method">'+GROWTH_METHODS.map(x=>`<button data-m="${x.id}" class="${x.id===growthModel().method?'on':''}" aria-pressed="${x.id===growthModel().method}">${x.label}</button>`).join('')+'</div>';
  const [cy,cm]=currentMonthKey().split('-').map(Number),off=(cy*12+cm-1)-PM.lastAbs;   // months from the last data month to today
+ st.w=PM.winId(growthModel().window);   // the window is the shared growth setting
  const w=st.w,lv=st.lv,k=st.k,gm=PM.targets().find(m=>m.id===st.goal),T=gm.net,A=PM.A,gpr=PM.gpPerRx(),r0=PM.rebRate(),val=PM.value;
- const tr=PM.plan(w,{}),pl=PM.plan(w,lv),aT=PM.arrival(tr,T),aP=PM.arrival(pl,T),sv=PM.solve(w,lv,T,k),f=tr.f,km=PM.lab(L+k),nk=pl.at(k);
+ const tr=PM.plan(w,{}),pl=PM.plan(w,lv),aT=PM.arrival(tr,T),aP=PM.arrival(pl,T),sv=PM.solve(w,lv,T,k),TR=tr.TR,gd=growthDescribe(TR),km=PM.lab(L+k),nk=pl.at(k);
  const th=pjRoot().dataset.theme;pjRoot().querySelectorAll('[data-theme-set]').forEach(b=>b.classList.toggle('on',b.dataset.themeSet===th));
- set('seg',seg(w));set('cap',cap(w));set('gmonth',km);{const dk=k-off;set('gaway',dk===0?'this month':dk>0?`${mo(dk)} from now`:`${mo(-dk)} ago`)}
+ set('seg',seg(w));set('mseg',mseg());set('cap',cap(w));set('gmonth',km);{const dk=k-off;set('gaway',dk===0?'this month':dk>0?`${mo(dk)} from now`:`${mo(-dk)} ago`)}
  q('[data-act="kprev"]').disabled=k<=1;q('[data-act="knext"]').disabled=k>=PJ_KMAX;q('[data-act="kprev12"]').disabled=k<=1;q('[data-act="knext12"]').disabled=k>=PJ_KMAX;
  const pct=nk/T;
  set('gring',PM.ring({size:116,stroke:12,pct,color:sv.met?'#22C08A':'#F5A623',glow:8})+`<div class="gr-c"><b>${Math.max(0,Math.round(pct*100))}%</b><span>of goal</span></div>`);
@@ -1598,7 +1739,7 @@ function pjDraw() {
   if(room>=250&&lv.add+room<=MAX.add)ops.push({n:'Room for new costs',a:`Up to ${f$(room)}/mo`,s:'for a hire or another cost, and still hit the goal',b:'Add as new cost',act:`data-apply="add" data-v="${lv.add+room}"`});
   if(aP.k&&aP.k<k)ops.push({n:'Aim earlier',a:aP.label,s:'is the earliest month this plan gets there',b:'Set as goal',act:`data-act="setk" data-v="${aP.k}"`});
  }else{const nd=sv.need;oh=`Close the <b>${f$(sv.gap)}/mo</b> gap in ${km} with any one of these:`;
-  if(nd.flat!=null)ops.push({n:'Hold expenses flat',a:nd.flat>=sv.gap?'Closes it':`Covers ${f$(nd.flat)}`,s:`stops the ${fs(f.exp)}/mo expense trend`,b:'Apply',act:'data-apply="flat" data-v="1"'});
+  if(nd.flat!=null)ops.push({n:'Hold expenses flat',a:nd.flat>=sv.gap?'Closes it':`Covers ${f$(nd.flat)}`,s:`stops the ${gd.exp} expense trend`,b:'Apply',act:'data-apply="flat" data-v="1"'});
   ops.push(pjOpt('cut','Cut expenses',`−${f$(nd.cut-lv.cut)}/mo`,`from ${f$(D[L].exp)} today`,nd.cut));
   ops.push(pjOpt('blister','Blister pack patients',`+${nd.blister-lv.blister} / mo`,`new patients, ${A.rxPerBlister} Rx each`,nd.blister));
   ops.push(pjOpt('rx','Other new Rx',`+${nd.rx-lv.rx} / mo`,'transfers and walk-ins, above the trend',nd.rx));
@@ -1609,7 +1750,7 @@ function pjDraw() {
  {const ce=q('[data-k="chart"]');pjRenderChart(PM,ce,{wid:w,plan:pl,focus:st.goal,target:{k,net:T},planLabel:'Your plan',height:440,fill:ce.dataset.fill==='1',ms:PM.targets(),valLines:true})}
  {const T_=PM.targets(),now=D[L].net;let li=0;T_.forEach((m,i)=>{if(now>=m.net)li=i});set('miles',T_.slice(li,li+3).map(m=>pjMcard(m,tr,pl,m.id===st.goal)).join(''))}
  set('expnow',f$(D[L].exp));
- set('s-flat',f.exp>0?`Trend adds ${f$(f.exp)}/mo to expenses each month`:'Expenses are not rising in this window');
+ set('s-flat',!gd.expRising?'Expenses are not rising in this window':TR.method==='pct'?`Trend grows expenses ${gd.exp}, compounding`:`Trend adds ${f$(TR.sExp)}/mo to expenses each month`);
  const V={cut:lv.cut?`−${f$(lv.cut)}/mo`:'$0',add:lv.add?`+${f$(lv.add)}/mo`:'$0',blister:lv.blister?`+${lv.blister} / mo`:'0',rx:lv.rx?`+${lv.rx} / mo`:'0',front:lv.front?`+${f$(lv.front)}/mo`:'$0',rebate:`${rate().toFixed(1)}%`};
  Object.keys(V).forEach(x=>{set('v-'+x,V[x]);const e=q(`[data-k="v-${x}"]`);if(e)e.classList.toggle('zero',x==='rebate'?lv.rebate==null:!lv[x])});
  set('s-cut',lv.cut?`+${fK(val(lv.cut))} valuation`:`Each $1,000/mo adds ${fK(val(1000))} to valuation`);
@@ -1631,7 +1772,11 @@ function pjDraw() {
  // out to every 6 months for far goals). Net = GP − expenses, month by month.
  {let c=0,rs=0,g=0,e=0;for(let j=1;j<=12;j++){c+=Math.max(0,pl.cnt(j));rs+=Math.max(0,pl.rxs(j));g+=pl.gp(j);e+=pl.exp(j)}const n=g-e;
   set('tfoot',`<tr><td>Next 12 months<span class="tag">${PM.lab(L+1,true)} – ${PM.lab(L+12,true)}</span></td><td>${PM.hasCnt?Math.round(c).toLocaleString('en-US'):'—'}</td><td>${f$(rs)}</td><td>${f$(g)}</td><td>${f$(e)}</td><td class="net${n>0?' hit':''}">${f$(n)}</td><td></td></tr>`)}
- set('method',`Trend: least-squares slope over ${f.n} months (${f.from} – ${d.label}) for net profit, gross profit, expenses, Rx count and Rx sales, extended from ${d.label}. Moves start in ${PM.lab(L+1)}. Assumptions: ${f2(gpr)} GP and ${f2(PM.rxValue())} in sales per Rx (3-mo avg), ${A.rxPerBlister} Rx per blister pack patient, ${r0.toFixed(1)}% rebate rate (3-mo avg), ${Math.round(A.frontMargin*100)}% front-store margin (estimate). Valuation = monthly net profit × 12 × ${PM.S.multiple}, set in Settings; dotted lines mark each $1M of value ($1M = ${f$(PM.valNet())}/mo net profit).${D.length<=12?' All time and Past year match until there are 13+ months of data.':''}`);
+ const howTrend=!TR.ok?`Trend: ${TR.reason.toLowerCase()} for the ${GROWTH_METHODS.find(x=>x.id===TR.method).label} method, so figures are held at ${d.label}'s level.`
+   :TR.method==='pct'?`Trend: compound monthly growth over ${TR.n} months (${gd.span}): gross profit ${gd.head}, expenses ${gd.exp}, both compounding.`
+   :TR.method==='rx'?`Trend: least-squares scripts per month over ${TR.n} months (${gd.span}), valued at ${f2(TR.gpr)} GP per script (3-mo avg); expenses on their own least-squares line (${gd.exp}).`
+   :`Trend: least-squares line over ${TR.n} months (${gd.span}) for gross profit (${fs(TR.sGP)}/mo) and expenses (${gd.exp}), so net profit moves ${gd.head}.`;
+ set('method',`${howTrend} The method and window are one setting shared with the Dashboard and Insights. Moves start in ${PM.lab(L+1)}. Assumptions: ${f2(gpr)} GP and ${f2(PM.rxValue())} in sales per Rx (3-mo avg), ${A.rxPerBlister} Rx per blister pack patient, ${r0.toFixed(1)}% rebate rate (3-mo avg), ${Math.round(A.frontMargin*100)}% front-store margin (estimate). Valuation = monthly net profit × 12 × ${PM.S.multiple}, set in Settings; dotted lines mark each $1M of value ($1M = ${f$(PM.valNet())}/mo net profit).${D.length<=12?' All time and Past year match until there are 13+ months of data.':''}`);
  q('[data-act="reset"]').disabled=!pjMovesList(lv).length;pjDrawPlans();
  pjSave();
 }
@@ -1651,18 +1796,19 @@ function pjBind(page) {
       return;
     }
     if (!_pj.PM) return;
-    const t = e.target.closest('[data-w],[data-act],[data-apply]');
+    const t = e.target.closest('[data-w],[data-m],[data-act],[data-apply]');
     if (_pj.pendingDel != null && !(t && t.dataset.act === 'del')) { _pj.pendingDel = null; pjDrawPlans(); }
     if (!t) return;
     const st = _pj.st;
-    if (t.dataset.w) st.w = t.dataset.w;
+    if (t.dataset.w) { st.w = t.dataset.w; setGrowthModel({ window: _pj.PM.winN(t.dataset.w) }); }
+    else if (t.dataset.m) setGrowthModel({ method: t.dataset.m });
     else if (t.dataset.apply) { const x = t.dataset.apply; st.lv[x] = x === 'flat' ? true : pjClamp(x, +t.dataset.v); }
     else {
       const a = t.dataset.act;
       if (a === 'save-open') { pjOpenSave(true); return; }
       if (a === 'save-cancel') { pjOpenSave(false); return; }
       if (a === 'del') { const id = t.dataset.id; if (_pj.pendingDel === id) { _pj.pendingDel = null; pjDeletePlan(id); } else { _pj.pendingDel = id; pjDrawPlans(); } return; }
-      if (a === 'load') { const p = (_pj.plans || []).find(x => x.id === t.dataset.id); if (!p) return; const GS = pjGoalTags(), k = pjKFor(_pj.PM, _pj.PM.lastAbs + pjPlanOff(p)); _pj.st = { w: _pj.PM.win(p.w) ? p.w : 'six', goal: GS[p.goal] ? p.goal : '10k', k, t: _pj.PM.lastAbs + k, lv: Object.assign({}, PJ_LV0, p.lv) }; }
+      if (a === 'load') { const p = (_pj.plans || []).find(x => x.id === t.dataset.id); if (!p) return; const GS = pjGoalTags(), k = pjKFor(_pj.PM, _pj.PM.lastAbs + pjPlanOff(p)); const pw = _pj.PM.win(p.w) ? p.w : 'three'; setGrowthModel(Object.assign({ window: _pj.PM.winN(pw) }, p.m ? { method: p.m } : {})); _pj.st = { w: pw, goal: GS[p.goal] ? p.goal : '10k', k, t: _pj.PM.lastAbs + k, lv: Object.assign({}, PJ_LV0, p.lv) }; }
       else if (a === 'kprev') st.k = Math.max(1, st.k - 1);
       else if (a === 'knext') st.k = Math.min(PJ_KMAX, st.k + 1);
       else if (a === 'kprev12') st.k = Math.max(1, st.k - 12);
@@ -1678,7 +1824,7 @@ function pjBind(page) {
     e.preventDefault();
     const st = _pj.st, name = (pjQ('[data-name]').value || '').trim() || pjDefName();
     const same = (_pj.plans || []).find(p => p.name === name);   // same name replaces that plan, as before
-    const plan = { id: same ? same.id : pjNewId(), name, w: st.w, goal: st.goal, k: st.k, t: _pj.PM.lastAbs + st.k, lv: Object.assign({}, st.lv),
+    const plan = { id: same ? same.id : pjNewId(), name, w: st.w, m: growthModel().method, goal: st.goal, k: st.k, t: _pj.PM.lastAbs + st.k, lv: Object.assign({}, st.lv),
                    savedAt: new Date().toISOString(), savedBy: (auth.currentUser && auth.currentUser.email) || '' };
     pjOpenSave(false);
     pjSavePlan(plan);
@@ -1700,9 +1846,9 @@ function pjBind(page) {
 // PAGE: DASHBOARD
 // ================================================================
 function renderDashboard(animate){
-  syncRealisticRate();
   const el = document.getElementById('page-dashboard');
-  const sorted = [...months].sort((a,b)=>a.monthKey.localeCompare(b.monthKey));
+  const rows = growthRows();             // de-duplicated, sorted: the same months every page projects from
+  const sorted = rows.map(r => r.m);
 
   if(!sorted.length){
     el.innerHTML = `<div class="dash2"><div class="card" style="padding:40px;text-align:center">
@@ -1713,7 +1859,7 @@ function renderDashboard(animate){
 
   if(dashSel===null || dashSel<0 || dashSel>sorted.length-1) dashSel = sorted.length-1;
   const sel = dashSel;
-  const c = dashCompute(sorted, sel);
+  const c = dashCompute(sorted, sel, rows);
   const m = c.m, d = c.d;
   const profitable = c.isProfit;
   const rx = parseFloat(m.rxSales)||0;
@@ -1728,40 +1874,36 @@ function renderDashboard(animate){
     : near ? `<span class="pill amber"><span class="dot"></span>Near break-even</span>`
     : `<span class="pill red"><span class="dot"></span>Below break-even</span>`;
 
-  // growth chip + strings
-  const gv = c.growth;
-  let chip = `<span class="k-chip flat">—</span>`, growthAvgStr='—', growthSub='First month of data', growthCls='';
-  if(gv.last!==null && gv.avg!==null){
-    const accel=gv.trend==='accelerating', slow=gv.trend==='decelerating';
+  // growth tile: the same trend every projection on this page uses, so it never
+  // shows one growth number and forecasts with another
+  const T = c.trend, gd = c.gdesc, gm = growthModel();
+  const gHead = gd.head + (gd.unit ? ' ' + gd.unit : '');
+  let chip = `<span class="k-chip flat">—</span>`, growthAvgStr='—', growthSub=gd.detail || 'First month of data', growthCls='';
+  if(T.ok){
+    const accel=T.trend==='accelerating', slow=T.trend==='decelerating';
     chip = `<span class="k-chip ${accel?'up':slow?'down':'flat'}">${accel?'↗ Accelerating':slow?'↘ Slowing':'→ Stable'}</span>`;
-    // Show the same compound rate the projections use, so the page never
-    // displays one growth number and forecasts with another.
-    growthAvgStr = fPct(gv.cagr!==null ? gv.cagr : gv.avg)+' / mo';
-    growthCls = gv.avg>=0?'pos':'neg';
-    growthSub = 'Last month '+fPct(gv.last)+' vs '+monthKeyToLabel(sorted[sel-1].monthKey);
+    growthAvgStr = gd.head;
+    growthCls = (T.method==='rx' ? T.sCnt : T.method==='pct' ? T.g : T.perMonth) >= 0 ? 'pos' : 'neg';
+    growthSub = (gd.unit ? gd.unit[0].toUpperCase() + gd.unit.slice(1) + ' · ' : '') + gd.detail;
   }
 
   // break-even KPI
   const beKpiNum = profitable ? 'Profitable' : (c.beMonths!==null ? c.beMonths+' mo.' : 'N/A');
-  const beKpiSub = profitable ? 'Net profit is positive' : 'At '+fPct(c.g)+'/mo realistic growth';
+  const beKpiSub = profitable ? 'Net profit is positive' : (c.beMonths!==null ? 'At ' + gHead : (T.ok ? "Trend doesn't reach break-even" : T.reason));
 
   // ── Goal panel: break-even forecast until profitable, then $1M valuation ──
   const ringPctVal = c.isProfit ? c.pct : c.bePct;
   let goalHtml;
   if(c.isProfit){
     const arrivalStr = c.value>=1000000 ? '🎉' : (c.arrival1M || '—');
-    // c.g is measured on GROSS PROFIT and applied to Rx sales (the owner's choice),
-    // so name the rate's source rather than implying Rx sales were measured.
     const blockedMsg = {
-      rates:  'Set a measured Rx margin in Settings to project',
-      nodata: 'Not enough history to project',
-      growth: 'Need positive growth to project',
-      sales:  'Need recorded Rx sales to project',
-      outrun: 'Expenses are outgrowing sales — not reachable on this trend',
+      nodata: T.reason || 'Not enough history to project',
+      growth: "Net profit isn't rising on this trend",
+      outrun: 'Expenses are outgrowing gross profit — not reachable on this trend',
       faraway:'More than 10 years out at this pace',
     }[c.m1Blocked] || 'Not enough data to project';
     const arrivalSub = c.value>=1000000 ? "You're there!"
-      : c.arrival1M ? 'Rx sales at '+fPct(c.g)+'/mo (GP pace) vs expenses '+fPct(c.expGrowth)+'/mo'
+      : c.arrival1M ? 'At ' + gHead + ' (' + gd.win + ' trend)'
       : blockedMsg;
     goalHtml = `
       <div class="goal-top">
@@ -1796,7 +1938,7 @@ function renderDashboard(animate){
         <div class="goal-arrival">
           <div class="mini-label">Est. break-even</div>
           <div class="midnum">${c.beDate || '—'}</div>
-          <div class="hint">${c.beMonths!==null ? 'GP '+fPct(c.g)+'/mo vs expenses '+fPct(c.expGrowth)+'/mo' : 'Need positive growth to project'}</div>
+          <div class="hint">${c.beMonths!==null ? 'At ' + gHead + ' (' + gd.win + ' trend)' : (T.ok ? "Trend doesn't reach break-even" : T.reason)}</div>
         </div>
       </div>
       <div class="ring-wrap">
@@ -1825,13 +1967,13 @@ function renderDashboard(animate){
           : `<div class="t-flag warn">Rx sales are at the target, but this month's margin puts the valuation at ${fmt(c.value)} — the gap is margin, not volume</div>`)
       : `<div class="t-flag warn">You are ${fmt(Math.abs(c.awayMillion))} away in monthly Rx sales</div>`);
   const rateSrc = c.rates.source==='avg' ? c.rates.window+'-mo real avg' : 'manual';
-  const assumptions = `Assumes front-store GP of ${fmt(c.frontGP)}/month (this month) · Rx GP ${(c.rates.rxGPRate*100).toFixed(1)}% · Rebate ${(c.rates.rebRate*100).toFixed(1)}% (${rateSrc}) · Expenses ${fmt(c.expenses)}/month · Valuation = monthly net profit × 12 × ${c.vm}. Both targets are priced at this month's expenses; the arrival estimate lets expenses grow ${(c.expGrowth*100).toFixed(1)}%/month, so the sales required drift upward as you approach them.`;
+  const assumptions = `Assumes front-store GP of ${fmt(c.frontGP)}/month (this month) · Rx GP ${(c.rates.rxGPRate*100).toFixed(1)}% · Rebate ${(c.rates.rebRate*100).toFixed(1)}% (${rateSrc}) · Expenses ${fmt(c.expenses)}/month · Valuation = monthly net profit × 12 × ${c.vm}. Both targets are priced at this month's expenses${T.ok && gd.expRising ? `; the arrival estimate follows the growth trend, where expenses rise ${gd.exp}, so the sales required drift upward as you approach them` : ''}.`;
 
   // momentum
   let momentum;
   if(profitable) momentum='Profitable and compounding — keep expenses flat and the valuation curve takes care of itself.';
   else if(near) momentum='Close to break-even — one strong month can flip it.';
-  else if(gv.avg!==null && gv.avg>0) momentum='Climbing at '+fPct(c.g)+'/mo — break-even is roughly '+(c.beMonths||'—')+' months out at this pace.';
+  else if(T.ok && T.net(1) > T.net(0)) momentum='Climbing at '+gHead+' — break-even is roughly '+(c.beMonths||'—')+' months out at this pace.';
   else momentum='Focus on Rx volume growth to close the gap.';
 
   // unlocked targets?
@@ -1892,13 +2034,21 @@ function renderDashboard(animate){
         <div class="k-sub">${beKpiSub}</div>
       </section>
       <section class="kpi card">
-        <div class="k-top"><span class="k-label">Growth · ${GROWTH_WINDOW_MONTHS}-mo avg / mo</span>${chip}</div>
+        <div class="k-top"><span class="k-label">Growth · ${gd.win} trend</span>${chip}</div>
         <div class="k-num num ${growthCls}">${growthAvgStr}</div>
         <div class="k-sub">${growthSub}</div>
       </section>
 
       <!-- ZONE 2 -->
-      <div class="zone-label"><span class="step">2</span><h2>Where I'm headed next month</h2><span class="rule"></span></div>
+      <div class="zone-label"><span class="step">2</span><h2>Where I'm headed</h2><span class="rule"></span></div>
+
+      <section class="card growth-ctl">
+        <span class="gc-lab">Project with</span>
+        <div class="seg" id="dashGrowthMethod">${GROWTH_METHODS.map(x=>`<button data-gm-method="${x.id}" class="${gm.method===x.id?'active':''}">${x.label}</button>`).join('')}</div>
+        <span class="gc-lab">over the last</span>
+        <div class="seg" id="dashGrowthWindow">${GROWTH_WINDOWS.map(n=>`<button data-gm-window="${n}" class="${gm.window===n?'active':''}">${n?n+' mo':'All'}</button>`).join('')}</div>
+        <span class="gc-desc">${T.ok ? `<b>${gHead}</b> · ${gd.span}` : gd.detail}</span>
+      </section>
 
       <section class="next-main card">
         <div class="next-head">
@@ -1909,17 +2059,17 @@ function renderDashboard(animate){
           <div class="proj">
             <div class="p-lbl">Rx Sales Target</div>
             <div class="p-num num navytxt">${fmt(c.targetRx)}</div>
-            <div class="p-sub">Last: ${fmt(rx)} + ${(c.g*100).toFixed(1)}% growth</div>
+            <div class="p-sub">${T.ok ? `Last: ${fmt(rx)} ${c.targetRx>=rx?'+':'−'} ${fmt(Math.abs(c.targetRx-rx))} on trend` : gd.detail}</div>
           </div>
           <div class="proj">
             <div class="p-lbl">Projected Total GP</div>
             <div class="p-num num ${projGPcls}">${fmt(c.projGP)}</div>
-            <div class="p-sub">All streams at target</div>
+            <div class="p-sub">Gross profit on the ${gd.win} trend</div>
           </div>
           <div class="proj">
             <div class="p-lbl">Projected Net Profit</div>
             <div class="p-num num ${projNetCls}">${fSign(c.projNet)}</div>
-            <div class="p-sub">After ${fmt(c.expenses)} expenses</div>
+            <div class="p-sub">After ${fmt(c.expNext)} expenses</div>
           </div>
         </div>
         <div class="note"><span>${momentum}</span></div>
@@ -1947,6 +2097,18 @@ function renderDashboard(animate){
         <div class="target-block" style="border:none">
           <div class="t-desc" style="color:var(--b-amber);font-weight:600">To unlock these targets, set the Rx GP method to <strong>% of Rx Sales</strong>, or turn on <strong>Auto rate basis (trailing average of real data)</strong> in Settings.</div>
         </div>`}
+      </section>
+
+      <section class="card ttm-card">
+        <div class="trend-head"><h3>12-month view</h3><span class="ttm-note">${T.ok ? `Next 12 months projected at ${gHead} (${gd.win} trend)` : gd.detail}</span></div>
+        <div class="ttm-scroll"><table class="ttm">
+          <thead><tr><th></th><th>Rx count</th><th>Rx sales</th><th>Gross profit</th><th>Expenses</th><th>Net profit</th></tr></thead>
+          <tbody>${[c.ttm.past, c.ttm.next].map(r => `<tr>
+            <td><b>${r.title}</b><span>${r.span}</span></td>
+            <td>${r.cnt === null ? '—' : Math.round(r.cnt).toLocaleString('en-CA') + (r.cntNote ? `<small>${r.cntNote}</small>` : '')}</td>
+            <td>${r.ok ? fmt(r.rx) : '—'}</td><td>${r.ok ? fmt(r.gp) : '—'}</td><td>${r.ok ? fmt(r.exp) : '—'}</td>
+            <td class="${r.ok ? (r.net >= 0 ? 'pos' : 'neg') : ''}">${r.ok ? fSign(r.net) : '—'}</td></tr>`).join('')}</tbody>
+        </table></div>
       </section>
 
       <!-- ZONE 3 -->
@@ -2003,6 +2165,15 @@ function renderDashboard(animate){
     const b=e.target.closest('.mbtn'); if(!b) return;
     dashSel = parseInt(b.dataset.idx); renderDashboard(true);
   });
+  // One shared setting: Projections and Insights follow whatever is chosen here.
+  document.getElementById('dashGrowthMethod').addEventListener('click', e=>{
+    const b=e.target.closest('[data-gm-method]'); if(!b) return;
+    setGrowthModel({ method: b.dataset.gmMethod }); renderDashboard();
+  });
+  document.getElementById('dashGrowthWindow').addEventListener('click', e=>{
+    const b=e.target.closest('[data-gm-window]'); if(!b) return;
+    setGrowthModel({ window: Number(b.dataset.gmWindow) }); renderDashboard();
+  });
   document.getElementById('dashDensitySeg').addEventListener('click', e=>{
     const b=e.target.closest('button'); if(!b) return;
     dashDensity = b.dataset.density;
@@ -2057,23 +2228,14 @@ function dashRatesUpTo(sorted, idx){
   return { rxGPRate:(settings.rxGPPct||0)/100, rebRate:settings.rebateMethod==='pct'?(settings.rebatePct||0)/100:0, source:'manual', window:0 };
 }
 
-function dashGrowthCalc(sorted, idx){
-  // Window of GROWTH_WINDOW_MONTHS ending on the selected month, i.e. N-1
-  // month-over-month rates. Matches calcRollingAvgGrowth(), which feeds the
-  // growthRates.realistic fallback, so both mean the same "average growth".
-  const start=Math.max(1, idx-(GROWTH_WINDOW_MONTHS-2)); const rates=[];
-  for(let k=start;k<=idx;k++){ const p=calcMonthData(sorted[k-1]).totalGP, cu=calcMonthData(sorted[k]).totalGP; if(p>0) rates.push((cu-p)/p); }
-  const avg = rates.length? rates.reduce((s,r)=>s+r,0)/rates.length : null;
-  // Compound rate over the same span — used for every forward projection.
-  let cagr = null;
-  if(rates.length){
-    const f=calcMonthData(sorted[start-1]).totalGP, l=calcMonthData(sorted[idx]).totalGP;
-    if(f>0 && l>0) cagr = Math.pow(l/f, 1/(idx-start+1)) - 1;
-  }
-  let last=null; if(idx>=1){ const p=calcMonthData(sorted[idx-1]).totalGP; if(p>0) last=(calcMonthData(sorted[idx]).totalGP-p)/p; }
-  let trend='stable';
-  if(rates.length>=2){ const mid=Math.ceil(rates.length/2); const fa=rates.slice(0,mid).reduce((s,r)=>s+r,0)/mid; const la=rates.slice(-mid).reduce((s,r)=>s+r,0)/mid; const diff=la-fa; if(diff>0.005)trend='accelerating'; else if(diff<-0.005)trend='decelerating'; }
-  return { avg, cagr, last, trend };
+// 'YYYY-MM' n months later, and the short "Oct '26" form the 12-month view uses.
+function dashNextKey(monthKey, n){
+  const [y,mo]=monthKey.split('-').map(Number), t=(mo-1)+n;
+  return (y+Math.floor(t/12)) + '-' + String(((t%12)+12)%12+1).padStart(2,'0');
+}
+function dashShort(monthKey){
+  const [y,mo]=monthKey.split('-').map(Number);
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo-1] + " '" + String(y).slice(2);
 }
 
 function dashAddMonths(monthKey, n){
@@ -2081,7 +2243,8 @@ function dashAddMonths(monthKey, n){
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mm]+' '+yy;
 }
 
-function dashCompute(sorted, idx){
+function dashCompute(sorted, idx, rows){
+  rows = rows || growthRows();
   const m = sorted[idx];
   const d = calcMonthData(m);
   // Use the SELECTED MONTH's own expenses, so every figure on this panel agrees
@@ -2099,22 +2262,9 @@ function dashCompute(sorted, idx){
   // genuinely entered as a % of Rx sales. Under fee+markup with a manual basis,
   // `combined` is just settings.rxGPPct — a number the Settings page itself calls
   // "not measured". The Rx-sales targets already hide behind this; so must the ETA.
-  const ratesOK = combined > 0 && (settings.rxGPMethod === 'pct' || rates.source === 'avg');
-  const growth = dashGrowthCalc(sorted, idx);
-  // Compound rate for projections; fall back to the simple mean, then to settings.
-  const gMeasured = growth.cagr!==null || growth.avg!==null;
-  const g = growth.cagr!==null ? growth.cagr
-          : growth.avg!==null ? growth.avg
-          : (settings.growthRates.realistic||3)/100;
-  // Trailing expense growth, measured over the SAME window as g so the two
-  // rates driving the moving-target loop are comparable and adding old history
-  // cannot silently re-time the milestone. Deflation is preserved, not clamped to
-  // zero — a pharmacy actively cutting costs should get credit for it.
-  const expAnchorIdx = Math.max(0, idx - (GROWTH_WINDOW_MONTHS-1));
-  const anchorExp = parseFloat(sorted[expAnchorIdx].expenses) || 0;
-  const expSpan = idx - expAnchorIdx;
-  const expGrowth = (expSpan > 0 && anchorExp > 0 && monthExp > 0)
-    ? Math.pow(monthExp/anchorExp, 1/expSpan) - 1 : 0;
+  // Every forward-looking figure below comes from the shared growth trend
+  // (GROWTH TRENDS), measured over the chosen window ending at THIS month.
+  const T = growthTrend(rows, idx), gdesc = growthDescribe(T);
 
   // Valuation is based on NET profit run-rate: monthly net profit × 12 × multiple.
   // Until the pharmacy is profitable, the panel shows a break-even forecast instead.
@@ -2128,50 +2278,28 @@ function dashCompute(sorted, idx){
   const pct = Math.min(100, Math.max(0, value/target*100));
 
   const rx = parseFloat(m.rxSales)||0;
-  const targetRx = rx*(1+g);
+  const targetRx = T.ok ? Math.max(0, T.rx(1)) : rx;
   const frontGP = d.frontGP;
 
-  // Months to $1M valuation (only shown once profitable). Modelled on Rx SALES,
-  // which is the lever the pharmacy actually pulls:
-  //   net profit needed = $1M / multiple / 12
-  //   Rx sales needed   = (net needed + expenses - front-store GP) / combined margin
-  //                       i.e. break-even sales PLUS the sales that fund that net
-  // Rx sales are then compounded at the trailing growth rate until they reach it.
-  // The target is recomputed every month because expenses keep rising — it is a
-  // moving goalpost, not a fixed line.
+  // Months to $1M valuation (only shown once profitable): the first month the
+  // trend's net profit reaches $1M / multiple / 12. Expenses move with the trend
+  // too, so this is a moving goalpost, not a fixed line.
   const reqNet1M = target/(12*vm);
   let m1=null, m1Blocked=null;   // m1Blocked explains WHY there is no date
   if(isProfit){
     if(value>=target) m1=0;
-    else if(!gMeasured) m1Blocked='nodata';      // g is an assumed setting, not measured
-    else if(!ratesOK)   m1Blocked='rates';       // margin isn't measured — can't price a target
-    else if(!(g>0))     m1Blocked='growth';      // flat or shrinking
-    else if(!(rx>0))    m1Blocked='sales';       // nothing to compound
+    else if(!T.ok) m1Blocked='nodata';
     else {
-      let rxF=rx, exF=expenses;
-      for(let s3=1;s3<=120;s3++){
-        rxF*=(1+g); exF*=(1+expGrowth);
-        if(rxF >= (reqNet1M + exF - frontGP)/combined){ m1=s3; break; }
-      }
-      // Ran the full horizon without converging: costs are outrunning sales, or
-      // the milestone is simply more than 10 years out. Saying "need positive
-      // growth" here would be flatly wrong — growth IS positive.
-      if(m1===null) m1Blocked = (expGrowth >= g) ? 'outrun' : 'faraway';
+      m1 = growthReach(T, reqNet1M, 120);
+      // Still climbing at the 10-year horizon: just far. Otherwise it turned down:
+      // under % that is expenses compounding faster than gross profit.
+      if(m1===null) m1Blocked = T.net(120) > T.net(119) ? 'faraway' : (T.method==='pct' && T.ge > T.g) ? 'outrun' : 'growth';
     }
   }
   const arrival1M = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
-  // Switch on whether GP actually scales with Rx sales, not on the rate source.
-  // Under fee+markup calcMonthData ignores rxSales entirely (rxGP is the entered
-  // dollars), so re-running it with a higher targetRx returned identical output —
-  // the "next month at +12%" tile was silently showing this month's GP unchanged.
-  let projGP, projNet;
-  if(settings.rxGPMethod === 'pct'){
-    const nd = calcMonthData({...m, rxSales:targetRx});
-    projGP = nd.totalGP;
-  } else {
-    projGP = targetRx*combined + frontGP;
-  }
-  projNet = projGP - expenses;
+  // Next month straight from the trend: gross profit, expenses and net all move
+  // together, so the three tiles always add up.
+  const projGP = T.gp(1), expNext = T.exp(1), projNet = projGP - expNext;
 
   const beRx = combined>0 ? (expenses - frontGP)/combined : null;
   const needMore = beRx!==null ? beRx-rx : null;
@@ -2180,16 +2308,31 @@ function dashCompute(sorted, idx){
   const valRx = combined>0 ? (reqNet1M + expenses - frontGP)/combined : null;
   const awayMillion = valRx!==null ? valRx-rx : null;
 
-  // Months to break-even: grow current GP run-rate at avg growth until it covers expenses.
+  // Months to break-even: the first month the trend's net profit turns positive.
   let beMonths=null;
   if(monthlyNet>=0) beMonths=0;
-  else if(g>0 && gMeasured){ let gp=d.totalGP, ex=expenses; for(let s2=1;s2<=120;s2++){ gp*=(1+g); ex*=(1+expGrowth); if(gp-ex>=0){ beMonths=s2; break; } } }
+  else if(T.ok) beMonths = growthReach(T, 0, 120);
   // Break-even forecast detail: progress = current GP vs the GP needed to cover expenses.
   const beDate = (beMonths && beMonths>0) ? dashAddMonths(m.monthKey, beMonths) : null;
   const bePct  = expenses>0 ? Math.min(100, Math.max(0, d.totalGP/expenses*100)) : 0;
   const beGpGap = Math.max(0, expenses - d.totalGP);
 
-  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, m1Blocked, arrival1M, targetRx, projGP, projNet, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, g, expGrowth, growth };
+  // 12-month view: the last 12 actual months ending here, and the next 12 on
+  // the trend (the same sums as the Projections page's total row).
+  const past = rows.slice(0, idx+1).filter(r => r.t > rows[idx].t - 12), sumOf = (a,k) => a.reduce((s,r)=>s+r[k],0);
+  const withCnt = past.filter(r => r.cnt > 0).length;
+  const pastSpan = rows[idx].t - past[0].t + 1;   // calendar months covered (a skipped month still counts)
+  const ttmPast = { title: pastSpan >= 12 ? 'Last 12 months' : 'Last ' + pastSpan + ' month' + (pastSpan===1?'':'s'),
+    span: dashShort(past[0].key) + ' – ' + dashShort(rows[idx].key) + ' · actual',
+    ok: true, rx: sumOf(past,'rx'), gp: sumOf(past,'gp'), exp: sumOf(past,'exp'), net: sumOf(past,'net'),
+    cnt: withCnt ? sumOf(past,'cnt') : null, cntNote: withCnt && withCnt < past.length ? withCnt + ' of ' + past.length + ' mo' : '' };
+  let n12 = { cnt:0, rx:0, gp:0, exp:0 };
+  for(let k=1;k<=12;k++){ n12.cnt += Math.max(0,T.cnt(k)); n12.rx += Math.max(0,T.rx(k)); n12.gp += T.gp(k); n12.exp += T.exp(k); }
+  const hasCnt = rows.slice(0, idx+1).some(r => r.cnt > 0);
+  const ttmNext = { title: 'Next 12 months', span: dashShort(dashNextKey(rows[idx].key, 1)) + ' – ' + dashShort(dashNextKey(rows[idx].key, 12)) + ' · projected',
+    ok: T.ok, rx: n12.rx, gp: n12.gp, exp: n12.exp, net: n12.gp - n12.exp, cnt: T.ok && hasCnt ? n12.cnt : null, cntNote: '' };
+
+  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, m1Blocked, arrival1M, targetRx, projGP, projNet, expNext, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, trend: T, gdesc, ttm: { past: ttmPast, next: ttmNext } };
 }
 
 function dashCharts(sorted, sel){
@@ -2378,33 +2521,16 @@ function renderInsights() {
       ? `more scripts/mo · ${per(contribPerScript)} contribution each (${per(gpFit.b)} GP − ${per(expFit.b)} cost)`
       : `more scripts/mo at ${per(contribPerScript)} dispensing GP each`;
 
-  // ── Growth pace + break-even ETA (expenses are NOT held fixed) ─
-  const gStart = Math.max(1, M.length - (GROWTH_WINDOW_MONTHS-1));
-  const gpGrowths = [];
-  for (let i = gStart; i < M.length; i++) {
-    if (M[i-1].gp > 0) gpGrowths.push(M[i].gp / M[i-1].gp - 1);
-  }
-  // Compound, not the mean of percentages — averaging rates then compounding them
-  // overstates growth (+100% then -50% averages to +25% but nets to 0%).
-  const gSpan = M.length - gStart;
-  const g3 = (gpGrowths.length && M[gStart-1].gp > 0 && last.gp > 0)
-    ? Math.pow(last.gp / M[gStart-1].gp, 1/gSpan) - 1
-    : (gpGrowths.length ? gpGrowths.reduce((s,v)=>s+v,0)/gpGrowths.length : 0);
-  // Expense drift over the SAME window as the growth rate above, so the two rates
-  // driving this projection are comparable — and so adding older history cannot
-  // silently re-time the estimate. Deflation is preserved, not clamped to zero.
-  const eAnchor = M[gStart-1];
-  const expGrowth = (gSpan > 0 && eAnchor && eAnchor.exp > 0 && last.exp > 0)
-    ? Math.pow(last.exp / eAnchor.exp, 1/gSpan) - 1 : 0;
-
+  // ── Break-even ETA: the shared growth trend (same as Dashboard and
+  //    Projections), from the latest month. Expenses move with it. ──────
+  const gRows = growthRows(), TR = growthTrend(gRows, gRows.length - 1), gDesc = growthDescribe(TR);
   let beEta = null, remainingBurn = null;
   if (hasExp) {
     if (last.net >= 0) beEta = 0;
-    else if (g3 > 0) {
-      let gp = last.gp, ex = last.exp, tot = 0;
+    else if (TR.ok) {
+      let tot = 0;
       for (let i = 1; i <= 60; i++) {
-        gp *= (1 + g3); ex *= (1 + expGrowth);
-        const n = gp - ex;
+        const n = TR.net(i);
         if (n >= 0) { beEta = i; break; }
         tot += n;
       }
@@ -2418,8 +2544,8 @@ function renderInsights() {
   })() : null;
   const beEtaSub = !hasExp ? `add expenses for ${last.label}`
     : beEta === 0 ? 'net profit is positive'
-    : beEtaDate ? `≈ ${beEtaDate} · GP ${iPct(g3*100)}/mo vs expenses ${iPct(expGrowth*100)}/mo`
-    : 'needs positive GP growth';
+    : beEtaDate ? `≈ ${beEtaDate} · ${gDesc.head}${gDesc.unit ? ' ' + gDesc.unit : ''} (${gDesc.win} trend)`
+    : (TR.ok ? 'trend does not reach break-even within 5 years' : TR.reason.toLowerCase());
 
   // ── Cash: burned to date + projected remaining ────────────────
   const cumNet = M.reduce((s,x) => s + x.net, 0);
@@ -2496,10 +2622,12 @@ function renderInsights() {
 
   if (expCreep > 5) {
     let clause = '';
-    if (gap !== null && gap > 0 && g3 > 0 && hasExp && beEta) {
-      const moPer1k = 1000 / (last.exp * Math.log(1 + g3));
-      if (isFinite(moPer1k) && moPer1k > 0) {
-        clause = ` At the current GP pace each $1k of creep delays break-even about ${moPer1k.toFixed(1)} month${moPer1k >= 1.05 ? 's' : ''}.`;
+    if (gap !== null && gap > 0 && hasExp && beEta && TR.ok) {
+      // Break-even with $1k more in monthly costs, on the same trend.
+      const f0 = growthReachFrac(TR, 0, 120), f1 = growthReachFrac(TR, 1000, 120);
+      const moPer1k = f0 !== null && f1 !== null ? f1 - f0 : null;
+      if (moPer1k !== null && moPer1k >= 0.05) {
+        clause = ` On the current trend each $1k of creep delays break-even about ${moPer1k.toFixed(1)} month${moPer1k >= 1.05 ? 's' : ''}.`;
       }
     }
     bullets.push({icon:'💸', text:`Expenses have crept ${iPct(expCreep)} since ${first.label} (${fmt(first.exp)} → ${fmt(last.exp)}).${clause}`});
@@ -2757,7 +2885,6 @@ function deleteMonth(id) {
   if (!confirm('Delete this month? This cannot be undone.')) return;
   months = months.filter(m => m.id !== id);
   saveMonths();
-  syncRealisticRate();
   renderMonthly();
   updateBadge();
 }
@@ -3542,7 +3669,6 @@ function saveModal(id, isNew) {
   }
 
   saveMonths();
-  syncRealisticRate();
   closeModal();
   navigate('monthly');
   updateBadge();
