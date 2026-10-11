@@ -133,125 +133,7 @@ input:focus{border-color:var(--navy)}
 .section-divider{border:none;border-top:1px solid var(--border);margin:18px 0}
 .sub-fields{background:var(--bg);border-radius:8px;padding:12px 14px;margin-top:8px}
 
-/* FORECAST PANELS */
-.fc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
-.fc-panel{border-radius:12px;padding:20px}
-.fc-panel.pess{background:#fff5f5;border:1.5px solid #fecaca}
-.fc-panel.real{background:#fffbf0;border:1.5px solid #fde68a}
-.fc-panel.opti{background:#f0faf6;border:1.5px solid #a7f3d0}
-.fc-panel h3{font-size:.95rem;font-weight:700;margin-bottom:14px}
-.fc-panel.pess h3{color:var(--red)} .fc-panel.real h3{color:var(--amber)} .fc-panel.opti h3{color:var(--teal)}
-.fc-stat{margin-top:10px}
-.fc-stat-label{font-size:.7rem;color:var(--light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
-.fc-stat-value{font-size:1rem;font-weight:700}
-.fc-stat-value.pos{color:var(--teal)}
-
-/* CHART */
-.chart-wrap{position:relative}
-
-/* SETTINGS */
-.setting-block{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)}
-.setting-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-.setting-label{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:10px}
-
-/* SPINNER */
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* WEEKLY METRICS */
-.wk-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:var(--teal);color:#fff;border:none;font-size:1.8rem;line-height:1;cursor:pointer;box-shadow:0 4px 20px rgba(29,158,117,.45);z-index:300;display:flex;align-items:center;justify-content:center;transition:transform .15s}
-.wk-fab:hover{transform:scale(1.08)}
-.wk-prog-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--light);margin-bottom:3px}
-.wk-prog-bar{background:#e0e4ea;border-radius:6px;height:10px;overflow:hidden;margin-bottom:4px}
-.wk-prog-fill{height:100%;border-radius:6px;transition:width .4s}
-.wk-tip{background:linear-gradient(135deg,#eef4ff,#e8f7f2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:.84rem;color:var(--navy)}
-.wk-hit{display:inline-block;background:var(--teal);color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle}
-.wk-src-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
-@media(max-width:520px){.wk-src-grid{grid-template-columns:1fr}}
-
-/* EHC MISSION HEADER */
-/* ── EHC hero + monthly pace strip (Claude Design: "EHC Hero Redesign") ──
-   One navy card: a large goal ring on the left, the mission copy on the right,
-   and a darker pace strip underneath carrying the three monthly metrics.
-   The pace strip is shared with Weekly Metrics so both pages stay identical. */
-.ehero{background:var(--navy);border-radius:20px;color:#fff;overflow:hidden;margin-bottom:16px}
-.ehero.code-red{box-shadow:0 0 0 4px rgba(224,82,82,.10);outline:1px solid rgba(255,122,110,.38);outline-offset:-1px}
-.ehero-top{display:grid;grid-template-columns:340px 1fr;gap:56px;align-items:center;padding:44px 48px 40px}
-.ehero-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 0 14px}
-.ehero-h1{margin:0 0 18px;font-size:44px;line-height:1.05;font-weight:800;letter-spacing:-.02em;overflow-wrap:break-word}
-.ehero-lede{margin:0;font-size:18px;line-height:1.5;color:rgba(255,255,255,.86);max-width:44ch}
-.ehero-lede b{color:#fff;font-weight:800}
-.ehero-meta{display:flex;align-items:center;gap:14px;margin-top:24px;font-size:13.5px;color:rgba(255,255,255,.55);flex-wrap:wrap}
-.ehero-chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.10);border-radius:999px;padding:7px 14px}
-.ehero-chip .dot{width:7px;height:7px;border-radius:50%;background:#F5A623;flex:none}
-.ehero.code-red .ehero-chip .dot{background:#ff7a6e;animation:ehcPulse 2s ease-in-out infinite}
-.ehero-ring{position:relative;width:340px;height:340px;justify-self:center;max-width:100%}
-.ehero-ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
-.ehero-ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;padding:0 30px}
-.ehero-ring .big{font-size:88px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.ehero-ring .cap{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55)}
-.ehero-ring .sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:8px;font-variant-numeric:tabular-nums}
-.ehero-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.61,.36,1)}
-
-/* colour lives on .epace, not on the hero wrapper: the strip also renders
-   standalone on Weekly Metrics, where it would otherwise inherit the page's
-   dark body text and render the numbers nearly invisible on navy. */
-.epace{border-top:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.10);padding:26px 48px 34px;color:#fff}
-.ehero .epace{margin:0}
-.epace-solo{background:var(--navy);border-radius:20px;margin-bottom:16px;border-top:none}
-.epace-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 22px;gap:12px;flex-wrap:wrap}
-.epace-head .t{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55)}
-.epace-head .r{font-size:13.5px;color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums}
-.epace-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.emetric{display:flex;align-items:center;gap:18px;background:rgba(255,255,255,.06);border-radius:14px;padding:18px 22px}
-.emring{position:relative;width:76px;height:76px;flex:none}
-.emring svg{transform:rotate(-90deg);display:block}
-.emring .v{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
-.emring-arc{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.61,.36,1)}
-.emetric .k{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 0 6px}
-.emetric .n{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.emetric .n span{color:rgba(255,255,255,.55);font-weight:700;font-size:17px}
-.emetric .s{font-size:13px;font-weight:700;margin-top:5px}
-.epace-foot{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.6)}
-
-@media(max-width:900px){
-  .ehero-top{grid-template-columns:1fr;gap:26px;padding:30px 22px 26px;text-align:center}
-  .ehero-ring{width:250px;height:250px;margin:0 auto}
-  .ehero-ring .big{font-size:64px}
-  .ehero-h1{font-size:32px}
-  .ehero-lede{max-width:none;font-size:16px}
-  .ehero-meta{justify-content:center}
-  .epace{padding:22px 20px 26px}
-  .epace-grid{grid-template-columns:1fr;gap:12px}
-}
-@media(max-width:480px){
-  /* the headline is user-editable, so leave room for a longer one */
-  .ehero-h1{font-size:26px}
-  .ehero-ring{width:210px;height:210px}
-  .ehero-ring .big{font-size:54px}
-}
-@media(prefers-reduced-motion:reduce){
-  .ehero-arc,.emring-arc{transition:none}
-}
-/* Pulse for the Code Red chip dot on the EHC hero */
-@keyframes ehcPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,122,110,.45)}50%{opacity:.55;box-shadow:0 0 0 6px rgba(255,122,110,0)}}
-@media(prefers-reduced-motion:reduce){.ehero.code-red .ehero-chip .dot{animation:none}}
-.ehc-note-card{border-left:4px solid var(--teal)}
-
-/* CELEBRATION */
-.celeb-overlay{position:fixed;inset:0;background:rgba(27,58,107,.72);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
-.celeb-box{background:#fff;border-radius:20px;padding:32px 40px;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,.3);max-width:360px;animation:celebPop .35s cubic-bezier(.34,1.56,.64,1)}
-@keyframes celebPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
-@keyframes confettiFall{from{transform:translateY(0) rotate(0deg);opacity:.9}to{transform:translateY(95vh) rotate(450deg);opacity:0}}
-#confettiContainer{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
-
-/* WEEK MODAL */
-.week-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:none;align-items:center;justify-content:center;padding:16px}
-.week-modal{background:#fff;border-radius:16px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.28)}
-
-/* RESPONSIVE */
-@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.fc-grid{grid-template-columns:1fr}.charts-row-2{grid-template-columns:1fr!important}.rx-tgt-grid{grid-template-columns:1fr!important}.rx-tgt-divider{display:none!important}.weekly-pb-grid{grid-template-columns:1fr!important}}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-row-2{grid-template-columns:1fr!important}.rx-tgt-grid{grid-template-columns:1fr!important}.rx-tgt-divider{display:none!important}.weekly-pb-grid{grid-template-columns:1fr!important}}
 @media(max-width:520px){.kpi-grid{grid-template-columns:1fr}.page{padding:14px}}
 
 /* UTILS */
@@ -420,6 +302,204 @@ input:focus{border-color:var(--navy)}
   .dash2 .hero-now-row > div{ flex:1 1 42%; min-width:0; }
 }
 @media (prefers-reduced-motion: reduce){ .dash2 .ring-fill{ transition:none; } }
+/* ── PROJECTIONS (Claude Design: 'Projections v4.html') ────────────
+   Every rule is scoped under .pj so the design's class names cannot leak
+   into, or inherit from, the rest of the app. Theme tokens live on .pj. */
+#page-projections{max-width:none;padding:0}
+.pj *::before,.pj *::after{box-sizing:border-box}
+.pj{background:var(--bg);color:var(--ink);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:calc(100vh - 104px)}
+.pj .pj-top{display:flex;justify-content:flex-end;margin-bottom:12px}
+.pj .pj-empty{max-width:560px;margin:60px auto;padding:28px;text-align:center;color:var(--mut);font-size:14.5px;line-height:1.55}
+.pj .pj-empty b{display:block;margin-bottom:6px;color:var(--ink);font-size:17px}
+.pj{color-scheme:dark;--bg:#0b1830;--card:#11264a;--ink:#fff;--mut:rgba(255,255,255,.68);--fnt:rgba(255,255,255,.56);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);--line3:rgba(255,255,255,.32);--soft:rgba(255,255,255,.04);--soft2:rgba(255,255,255,.07);--hover:rgba(255,255,255,.05);--track:rgba(255,255,255,.09);--sw-off:rgba(255,255,255,.18);--tab-bg:#0e1f3d;--tip-bg:#081226;--input-bg:#0a1529;--on-bg:#fff;--on-ink:#0b1830;--card-shadow:none;--shadow:0 14px 30px -12px rgba(0,0,0,.7);--amber:#F5A623;--amber-t:#F5A623;--green:#22C08A;--gt:#3fe0a6;--red:#ff7a6e;--navy:#1B3A6B;--ch-ink:#ffffff;--ch-ink-rgb:255,255,255;--ch-bg:#0b1830;--ch-amber:#F5A623;--ch-amber-t:#F5A623;--ch-green:#3fe0a6;--ch-green-t:#3fe0a6;--ch-red:#ff7a6e;--ch-red-t:#ff7a6e;--ch-val:#9cc2ff;--ch-val-t:#9cc2ff;--ch-glow:1;--ch-axis:rgba(255,255,255,.56)}
+.pj[data-theme="light"]{color-scheme:light;--bg:#eef1f7;--card:#fff;--ink:#16243d;--mut:#4f5d75;--fnt:#5d6a81;--line:#e4e9f2;--line2:#d2dae7;--line3:#aab6ca;--soft:#f6f8fc;--soft2:#edf1f7;--hover:#eef2f8;--track:rgba(27,58,107,.10);--sw-off:rgba(22,36,61,.22);--tab-bg:#fff;--tip-bg:#fff;--input-bg:#fff;--on-bg:#1B3A6B;--on-ink:#fff;--card-shadow:0 1px 2px rgba(20,40,70,.05),0 12px 28px -20px rgba(20,40,70,.28);--shadow:0 16px 36px -14px rgba(20,40,70,.35);--amber-t:#9e5c00;--gt:#0b8558;--red:#c8433a;--ch-ink:#16243d;--ch-ink-rgb:22,36,61;--ch-bg:#fff;--ch-amber-t:#9e5c00;--ch-green:#12a874;--ch-green-t:#0b8558;--ch-red:#e0574c;--ch-red-t:#c8433a;--ch-val:#4a7fe0;--ch-val-t:#2f62c4;--ch-glow:0;--ch-axis:#5d6a81}
+.pj a{color:var(--amber-t);text-decoration:none}
+.pj a:hover{color:var(--amber);text-decoration:underline}
+.pj .wrap{max-width:1600px;margin:0 auto;padding:18px clamp(14px,2.4vw,32px) 40px}
+.pj .pjc{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--card-shadow)}
+.pj .eyebrow{margin:0;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--fnt)}
+.pj .seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;border-radius:10px;background:var(--soft2);border:1px solid var(--line)}
+.pj .seg button{font:inherit;font-size:12.5px;font-weight:700;color:var(--mut);background:none;border:none;border-radius:7px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.pj .seg button:hover{color:var(--ink)}
+.pj .seg button.on{background:var(--on-bg);color:var(--on-ink)}
+.pj .segcap{margin:0;font-size:12.5px;color:var(--mut)}
+.pj .segcap b{color:var(--ink);font-weight:800}
+.pj .gbuild{display:flex;align-items:center;gap:18px;min-width:0}
+.pj .g-main{min-width:0}
+.pj .g-ring{position:relative;flex:none;width:96px;height:96px}
+.pj .g-ring svg{display:block;width:100%;height:100%}
+.pj .gr-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.pj .gr-c b{font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pj .gr-c span{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--fnt)}
+.pj .g-sent{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:6px;font-size:clamp(22px,2.3vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.pj .pillsel{position:relative;display:inline-flex}
+.pj .pillsel select{appearance:none;-webkit-appearance:none;font:inherit;letter-spacing:inherit;color:var(--amber-t);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.5);border-radius:11px;padding:2px 40px 4px 12px;cursor:pointer}
+.pj .pillsel select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.pj .pillsel select option{color:#0b1830;background:#fff;font-size:16px}
+.pj .pillsel::after{content:"";position:absolute;right:15px;top:50%;width:8px;height:8px;border-right:3px solid var(--amber-t);border-bottom:3px solid var(--amber-t);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.pj .stepper{display:inline-flex;align-items:center;gap:1px;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.5);border-radius:11px;padding:0 3px}
+.pj .stepper b{color:var(--amber-t);font-weight:800;padding:0 4px;min-width:5.3em;text-align:center}
+.pj .stepper button{font:inherit;font-size:26px;line-height:1;color:var(--amber-t);background:none;border:none;width:36px;height:42px;border-radius:8px;cursor:pointer}
+.pj .stepper button.yr{width:30px;font-size:20px}
+.pj .stepper button:hover{background:rgba(245,166,35,.16)}
+.pj .stepper button:disabled{opacity:.3;cursor:default;background:none}
+.pj .g-away{margin:6px 0 0;font-size:13px;color:var(--mut)}
+.pj .g-stats{display:flex;gap:24px;flex-wrap:wrap}
+.pj .gs{display:flex;flex-direction:column;gap:3px;min-width:104px}
+.pj .gs span{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--fnt)}
+.pj .gs b{font-size:19px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.pj .gs b.ok{color:var(--gt)}
+.pj .gs b.late{color:var(--amber-t)}
+.pj .gs em{font-style:normal;font-size:12px;color:var(--mut)}
+.pj .st{align-self:flex-start;font-style:normal;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}
+.pj .st.ok{background:rgba(34,192,138,.15);color:var(--gt)}
+.pj .st.late{background:rgba(245,166,35,.15);color:var(--amber-t)}
+.pj .g-oh{margin:0 0 10px;font-size:14px;color:var(--mut)}
+.pj .g-oh b{color:var(--ink)}
+.pj .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.pj .opt{display:flex;flex-direction:column;gap:3px;min-width:0;padding:12px 13px;border-radius:12px;background:var(--soft);border:1px solid var(--line2)}
+.pj .opt .on{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.pj .opt .oa{font-size:18px;font-weight:800;letter-spacing:-.02em;color:var(--gt);font-variant-numeric:tabular-nums}
+.pj .opt .os{flex:1;font-size:12px;line-height:1.35;color:var(--mut)}
+.pj .ob{margin-top:8px;align-self:flex-start;font:inherit;font-size:12.5px;font-weight:800;color:var(--on-ink);background:var(--on-bg);border:none;border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.pj .ob:hover{background:var(--gt)}
+.pj .opt.off .oa{color:var(--mut)}
+.pj .ox{margin-top:8px;font-size:11.5px;font-weight:700;color:var(--fnt)}
+.pj .chead{display:flex;justify-content:space-between;align-items:center;gap:10px 18px;flex-wrap:wrap;margin-bottom:8px}
+.pj .cseg{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;justify-content:flex-end}
+.pj .chart{position:relative;height:440px}
+.pj .chart svg{display:block;overflow:visible}
+.pj .legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:12px;color:var(--mut)}
+.pj .legend>span{display:inline-flex;align-items:center;gap:7px}
+.pj .lg{display:inline-block;width:18px;height:0;border-top:2.5px solid var(--ink)}
+.pj .lg.trend{border-top:2px dashed var(--mut)}
+.pj .lg.green{border-top:3px solid var(--ch-green)}
+.pj .lg.val{border-top:3px dotted var(--ch-val)}
+.pj .lgt{display:inline-block;width:13px;height:13px;border-radius:50%;border:2px solid var(--amber);box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 6px var(--amber)}
+.pj .ctip{position:absolute;left:0;top:0;pointer-events:none;opacity:0;transform:translate(-50%,-100%);background:var(--tip-bg);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;min-width:180px;font-size:12.5px;box-shadow:var(--shadow);transition:opacity .12s;z-index:2}
+.pj .ctip p{margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--fnt)}
+.pj .ctip .r{display:flex;justify-content:space-between;gap:18px;line-height:1.6;color:var(--mut)}
+.pj .ctip .r b{color:var(--ink)}
+.pj .ctip .r b.g{color:var(--gt)}
+.pj .pulse{transform-box:fill-box;transform-origin:center;animation:pjPulse 2.2s ease-out infinite}
+@keyframes pjPulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.8);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pj .pulse{animation:none;opacity:0}}
+.pj .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:14px}
+.pj .mcard{display:flex;align-items:center;gap:14px;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--card-shadow)}
+.pj .mcard.goal{border-color:rgba(245,166,35,.55);box-shadow:0 0 0 4px rgba(245,166,35,.08),0 24px 40px -28px rgba(245,166,35,.5)}
+.pj .mring{position:relative;flex:none;width:64px;height:64px}
+.pj .mring svg{display:block}
+.pj .mr-c{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+.pj .mcard.done .mr-c{color:var(--gt);font-size:20px}
+.pj .mtxt{min-width:0}
+.pj .mlabel{margin:0 0 3px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.pj .mdate{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.pj .mcard.goal .mdate{color:var(--amber-t)}
+.pj .mcard.done .mdate{color:var(--gt)}
+.pj .msub{margin:4px 0 0;font-size:12px;line-height:1.4;color:var(--mut)}
+.pj .soon{color:var(--gt);font-weight:800}
+.pj .later{color:var(--red);font-weight:800}
+.pj .mv-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pj .mv-head h2,.pj .thead h2{margin:0;font-size:12.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.pj .lgrp{margin:16px 0 0;font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--fnt)}
+.pj .lever{padding:12px 0;border-bottom:1px solid var(--line)}
+.pj .lgl .lever:last-child{border-bottom:none}
+.pj .lrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:9px}
+.pj .lt{font-size:14px;font-weight:700}
+.pj .lt b{font-weight:800}
+.pj .lv{font-size:15px;font-weight:800;color:var(--gt);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pj .lv.neg{color:var(--red)}
+.pj .lv.zero{color:var(--fnt)}
+.pj .lfoot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:8px}
+.pj .ls{font-size:12px;line-height:1.4;color:var(--mut)}
+.pj .imp{flex:none;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--soft2);color:var(--mut)}
+.pj .imp.up{background:rgba(34,192,138,.15);color:var(--gt)}
+.pj .imp.dn{background:rgba(224,82,82,.14);color:var(--red)}
+.pj .tg{display:flex;align-items:center;gap:12px;cursor:pointer;position:relative}
+.pj .tg input{position:absolute;opacity:0;width:1px;height:1px}
+.pj .sw{position:relative;flex:none;width:42px;height:24px;border-radius:999px;background:var(--sw-off);transition:background .2s}
+.pj .sw::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s}
+.pj .tg input:checked+.sw{background:var(--green)}
+.pj .tg input:checked+.sw::after{transform:translateX(18px)}
+.pj .tg input:focus-visible+.sw{outline:2px solid var(--ink);outline-offset:2px}
+.pj .moves input[type=range]{width:100%;margin:0;accent-color:var(--green)}
+.pj .moves input[type=range].neg{accent-color:#e0574c}
+.pj .plans{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+.pj .plist{display:flex;flex-direction:column;gap:8px;min-width:0}
+.pj .pnone{font-size:13px;color:var(--fnt)}
+.pj .pchip{display:flex;align-items:stretch;border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:var(--soft)}
+.pj .pchip.on{border-color:rgba(245,166,35,.6);background:rgba(245,166,35,.10)}
+.pj .pload{display:flex;flex:1;flex-direction:column;align-items:flex-start;gap:1px;font:inherit;color:var(--ink);background:none;border:none;padding:7px 12px;cursor:pointer;text-align:left}
+.pj .pload b{font-size:13px;font-weight:800}
+.pj .pload span{font-size:11.5px;color:var(--mut)}
+.pj .pload:hover{background:var(--hover)}
+.pj .pdel{font:inherit;font-size:15px;font-weight:800;color:var(--fnt);background:none;border:none;border-left:1px solid var(--line);padding:0 12px;cursor:pointer}
+.pj .pdel:hover{color:var(--ink)}
+.pj .pdel.arm{font-size:12px;color:var(--ink);background:rgba(224,82,82,.22)}
+.pj .pact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pj .pbtn{font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:var(--soft2);border:1px solid var(--line2);border-radius:9px;padding:8px 13px;cursor:pointer;white-space:nowrap}
+.pj .pbtn.sm{font-size:12px;padding:6px 10px}
+.pj .pbtn:hover{border-color:var(--line3)}
+.pj .pbtn:disabled{opacity:.45;cursor:default;border-color:var(--line2)}
+.pj .pbtn.pri{background:var(--on-bg);color:var(--on-ink);border-color:var(--on-bg)}
+.pj .psave{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pj .psave[hidden]{display:none}
+.pj .psave input{font:inherit;font-size:13.5px;font-weight:600;color:var(--ink);background:var(--input-bg);border:1px solid var(--line2);border-radius:9px;padding:8px 11px;width:240px;max-width:100%}
+.pj .psave input:focus{outline:2px solid var(--amber);outline-offset:1px}
+.pj .tcard{padding:20px 22px 8px}
+.pj .thead p{margin:6px 0 0;font-size:13.5px;color:var(--mut)}
+.pj .tscroll{overflow-x:auto;margin-top:12px}
+.pj .tt{width:100%;min-width:680px;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.pj .tt th{padding:10px 12px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fnt);text-align:right;border-bottom:1px solid var(--line2);white-space:nowrap}
+.pj .tt td{padding:12px;font-size:14px;font-weight:600;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.pj .tt th:first-child,.pj .tt td:first-child{text-align:left}
+.pj .tt td:first-child{white-space:normal}
+.pj .tt tr:last-child td{border-bottom:none}
+.pj .tt tr.act td{color:var(--fnt)}
+.pj .tt tr.goal td{background:rgba(245,166,35,.09)}
+.pj .tt td.net{font-weight:800}
+.pj .tt td.net.hit{color:var(--gt)}
+.pj .tag{display:inline-flex;margin-left:6px;padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;vertical-align:1px;background:var(--soft2);color:var(--mut)}
+.pj .tag.g{background:rgba(245,166,35,.16);color:var(--amber-t)}
+.pj .mb{display:inline-flex;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;vertical-align:1px;background:rgba(34,192,138,.15);color:var(--gt)}
+.pj .mb.g{background:rgba(245,166,35,.16);color:var(--amber-t)}
+.pj .method{margin:0;font-size:12px;line-height:1.6;color:var(--fnt);max-width:130ch}
+.pj .LC{display:grid;grid-template-columns:400px minmax(0,1fr);gap:18px;align-items:start}
+.pj .lc-rail{position:sticky;top:70px;max-height:calc(100vh - 82px);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--card-shadow);scrollbar-width:thin}
+.pj .lc-sec{padding:18px 20px;border-bottom:1px solid var(--line)}
+.pj .lc-sec:last-child{border-bottom:none}
+.pj .LC .gbuild{flex-wrap:wrap;align-items:flex-start}
+.pj .LC .g-main{flex:1 1 230px}
+.pj .LC .g-ring{width:76px;height:76px}
+.pj .LC .gr-c b{font-size:17px}
+.pj .LC .gr-c span{font-size:8px}
+.pj .LC .g-sent{font-size:22px;gap:8px}
+.pj .LC .stepper button{height:38px;width:31px;font-size:22px}
+.pj .LC .stepper button.yr{width:27px;font-size:18px}
+.pj .LC .g-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.pj .LC .gs{min-width:0}
+.pj .LC .gs span{font-size:9.5px}
+.pj .LC .gs b{font-size:16px}
+.pj .LC .gs em{font-size:11px}
+.pj .LC .opts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pj .LC .opt .oa{font-size:16px}
+.pj .lc-stage{display:flex;flex-direction:column;gap:16px;min-width:0}
+.pj .lc-chart{padding:18px 22px 16px}
+.pj .LC .chart{height:clamp(420px,calc(100vh - 330px),780px)}
+.pj .LC .mgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.pj .LC .mgrid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1100px){.pj .LC{display:flex;flex-direction:column;gap:16px;align-items:stretch}
+.pj .lc-rail,.pj .lc-stage{display:contents}
+.pj .lc-sec,.pj .lc-sec:last-child{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--card-shadow)}
+.pj .lc-goal{order:1}
+.pj .lc-chart{order:2}
+.pj .lc-gap{order:3}
+.pj .lc-moves{order:4}
+.pj .LC .mgrid{order:5}
+.pj .lc-plans{order:6}
+.pj .LC .tcard{order:7}
+.pj .LC .method{order:8}
+.pj .LC .chart{height:clamp(360px,calc(100vh - 420px),560px)}}
 </style>
 </head>
 <body>
@@ -502,9 +582,9 @@ input:focus{border-color:var(--navy)}
 </div>
 
 <div id="page-dashboard" class="page active"></div>
+<div id="page-projections" class="page"></div>
 <div id="page-monthly"   class="page"></div>
 <div id="page-expenses"  class="page"></div>
-<div id="page-forecast"  class="page"></div>
 <div id="page-insights"  class="page"></div>
 <div id="page-settings"  class="page"></div>
 <div id="page-weekly"   class="page"></div>
@@ -579,11 +659,17 @@ const TRUSTED_EMAILS = [
   'eslam.elbana@gmail.com',
   'escarpment.pharmacy@gmail.com',
 ];
-const ALL_PAGES   = ['Dashboard','EHC','Forecast','Insights','Weekly Metrics','Monthly Data','Expenses','Settings'];
+const ALL_PAGES   = ['Dashboard','Projections','EHC','Insights','Weekly Metrics','Monthly Data','Expenses','Settings'];
+// 'Forecast' was retired in Oct 2026 and replaced by Projections. Stored
+// permission docs may still list it; nothing reads that name any more.
+
+// Projections is where the app opens for anyone allowed to see it; everyone
+// else starts on their first permitted page (EHC-only staff land on EHC).
+const LANDING_PAGE = 'projections';
 
 // Months of history used to MEASURE growth (a window of N months yields N-1
-// month-over-month rates). Single source of truth: the dashboard, the Forecast
-// page, the expense-drift rate and the Insights break-even ETA all read this, so
+// month-over-month rates). Single source of truth: the dashboard, the
+// expense-drift rate and the Insights break-even ETA all read this, so
 // they can never disagree about what "average growth" means. Change it here only.
 const GROWTH_WINDOW_MONTHS = 3;
 
@@ -592,9 +678,9 @@ const GROWTH_WINDOW_MONTHS = 3;
 const CODE_RED_DAYS = 60;
 // Ordered definition used to build the nav and admin checkboxes
 const PAGE_MAP = [
-  { id:'dashboard', label:'Dashboard',      name:'Dashboard'      },
+  { id:'dashboard',   label:'Dashboard',      name:'Dashboard'      },
+  { id:'projections', label:'Projections',    name:'Projections'    },
   { id:'ehc',       label:'EHC',            name:'EHC'            },
-  { id:'forecast',  label:'Forecast',       name:'Forecast'       },
   { id:'insights',  label:'Insights',       name:'Insights'       },
   { id:'weekly',    label:'Weekly Metrics', name:'Weekly Metrics' },
   { id:'monthly',   label:'Monthly Data',   name:'Monthly Data'   },
@@ -762,17 +848,13 @@ function calcMonthData(m) {
   }
 
   const rebate   = settings.rebateMethod === 'pct'
-    ? (parseFloat(m.rxSales)||0) * settings.rebatePct / 100
+    ? (parseFloat(m.rxSales)||0) * (parseFloat(settings.rebatePct)||0) / 100
     : parseFloat(m.rebate) || 0;
   const totalGP  = rxGP + frontGP + rebate;
   const totalExp = parseFloat(m.expenses) || 0;
   const netProfit = totalGP - totalExp;
 
   return { rxGP, frontGP, rebate, totalGP, totalExp, netProfit };
-}
-
-function latestMonth() {
-  return months.length ? months[months.length - 1] : null;
 }
 
 function calcRollingAvgGrowth() {
@@ -828,53 +910,14 @@ function syncRealisticRate() {
   }
 }
 
-function calcBreakEven(growthPct) {
-  if (!months.length) return null;
-  const last = months.slice(-3);
-  const avgNP = last.reduce((s,m) => s + calcMonthData(m).netProfit, 0) / last.length;
-  if (avgNP >= 0) return { already: true, netProfit: avgNP };
-
-  const lm = latestMonth();
-  const startGP = calcMonthData(lm).totalGP;
-  const expTotal = calcTotalExpenses();
-  const rate = growthPct / 100;
-  let gp = startGP;
-  for (let mo = 1; mo <= 120; mo++) {
-    gp *= (1 + rate);
-    const np = gp - expTotal;
-    if (np >= 0) {
-      const d = new Date();
-      d.setMonth(d.getMonth() + mo);
-      const annProj = (() => {
-        let g2 = gp, tot = 0;
-        for (let i = 0; i < 12; i++) { g2 *= (1+rate); tot += g2 - expTotal; }
-        return tot;
-      })();
-      return {
-        already: false, months: mo,
-        date: d.toLocaleDateString('en-CA',{month:'long',year:'numeric'}),
-        netProfit: np, annualProfit: annProj,
-      };
-    }
-  }
-  return null;
-}
-
 // ================================================================
-// S-CURVE HELPERS
+// PROJECTION RATES
 // ================================================================
 
-// Logistic formula: Rx(t) = ceiling / (1 + e^(-k*(t-6)))
-// k is derived so Rx(monthsToCeiling) ≈ 95% of ceiling:  k = ln(19)/(monthsToCeiling-6)
-function sCurveK(monthsToCeiling) {
-  const inflection = 6;
-  return monthsToCeiling > inflection
-    ? Math.log(19) / (monthsToCeiling - inflection)
-    : 0.8; // fallback for edge cases
-}
-
-// Effective Rx GP & Rebate rates (per $1 of Rx Sales) used for forward
-// projections and the Rx Sales Targets. Honors the rateBasis setting:
+// Effective Rx GP & Rebate rates (per $1 of Rx Sales) shown in the Settings
+// rate-basis preview; keep in step with dashRatesUpTo, which the dashboard's
+// targets use. (The Projections page measures its own 3-month rates.) Honors
+// the rateBasis setting:
 //   'avg'    → derive from a trailing window of REAL month data (fee+markup,
 //              actual rebate $). Most accurate when you enter real numbers.
 //   'manual' → use the static Rx GP % / Rebate % from Settings.
@@ -907,73 +950,6 @@ function projectionRates() {
     source:   'manual',
     window:   0,
   };
-}
-
-// Returns net profit derived from S-curve Rx(t) using latest-month GP rates.
-// When rateBasis === 'avg', uses the trailing-average rates instead so the
-// forecast stays consistent with the dashboard targets.
-function sCurveNPRates() {
-  const lm       = latestMonth();
-  if (!lm) return null;
-  const lmData   = calcMonthData(lm);
-  const lmRx     = parseFloat(lm.rxSales) || 1;
-  const pr       = projectionRates();
-  return {
-    rxGPRate:  pr.source === 'avg' ? pr.rxGPRate : lmData.rxGP   / lmRx,  // rxGP per $1 of Rx Sales
-    rebRate:   pr.source === 'avg' ? pr.rebRate  : lmData.rebate  / lmRx,  // rebate per $1 of Rx Sales
-    frontGP:   lmData.frontGP,         // front-store GP (assumed constant)
-    expenses:  calcTotalExpenses(),
-  };
-}
-
-function calcBreakEvenSCurve(ceiling, monthsToCeiling) {
-  if (!months.length) return null;
-  const last3 = months.slice(-3);
-  const avgNP = last3.reduce((s, m) => s + calcMonthData(m).netProfit, 0) / last3.length;
-  if (avgNP >= 0) return { already: true, netProfit: avgNP };
-
-  const rates = sCurveNPRates();
-  if (!rates) return null;
-  const {rxGPRate, rebRate, frontGP, expenses} = rates;
-  const k = sCurveK(monthsToCeiling);
-
-  // Anchor to last reported Rx Sales with offset correction (same formula as chart)
-  const lm       = latestMonth();
-  const baseline = parseFloat(lm.rxSales) || 0;
-  const rxRange  = Math.max(0, ceiling - baseline);
-  const offset   = rxRange / (1 + Math.exp(-k * (0 - 6))); // RxGrowth at t=0
-
-  for (let mo = 1; mo <= 120; mo++) {
-    const rxGrowth = rxRange / (1 + Math.exp(-k * (mo - 6))) - offset;
-    const rx       = baseline + rxGrowth;
-    const np = rx * (rxGPRate + rebRate) + frontGP - expenses;
-    if (np >= 0) {
-      const d = new Date();
-      d.setMonth(d.getMonth() + mo);
-      let annProj = 0;
-      for (let i = 1; i <= 12; i++) {
-        const rxGrowth2 = rxRange / (1 + Math.exp(-k * ((mo + i) - 6))) - offset;
-        const rx2       = baseline + rxGrowth2;
-        annProj += rx2 * (rxGPRate + rebRate) + frontGP - expenses;
-      }
-      return {
-        already: false, months: mo,
-        date: d.toLocaleDateString('en-CA', {month:'long', year:'numeric'}),
-        netProfit: np, annualProfit: annProj,
-      };
-    }
-  }
-  return null;
-}
-
-function updSCurve(scenario, field, rawVal) {
-  if (!settings.sCurve) settings.sCurve = {};
-  if (!settings.sCurve[scenario]) settings.sCurve[scenario] = {};
-  settings.sCurve[scenario][field] = field === 'ceiling'
-    ? (parseFloat(rawVal) || 0)
-    : Math.max(7, parseInt(rawVal) || 7); // min 7 so monthsToCeiling > inflection(6)
-  saveSettings();
-  renderForecast();
 }
 
 // ================================================================
@@ -1019,14 +995,19 @@ function renderNav() {
     .join('');
 }
 
+function landingPage() {
+  const allowed = p => !!userRecord && userRecord.pages.includes(p.name);
+  const home = PAGE_MAP.find(p => p.id === LANDING_PAGE);
+  if (home && allowed(home)) return home.id;
+  const first = PAGE_MAP.find(allowed);
+  return first ? first.id : 'dashboard';
+}
+
 function navigate(page) {
-  // Access guard — silently redirect to first allowed page if not permitted
+  // Access guard — silently redirect to the landing page if not permitted
   if (userRecord) {
     const entry = PAGE_MAP.find(p => p.id === page);
-    if (entry && !userRecord.pages.includes(entry.name)) {
-      const first = PAGE_MAP.find(p => userRecord.pages.includes(p.name));
-      page = first ? first.id : page;
-    }
+    if (entry && !userRecord.pages.includes(entry.name)) page = landingPage();
   }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1046,9 +1027,9 @@ function updateBadge() {
 function renderPage(page) {
   switch(page) {
     case 'dashboard': renderDashboard(); break;
+    case 'projections': renderProjections(); break;
     case 'monthly':   renderMonthly();   break;
     case 'expenses':  renderExpenses();  break;
-    case 'forecast':  renderForecast();  break;
     case 'insights':  renderInsights();  break;
     case 'weekly':    renderWeekly();    break;
     case 'ehc':       renderEHC();       break;
@@ -1084,6 +1065,432 @@ const gapLabelPlugin = {
     ctx.restore();
   },
 };
+
+// ================================================================
+// PAGE: PROJECTIONS  (Claude Design: 'Projections v4.html' + proj/*.js)
+// ================================================================
+// Ported from the design's model.js / chart.js / levers.js, kept close to the
+// original so the two can be compared. What differs: it reads the live months
+// (through calcMonthData, so every figure matches Monthly Data) instead of a
+// fixed table, takes the valuation multiple from Settings, renders into
+// #page-projections, and carries its own Light/Dark switch because the app
+// header has none.
+const PJ_MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const PJ_KEY = 'escarpment-projections-v2', PJ_PKEY = 'escarpment-projections-plans', PJ_THEME_KEY = 'escarpment-theme';
+const PJ_KMAX = 72, PJ_MIN_MONTHS = 3;
+const PJ_LV0 = {flat:false,cut:0,add:0,blister:0,rx:0,front:0,rebate:null};
+const PJ_MAX = {cut:5000,add:10000,blister:30,rx:300,front:6000,rebate:16};
+let _pj = { PM:null, st:null, plans:null, pendingDel:-1 };
+
+// One row per month in the shape the design's model expects — the same eight
+// columns as the Monthly Data CSV export it was built from.
+function pjRows() {
+  return [...months].filter(m => /^\d{4}-\d{2}$/.test(m.monthKey || ''))
+    .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
+    .map((m, i) => {
+      const d = calcMonthData(m), [y, mo] = m.monthKey.split('-').map(Number);
+      return { i, key: m.monthKey, label: PJ_MN[mo - 1] + ' ' + y,
+        rx: parseFloat(m.rxSales) || 0, cnt: Number(m.rxCount) || 0, front: parseFloat(m.frontSales) || 0,
+        reb: d.rebate, gp: d.totalGP, exp: d.totalExp, net: d.netProfit };
+    });
+}
+
+function pjValuationMultiple() {
+  const v = parseFloat(settings.valuationMultiple);   // same fallback as the dashboard
+  return isFinite(v) && v > 0 ? v : 3;
+}
+
+// ── model.js ─────────────────────────────────────────────────────
+function pjBuildModel(D, multiple) {
+  const MN = PJ_MN, L = D.length - 1;
+  // Anchor month arithmetic on the LAST month of data, so projected month names
+  // stay right even if an older month is missing from the history.
+  const [ly, lm] = D[L].key.split('-').map(Number), T0 = ly * 12 + (lm - 1) - L;
+  const M0 = ((T0 % 12) + 12) % 12, Y0 = Math.floor(T0 / 12);
+  const S = { multiple, target: 1e6 };
+  const WINDOWS = [{id:'all',label:'All time',n:D.length,name:'all time'},{id:'year',label:'Past year',n:12,name:'the past year'},{id:'six',label:'Past 6 mo',n:6,name:'the past 6 months'},{id:'three',label:'Past 3 mo',n:3,name:'the past 3 months'}];
+  const mIdx = i => i>=0&&i<=L ? Number(D[i].key.slice(5))-1 : (((M0+i)%12)+12)%12;   // 0-11
+  const lab = (i,s) => { let m,y; if(i>=0&&i<=L){[y,m]=D[i].key.split('-').map(Number);m=MN[m-1]}else{const t=M0+i;m=MN[((t%12)+12)%12];y=Y0+Math.floor(t/12)} return s?m+" '"+String(y).slice(2):m+' '+y; };
+  const win = id => WINDOWS.find(w=>w.id===id);
+  function slope(a){const n=a.length,xm=(n-1)/2,ym=a.reduce((s,v)=>s+v,0)/n;let sxy=0,sxx=0;a.forEach((y,x)=>{sxy+=(x-xm)*(y-ym);sxx+=(x-xm)*(x-xm)});return sxx?sxy/sxx:0}
+  // Rx Count was added to the data later than the dollar figures, so some months
+  // have none. The count trend fits only months that have one, at their real
+  // positions; per-Rx figures below divide dollars by scripts from the SAME months.
+  function slopeXY(pts){const n=pts.length;if(n<2)return 0;const xm=pts.reduce((a,p)=>a+p[0],0)/n,ym=pts.reduce((a,p)=>a+p[1],0)/n;let sxy=0,sxx=0;pts.forEach(([x,y])=>{sxy+=(x-xm)*(y-ym);sxx+=(x-xm)*(x-xm)});return sxx?sxy/sxx:0}
+  function fit(id){const n=Math.min(win(id).n,D.length),s=D.slice(-n);return{n,from:s[0].label,net:slope(s.map(d=>d.net)),gp:slope(s.map(d=>d.gp)),exp:slope(s.map(d=>d.exp)),cnt:slopeXY(s.filter(d=>d.cnt>0).map(d=>[d.i,d.cnt])),rx:slope(s.map(d=>d.rx))}}
+  const counted = D.filter(d => d.cnt > 0), c0 = counted.length ? counted[counted.length - 1] : null;
+  const valNet = () => S.target/(12*S.multiple), value = n => n*12*S.multiple;
+  const f$ = v => (v<0?'−':'')+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
+  const fs = v => (v>=0?'+':'−')+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
+  const trim = s => s.includes('.')?s.replace(/\.?0+$/,''):s;
+  const fK = v => {const a=Math.abs(v),s=v<0?'−':'';return a>=1e6?s+'$'+trim((a/1e6).toFixed(2))+'M':a>=1e3?s+'$'+trim((a/1e3).toFixed(1))+'K':s+'$'+Math.round(a)};
+  const f2 = v => '$'+v.toFixed(2);
+  // 3-month averages. Without Rx Count data there is no per-Rx figure, so these
+  // return 0 rather than NaN; the Rx-based moves then show as unavailable.
+  const last3 = () => D.slice(-3), sum = (s,k) => s.reduce((a,d)=>a+d[k],0);
+  function gpPerRx(){const s=counted.slice(-3),c=sum(s,'cnt');return c>0?sum(s,'gp')/c:0}
+  function rxValue(){const s=counted.slice(-3),c=sum(s,'cnt');return c>0?sum(s,'rx')/c:0}
+  function rebRate(){const s=last3(),r=sum(s,'rx');return r>0?Math.round(sum(s,'reb')/r*1000)/10:0}
+  const targets = () => [{id:'be',label:'Break-even',tag:'Break-even',net:0}].concat(Array.from({length:10},(_,i)=>i+1).map(n=>({id:n+'0k',label:`$${n}0K / month`,tag:`$${n}0K/mo`,net:n*1e4})));
+  function valLines(max){const u=1e6/(12*S.multiple),c=Math.floor(max/u),sp=c<=5?1:c<=10?2:5,o=[];for(let m=1;m*u<=max;m++)if(m===1||m%sp===0)o.push({v:m*1e6,net:m*u,tag:`$${m}M value`});return o}
+  const A = {rxPerBlister:5,frontMargin:.4};
+  function plan(id,lv){lv=lv||{};const f=fit(id),gpr=gpPerRx(),rxv=rxValue(),r0=rebRate(),d=D[L],n=(lv.blister||0)*A.rxPerBlister+(lv.rx||0),dr=lv.rebate!=null?(lv.rebate-r0)/100:0,eS=lv.flat?0:f.exp;
+    const cnt=k=>c0?c0.cnt+f.cnt*(L+k-c0.i)+n*k:0,rxs=k=>d.rx+f.rx*k+n*k*rxv;   // count runs on from the last month that has one
+    const gp=k=>d.gp+f.gp*k+n*k*gpr+dr*rxs(k)+(lv.front||0)*A.frontMargin;
+    const exp=k=>d.exp+eS*k-(lv.cut||0)+(lv.add||0);
+    const at=k=>k<=0?d.net:gp(k)-exp(k),slope=at(2)-at(1);
+    return{id,f,lv,slope,base:at(1)-slope,at,gp,exp,cnt,rxs}}
+  function solve(id,lv,t,k){const p=plan(id,lv),G=t-p.at(k);if(G<=0)return{met:true,room:-G,p};
+    const gpr=gpPerRx(),rxv=rxValue(),r0=rebRate(),r=lv.rebate!=null?lv.rebate:r0,per=gpr+(r-r0)/100*rxv;
+    return{met:false,gap:G,p,need:{flat:lv.flat||p.f.exp<=0?null:p.f.exp*k,cut:(lv.cut||0)+Math.ceil(G/50)*50,blister:(lv.blister||0)+Math.ceil(G/(k*A.rxPerBlister*per)),rx:(lv.rx||0)+Math.ceil(G/(k*per)/5)*5,rebate:p.rxs(k)>0?Math.round((r+Math.ceil(G/p.rxs(k)*1000)/10)*10)/10:Infinity,front:(lv.front||0)+Math.ceil(G/A.frontMargin/100)*100}}}
+  function project(id,sc){sc=sc||{};const f=fit(id),s=(sc.flat?f.gp:f.net)+(sc.rx||0)*gpPerRx(),b=D[L].net+(sc.cut||0);return{id,f,slope:s,base:b,at:k=>k<=0?D[L].net:b+s*k}}
+  function arrival(p,t){
+    if(D[L].net>=t){let i=L;while(i>0&&D[i-1].net>=t)i--;return{reached:true,i,label:lab(i),short:lab(i,true)}}
+    let k=1;if(p.at(1)<t){if(p.slope<=0)return{never:true};k=Math.max(1,Math.ceil((t-p.base)/p.slope))}
+    if(k>240)return{never:true};
+    const v0=p.at(k-1),v1=p.at(k),xf=L+k-1+(v1>v0?Math.min(1,Math.max(0,(t-v0)/(v1-v0))):1);
+    return{k,i:L+k,xf,label:lab(L+k),short:lab(L+k,true),away:k-1}}
+  function ring(o){const s=o.size,w=o.stroke,h=s/2,r=(s-w)/2-2,c=2*Math.PI*r,p=Math.max(0,Math.min(1,o.pct));
+    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:${o.track||'var(--track,rgba(255,255,255,.09))'}" stroke-width="${w}"></circle>${p>0?`<circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="${o.color}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 ${h} ${h})" style="filter:drop-shadow(0 0 ${o.glow||5}px ${o.color}88)"></circle>`:''}</svg>`}
+  return {D,L,M0,lastAbs:ly*12+(lm-1),hasCnt:!!c0,mIdx,S,A,WINDOWS,win,lab,fit,valNet,value,targets,valLines,gpPerRx,rxValue,rebRate,project,plan,solve,arrival,f$,fs,fK,f2,ring};
+}
+
+// ── chart.js ─────────────────────────────────────────────────────
+function pjRenderChart(PM, el, o) {
+ el._o=o;el._pm=PM;
+ const D=PM.D,L=PM.L,ms=o.ms,cs=getComputedStyle(el),cv=(n,d)=>(cs.getPropertyValue(n)||'').trim()||d,IR=cv('--ch-ink-rgb','255,255,255'),A=a=>'rgba('+IR+','+a+')',INK=cv('--ch-ink','#ffffff'),BG=cv('--ch-bg','#0b1830'),G=cv('--ch-amber','#F5A623'),GT=cv('--ch-amber-t',G),GR=cv('--ch-green','#3fe0a6'),GRT=cv('--ch-green-t',GR),RD=cv('--ch-red','#ff7a6e'),RDT=cv('--ch-red-t',RD),VB=cv('--ch-val','#9cc2ff'),VBT=cv('--ch-val-t',VB),GLOW=cv('--ch-glow','1')==='1',AX=cv('--ch-axis',A(.55)),AX2=cv('--ch-axis',A(.58)),TX={[G]:GT,[GR]:GRT,[RD]:RDT};
+ const isF=m=>o.focus?m.id===o.focus:!!m.goal;
+ const cw=Math.round(el.clientWidth),W=cw?Math.max(260,cw):360,H=o.fill?Math.max(280,Math.round(el.clientHeight)):(o.height||420),cmp=o.compact||W<700;
+ const pad={l:50,r:cmp?96:150,t:30,b:34},pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+ const p=PM.project(o.wid),ps=o.plan||(o.scenario?PM.project(o.wid,o.scenario):null),lead=ps||p;
+ let mk=o.target?o.target.k:0;
+ ms.forEach(m=>{if(o.target&&!isF(m))return;const a=PM.arrival(lead,m.net);if(a.k)mk=Math.max(mk,a.k);if(isF(m)&&ps){const b=PM.arrival(p,m.net);if(b.k)mk=Math.max(mk,b.k)}});
+ const hz=Math.min(o.target?84:36,Math.max(12,mk+(o.target?6:3))),N=L+hz;
+ const upw=!ps||lead.at(hz)>=p.at(hz),PC=upw?GR:RD,top=Math.max(lead.at(hz),p.at(hz));
+ const vals=D.map(d=>d.net).concat([lead.at(hz),p.at(hz),lead.at(1)],ms.filter(m=>!o.target||isF(m)||m.net<=top).map(m=>m.net));
+ const lo=Math.min(...vals),hi=Math.max(...vals);
+ const y0=Math.floor(lo/5000)*5000,y1=Math.ceil((hi+(hi-lo)*.04)/5000)*5000;
+ const X=i=>pad.l+i/N*pw,Y=v=>pad.t+(y1-v)/(y1-y0)*ph,z=Y(0);
+ const u='c'+Math.random().toString(36).slice(2,8);
+ const minN=Math.min(...D.map(d=>d.net)),maxN=Math.max(0,...D.map(d=>d.net));
+ const P=pts=>pts.map((q,j)=>(j?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join('');
+ const qp=q=>[[X(L),Y(q.at(0))],[X(L+1),Y(q.at(1))],[X(N),Y(q.at(hz))]];
+ const boxes=[],labs=[];
+ const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+ const pr=(x,y,t,an)=>{const w=t.length*6.8+14;return{x:an==='end'?x-w+7:an==='middle'?x-w/2:x-7,y:y-13,w,h:19}};
+ const pill=(x,y,t,c,an)=>{const r=pr(x,y,t,an);boxes.push(r);labs.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="9.5" fill="${BG}" fill-opacity=".92"${c?` stroke="${c}" stroke-opacity=".45"`:''}></rect><text x="${x}" y="${y}" text-anchor="${an||'start'}" font-size="12" font-weight="800" fill="${c?(TX[c]||c):A(.9)}">${t}</text>`)};
+ const place=(cx,cy,t,c,cands,skip)=>{for(const cd of cands){if(!boxes.some(b=>hit(pr(cx+cd[0],cy+cd[1],t,cd[2]),b))){pill(cx+cd[0],cy+cd[1],t,c,cd[2]);return}}if(!skip){const pk=cands[0];pill(cx+pk[0],cy+pk[1],t,c,pk[2])}};
+ const dot=(x,y,r)=>boxes.push({x:x-r-2,y:y-r-2,w:2*r+4,h:2*r+4});
+ let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Manrope, system-ui, sans-serif" role="img" aria-label="Net profit, actual and projected">`;
+ s+=`<defs><clipPath id="${u}p"><rect x="${pad.l}" y="${pad.t-2}" width="${pw}" height="${ph+4}"></rect></clipPath><clipPath id="${u}a"><rect x="0" y="0" width="${W}" height="${z}"></rect></clipPath><clipPath id="${u}b"><rect x="0" y="${z}" width="${W}" height="${H}"></rect></clipPath><linearGradient id="${u}g" gradientUnits="userSpaceOnUse" x1="0" y1="${Y(maxN)-20}" x2="0" y2="${z}"><stop offset="0" stop-color="${GR}" stop-opacity=".4"></stop><stop offset="1" stop-color="${GR}" stop-opacity=".04"></stop></linearGradient><linearGradient id="${u}r" gradientUnits="userSpaceOnUse" x1="0" y1="${z}" x2="0" y2="${Y(minN)}"><stop offset="0" stop-color="${RD}" stop-opacity=".03"></stop><stop offset="1" stop-color="${RD}" stop-opacity=".36"></stop></linearGradient></defs>`;
+ s+=`<rect x="${X(L)}" y="${pad.t}" width="${X(N)-X(L)}" height="${ph}" fill="${A(.025)}"></rect>`;
+ const step=(y1-y0)>100000?20000:(y1-y0)>40000?10000:5000;
+ for(let v=Math.ceil(y0/step)*step;v<=y1;v+=step)s+=`<line x1="${pad.l}" x2="${pad.l+pw}" y1="${Y(v)}" y2="${Y(v)}" stroke="${A(.06)}"></line><text x="${pad.l-10}" y="${Y(v)+4}" text-anchor="end" font-size="11.5" fill="${AX}">${PM.fK(v)}</text>`;
+ const rr=N/(pw/56),every=rr>6?12:rr>3?6:3;
+ for(let i=0;i<=N;i++){if(PM.mIdx(i)%every===0)s+=`<line x1="${X(i)}" x2="${X(i)}" y1="${pad.t+ph}" y2="${pad.t+ph+5}" stroke="${A(.25)}"></line><text x="${X(i)}" y="${pad.t+ph+21}" text-anchor="middle" font-size="11.5" fill="${AX2}">${PM.lab(i,true)}</text>`}
+ s+=`<line x1="${X(L)}" x2="${X(L)}" y1="${pad.t-14}" y2="${pad.t+ph}" stroke="${A(.22)}" stroke-dasharray="2 4"></line><text x="${X(L)-8}" y="${pad.t-6}" text-anchor="end" font-size="10.5" font-weight="800" letter-spacing="1.4" fill="${AX}">ACTUAL</text><text x="${X(L)+8}" y="${pad.t-6}" font-size="10.5" font-weight="800" letter-spacing="1.4" fill="${AX}">PROJECTED</text>`;
+ const msd=ms.filter(m=>m.net>=y0&&m.net<=y1),vl=o.valLines?PM.valLines(y1):[];
+ const lbs=msd.map(m=>({m,y:Y(m.net)})).concat(vl.map(v=>({v,y:Y(v.net)}))).sort((a,b)=>a.y-b.y);
+ for(let i=1;i<lbs.length;i++)if(lbs[i].y-lbs[i-1].y<16)lbs[i].y=lbs[i-1].y+16;
+ lbs.forEach(({m,v,y})=>{if(v){const yy=Y(v.net);s+=`<line x1="${pad.l}" x2="${pad.l+pw}" y1="${yy}" y2="${yy}" stroke="${VB}" stroke-opacity=".6" stroke-width="2" stroke-dasharray="0 6" stroke-linecap="round"></line><text x="${pad.l+pw+10}" y="${y+4}" font-size="12" font-weight="700" fill="${VBT}">${v.tag}</text>`;return}
+  const yy=Y(m.net),f=isF(m),c=f?G:m.net===0?A(.42):A(.24);
+  s+=`<line x1="${pad.l}" x2="${pad.l+pw}" y1="${yy}" y2="${yy}" stroke="${c}" stroke-width="${f?1.6:1}"${m.net===0?'':` stroke-dasharray="${f?'7 5':'3 5'}"`}></line><text x="${pad.l+pw+10}" y="${y+4}" font-size="12" font-weight="${f?800:700}" fill="${f?GT:A(.75)}">${cmp&&m.tagS?m.tagS:m.tag}</text>`});
+ if(ps)s+=`<path d="${P(qp(p).concat(qp(ps).reverse()))}Z" fill="${PC}" fill-opacity=".10" clip-path="url(#${u}p)"></path>`;
+ s+=`<path d="${P(qp(p))}" fill="none" stroke="${ps?A(.6):INK}" stroke-width="${ps?2:2.6}" stroke-dasharray="${ps?'5 6':'8 6'}" stroke-linecap="round" clip-path="url(#${u}p)"${ps||!GLOW?'':' style="filter:drop-shadow(0 0 6px '+A(.45)+')"'}></path>`;
+ if(ps)s+=`<path d="${P(qp(ps))}" fill="none" stroke="${PC}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" clip-path="url(#${u}p)" style="filter:drop-shadow(0 0 8px ${PC}88)"></path>`;
+ const ap=D.map(d=>[X(d.i),Y(d.net)]),area=`M${X(0)} ${z}`+ap.map(q=>`L${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join('')+`L${X(L)} ${z}Z`;
+ s+=`<path d="${area}" fill="url(#${u}g)" clip-path="url(#${u}a)"></path><path d="${area}" fill="url(#${u}r)" clip-path="url(#${u}b)"></path><path d="${P(ap)}" fill="none" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"></path>`;
+ ap.forEach(q=>s+=`<circle cx="${q[0]}" cy="${q[1]}" r="2.6" fill="${INK}"></circle>`);
+ const reached=[];
+ ms.forEach(m=>{const a=PM.arrival(lead,m.net);if(!a.reached)return;const x=X(a.i),y=Y(D[a.i].net);s+=`<circle cx="${x}" cy="${y}" r="6" fill="${GR}" stroke="${BG}" stroke-width="2"></circle>`;dot(x,y,6);reached.push({x,y,t:`✓ ${m.label} · ${a.short}`})});
+ const lx=X(L),ly=Y(D[L].net);
+ s+=`<circle cx="${lx}" cy="${ly}" r="6.5" fill="${INK}"${GLOW?' style="filter:drop-shadow(0 0 8px '+A(.8)+')"':''}></circle>`;dot(lx,ly,6.5);
+ let tgt=null;
+ if(o.target){const tx=X(L+o.target.k),ty=Y(o.target.net);tgt=tx;s+=`<line x1="${tx}" x2="${tx}" y1="${pad.t}" y2="${pad.t+ph}" stroke="${G}" stroke-opacity=".4" stroke-dasharray="2 4"></line><circle cx="${tx}" cy="${ty}" r="11" fill="none" stroke="${G}" stroke-width="2"></circle><circle cx="${tx}" cy="${ty}" r="3.5" fill="${G}"></circle>`;boxes.push({x:tx-14,y:ty-14,w:28,h:28})}
+ const arr=[];
+ ms.forEach(m=>{const a=PM.arrival(lead,m.net);if(!a.k||a.k>hz)return;const x=X(a.xf),y=Y(m.net),f=isF(m),e={a,x,y,f};
+  if(ps&&f){const b=PM.arrival(p,m.net);if(b.k&&b.k<=hz){const bx=X(b.xf);if(b.k!==a.k){const sc=b.k>a.k?GR:RD;s+=`<line x1="${x}" x2="${bx}" y1="${y}" y2="${y}" stroke="${sc}" stroke-width="5" stroke-linecap="round" opacity=".9"></line>`;e.seg={mid:(x+bx)/2,c:sc,t:b.k>a.k?`${b.k-a.k} mo sooner`:`${a.k-b.k} mo later`}}s+=`<circle cx="${bx}" cy="${y}" r="5" fill="${BG}" stroke="${A(.7)}" stroke-width="2"></circle>`;dot(bx,y,5)}}
+  if(f){s+=`<circle class="pulse" cx="${x}" cy="${y}" r="7" fill="none" stroke="${G}" stroke-width="2"></circle><circle cx="${x}" cy="${y}" r="7" fill="${G}" style="filter:drop-shadow(0 0 8px ${G})"></circle>`;dot(x,y,7)}
+  else{s+=`<circle cx="${x}" cy="${y}" r="5" fill="${BG}" stroke="${INK}" stroke-width="2"></circle>`;dot(x,y,5)}
+  arr.push(e)});
+ const lt=`${PM.f$(D[L].net)} · ${PM.lab(L,true)}`,lw=lt.length*6.9;boxes.push({x:lx-12-lw,y:ly-27,w:lw,h:18});
+ s+=`<text x="${lx-12}" y="${ly-14}" text-anchor="end" font-size="12.5" font-weight="800" fill="${INK}">${PM.f$(D[L].net)}<tspan fill="${A(.62)}" font-weight="600"> · ${PM.lab(L,true)}</tspan></text>`;
+ if(tgt!=null)pill(tgt,pad.t+ph-10,'GOAL · '+PM.lab(L+o.target.k,true).toUpperCase(),G,'middle');
+ arr.filter(e=>e.f).forEach(e=>{pill(e.x,e.y-22,e.a.label,G,'middle');if(e.seg)place(e.seg.mid,e.y,e.seg.t,e.seg.c,[[0,32,'middle'],[0,-30,'middle'],[0,48,'middle']])});
+ reached.forEach(r=>place(r.x,r.y,r.t,GR,[[-10,-12,'end'],[10,22,'start'],[-10,22,'end']]));
+ const far=[[-10,-30,'end'],[10,-30,'start'],[0,-34,'middle'],[-10,38,'end'],[10,38,'start']];
+ arr.filter(e=>!e.f).forEach(e=>place(e.x,e.y,e.a.short,null,(ps?[[-10,-10,'end'],[10,-10,'start'],[-10,20,'end'],[9,20,'start']]:[[9,20,'start'],[-10,-10,'end'],[-10,20,'end'],[10,-10,'start']]).concat(far),true));
+ s+=labs.join('');
+ s+=`<line class="hx" x1="0" x2="0" y1="${pad.t}" y2="${pad.t+ph}" stroke="${A(.35)}" opacity="0"></line><circle class="hd" r="5" fill="${INK}" stroke="${BG}" stroke-width="2" opacity="0"></circle><rect class="hov" x="${pad.l}" y="${pad.t}" width="${pw}" height="${ph}" fill="transparent"></rect></svg>`;
+ el.innerHTML=s+'<div class="ctip"></div>';
+ const svg=el.querySelector('svg'),tip=el.querySelector('.ctip'),hx=svg.querySelector('.hx'),hd=svg.querySelector('.hd'),hov=svg.querySelector('.hov'),pl=o.planLabel||'With moves';
+ hov.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,i=Math.max(0,Math.min(N,Math.round((mx-pad.l)/pw*N))),act=i<=L,k=i-L,v=act?D[i].net:lead.at(k),x=X(i),y=Y(v);
+  hx.setAttribute('x1',x);hx.setAttribute('x2',x);hx.setAttribute('opacity',1);hd.setAttribute('cx',x);hd.setAttribute('cy',y);hd.setAttribute('opacity',1);
+  let rows=act?`<div class="r"><span>Net profit</span><b>${PM.f$(v)}</b></div>`:ps?`<div class="r"><span>${pl}</span><b class="g">${PM.f$(v)}</b></div><div class="r"><span>Trend</span><b>${PM.f$(p.at(k))}</b></div>`:`<div class="r"><span>Projected net</span><b>${PM.f$(v)}</b></div>`;
+  rows+=`<div class="r"><span>Valuation</span><b>${v>0?PM.fK(PM.value(v)):'—'}</b></div>`;
+  tip.innerHTML=`<p>${PM.lab(i)}${act?'':' · projected'}</p>${rows}`;tip.style.left=Math.max(95,Math.min(W-95,x))+'px';tip.style.top=(y-14)+'px';tip.style.opacity=1});
+ hov.addEventListener('mouseleave',()=>{tip.style.opacity=0;hx.setAttribute('opacity',0);hd.setAttribute('opacity',0)});
+ el._w=Math.round(el.clientWidth);el._h=Math.round(el.clientHeight);
+ // A hidden page measures 0 wide; redrawing then would only waste work and
+ // leave a 360px chart behind, so wait until it is visible again.
+ if(!el._ro&&window.ResizeObserver){el._ro=new ResizeObserver(()=>{if(!el.isConnected||!el.clientWidth)return;const w=Math.round(el.clientWidth),h=Math.round(el.clientHeight);if(Math.abs(w-el._w)>2||(el._o.fill&&Math.abs(h-el._h)>2))pjRenderChart(el._pm,el,el._o)});el._ro.observe(el)}
+}
+
+// ── levers.js ────────────────────────────────────────────────────
+function pjTheme() {
+  let t = null;
+  try { t = localStorage.getItem(PJ_THEME_KEY); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  return t;
+}
+
+function pjLoadState(PM) {
+  if (!_pj.st) {
+    let st = null;
+    try { st = JSON.parse(localStorage.getItem(PJ_KEY) || 'null'); } catch (e) {}
+    if (!st || !st.lv || !PM.win(st.w)) st = { w:'six', goal:'10k', k:5, lv:{} };
+    st.lv = Object.assign({}, PJ_LV0, st.lv);
+    st.k = Math.max(1, Math.min(PJ_KMAX, st.k || 6));
+    if (!PM.targets().some(m => m.id === st.goal && m.net > 0)) st.goal = '10k';
+    _pj.st = st;
+  }
+  // The goal is kept as an absolute month (t), so adding a month of data never
+  // slides it; k, the offset the stepper and drawing use, follows from it.
+  const st = _pj.st;
+  if (typeof st.t !== 'number' || !isFinite(st.t)) st.t = PM.lastAbs + st.k;
+  st.k = pjKFor(PM, st.t);
+  if (!_pj.plans) {
+    try { _pj.plans = JSON.parse(localStorage.getItem(PJ_PKEY) || '[]') || []; } catch (e) { _pj.plans = []; }
+    if (!Array.isArray(_pj.plans)) _pj.plans = [];
+  }
+}
+const pjKFor      = (PM, t) => Math.max(1, Math.min(PJ_KMAX, t - PM.lastAbs));
+const pjPlanOff   = p => typeof p.t === 'number' ? p.t - _pj.PM.lastAbs : (+p.k || 6);   // older plans stored only k
+const pjSave      = () => { try { localStorage.setItem(PJ_KEY, JSON.stringify(_pj.st)); } catch (e) {} };
+const pjSavePlans = () => { try { localStorage.setItem(PJ_PKEY, JSON.stringify(_pj.plans)); } catch (e) {} };
+
+function pjLayout(theme) {
+  const goalOpts = Array.from({length:10}, (_, i) => `<option value="${i+1}0k">$${i+1}0K / month</option>`).join('');
+  const lever = (k, label, min, max, step, val, cls, aria) => `<div class="lever"><div class="lrow"><span class="lt">${label}</span><b class="lv${cls ? ' ' + cls : ''}" data-k="v-${k}"></b></div><input${cls ? ` class="${cls}"` : ''} type="range" data-l="${k}" min="${min}" max="${max}" step="${step}" value="${val}" aria-label="${aria || label}" /><div class="lfoot"><span class="ls" data-k="s-${k}"></span><span data-k="i-${k}"></span></div></div>`;
+  return `<div class="pj" data-theme="${theme}"><main class="wrap">
+<div class="pj-top"><div class="seg" role="group" aria-label="Color theme"><button data-theme-set="light">Light</button><button data-theme-set="dark">Dark</button></div></div>
+<div class="LC">
+<aside class="lc-rail">
+<section class="lc-sec lc-goal"><div class="gbuild"><div class="g-ring" data-k="gring"></div><div class="g-main"><p class="eyebrow">Goal</p><div class="g-sent"><span>Reach</span><span class="pillsel"><select data-l="goal" aria-label="Goal milestone">${goalOpts}</select></span><span>by</span><span class="stepper"><button class="yr" data-act="kprev12" aria-label="One year earlier">«</button><button data-act="kprev" aria-label="Earlier month">‹</button><b data-k="gmonth"></b><button data-act="knext" aria-label="Later month">›</button><button class="yr" data-act="knext12" aria-label="One year later">»</button></span></div><p class="g-away" data-k="gaway"></p></div></div><div class="g-stats" data-k="gstats"></div></section>
+<section class="lc-sec lc-gap"><div class="gap"><p class="g-oh" data-k="gohead"></p><div class="opts" data-k="gopts"></div></div></section>
+<section class="lc-sec lc-moves"><div class="moves">
+<div class="mv-head"><h2>Your moves</h2><button class="pbtn sm" data-act="reset">Back to trend</button></div>
+<div class="mv-groups">
+<div class="lgroup g-cost"><p class="lgrp">Costs</p><div class="lgl">
+<div class="lever"><label class="tg"><input type="checkbox" data-l="flat" /><span class="sw"></span><span class="lt">Hold expenses flat at <b data-k="expnow"></b></span></label><div class="lfoot"><span class="ls" data-k="s-flat"></span><span data-k="i-flat"></span></div></div>
+${lever('cut', 'Cut monthly expenses', 0, 5000, 50, 0)}
+${lever('add', 'New costs, e.g. a hire', 0, 10000, 250, 0, 'neg')}
+</div></div>
+<div class="lgroup g-grow"><p class="lgrp">Growth</p><div class="lgl">
+${lever('blister', 'New blister pack patients', 0, 30, 1, 0, '', 'New blister pack patients per month')}
+${lever('rx', 'Other new Rx', 0, 300, 5, 0, '', 'Other new Rx per month')}
+${lever('front', 'Front-store sales', 0, 6000, 100, 0, '', 'Extra front-store sales per month')}
+</div></div>
+<div class="lgroup g-marg"><p class="lgrp">Margin</p><div class="lgl">
+${lever('rebate', 'Rebate rate', 8, 16, 0.1, 11)}
+</div></div>
+</div></div></section>
+<section class="lc-sec lc-plans"><div class="plans"><span class="eyebrow">Saved plans</span><div class="plist" data-k="plist"></div><div class="pact"><button class="pbtn" data-act="save-open">+ Save this plan</button><form class="psave" hidden><input data-name type="text" maxlength="48" aria-label="Plan name" /><button class="pbtn pri" type="submit">Save</button><button class="pbtn" type="button" data-act="save-cancel">Cancel</button></form></div></div></section>
+</aside>
+<div class="lc-stage">
+<section class="pjc lc-chart"><div class="chead"><div class="legend"><span><i class="lg"></i>Actual</span><span><i class="lg trend"></i>Current trend</span><span><i class="lg green"></i>Your plan</span><span><i class="lg val"></i>Valuation ($1M, $2M…)</span><span><i class="lgt"></i>Goal</span></div><div class="cseg"><p class="segcap" data-k="cap"></p><div data-k="seg"></div></div></div><div class="chart" data-k="chart" data-fill="1"></div></section>
+<div class="mgrid" data-k="miles"></div>
+<section class="pjc tcard"><div class="thead"><h2>Monthly targets</h2><p data-k="tsum"></p></div><div class="tscroll"><table class="tt"><thead><tr><th>Month</th><th>Rx count</th><th>Rx sales</th><th>Gross profit</th><th>Expense budget</th><th>Net profit</th><th>Valuation</th></tr></thead><tbody data-k="trows"></tbody></table></div></section>
+<p class="method" data-k="method"></p>
+</div>
+</div></main></div>`;
+}
+
+function renderProjections() {
+  const page = document.getElementById('page-projections');
+  const rows = pjRows(), theme = pjTheme();
+  pjBind(page);
+  if (rows.length < PJ_MIN_MONTHS) {
+    _pj.PM = null;
+    page.innerHTML = `<div class="pj" data-theme="${theme}"><main class="wrap"><div class="pjc pj-empty"><b>Projections need a few months of data</b>Add at least ${PJ_MIN_MONTHS} months in Monthly Data and the trend, goal and targets will appear here.</div></main></div>`;
+    return;
+  }
+  _pj.PM = pjBuildModel(rows, pjValuationMultiple());
+  pjLoadState(_pj.PM);
+  _pj.pendingDel = -1;
+  page.innerHTML = pjLayout(theme);
+  pjSync();
+  pjDraw();
+}
+
+const pjRoot = () => document.querySelector('#page-projections .pj');
+const pjQ    = s => { const r = pjRoot(); return r ? r.querySelector(s) : null; };
+const pjSet  = (k, h) => { const r = pjRoot(); if (r) r.querySelectorAll('[data-k="' + k + '"]').forEach(e => e.innerHTML = h); };
+const pjMo   = n => `${n} month${n === 1 ? '' : 's'}`;
+const pjEsc  = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pjRate = () => _pj.st.lv.rebate != null ? _pj.st.lv.rebate : _pj.PM.rebRate();
+
+function pjSync() {
+  const r = pjRoot(), st = _pj.st;
+  if (!r) return;
+  r.querySelectorAll('[data-l]').forEach(i => {
+    const k = i.dataset.l;
+    if (k === 'goal') i.value = st.goal;
+    else if (k === 'flat') i.checked = st.lv.flat;
+    else if (k === 'rebate') { i.min = Math.min(8, Math.floor(_pj.PM.rebRate())); i.value = pjRate(); }   // range must reach today's rate
+    else i.value = st.lv[k];
+  });
+}
+function pjMovesList(lv) {
+  const {fK} = _pj.PM, m = [];
+  if(lv.flat)m.push('expenses flat');if(lv.cut)m.push(`cut ${fK(lv.cut)}/mo`);if(lv.add)m.push(`+${fK(lv.add)}/mo costs`);if(lv.blister)m.push(`+${lv.blister} blister/mo`);if(lv.rx)m.push(`+${lv.rx} Rx/mo`);if(lv.front)m.push(`front-store +${fK(lv.front)}`);if(lv.rebate!=null)m.push(`rebate ${lv.rebate.toFixed(1)}%`);
+  return m;
+}
+function pjDefName() { const m = pjMovesList(_pj.st.lv); const s = m.length ? m.slice(0,2).join(', ') + (m.length > 2 ? ` +${m.length-2} more` : '') : 'trend only'; return s[0].toUpperCase() + s.slice(1); }
+const pjSnap = x => JSON.stringify({w:x.w,goal:x.goal,t:_pj.PM.lastAbs+pjPlanOff(x),lv:Object.assign({},PJ_LV0,x.lv)});
+function pjGoalTags() { return Object.fromEntries(_pj.PM.targets().slice(1).map(m => [m.id, m.tag])); }
+function pjDrawPlans() {
+  const PM = _pj.PM, L = PM.L, GS = pjGoalTags(), cur = pjSnap(_pj.st), pd = _pj.pendingDel;
+  pjSet('plist', _pj.plans.length ? _pj.plans.map((p,i) => { const n = pjMovesList(Object.assign({},PJ_LV0,p.lv)).length, w = PM.win(p.w) || PM.win('six');
+    return `<div class="pchip${pjSnap(p)===cur?' on':''}"><button class="pload" data-act="load" data-i="${i}"><b>${pjEsc(p.name)}</b><span>${GS[p.goal]||GS['10k']} by ${PM.lab(L+pjPlanOff(p))} · ${w.label} · ${n?`${n} move${n>1?'s':''}`:'no moves'}</span></button><button class="pdel${pd===i?' arm':''}" data-act="del" data-i="${i}" aria-label="Delete ${pjEsc(p.name)}">${pd===i?'Delete':'×'}</button></div>`; }).join('')
+    : '<span class="pnone">None yet. Save a plan to come back to it or show it in a meeting.</span>');
+}
+function pjOpenSave(on) { const f = pjQ('.psave'), b = pjQ('[data-act="save-open"]'), i = pjQ('[data-name]'); if (!f) return; f.hidden = !on; b.hidden = on; if (on) { i.value = pjDefName(); i.focus(); i.select(); } }
+function pjImpact(key, T, aT) {
+  const PM = _pj.PM, v = _pj.st.lv[key];
+  if (key === 'rebate' ? v == null : !v) return '';
+  const one = {}; one[key] = v;
+  const a = PM.arrival(PM.plan(_pj.st.w, one), T), d = (aT.k || 999) - (a.k || 999);
+  return d > 0 ? `<span class="imp up">${d} mo sooner</span>` : d < 0 ? `<span class="imp dn">${-d} mo later</span>` : '<span class="imp">No change</span>';
+}
+// The design's option card; a move that cannot be sized (no Rx Count data, so
+// no per-Rx figure) shows as unavailable instead of "Infinity".
+const pjMin = key => key === 'rebate' ? Math.min(8, Math.floor(_pj.PM.rebRate())) : 0;   // same floor as the slider
+const pjClamp = (key, v) => Math.min(PJ_MAX[key], Math.max(pjMin(key), v));
+function pjOpt(key, n, a, s, v) {
+  if (!isFinite(v)) return {n, a:'—', s, b:null, why: key === 'rebate' ? 'Not possible on this trend' : 'Needs Rx Count data'};
+  return {n, a, s, b: v >= pjMin(key) && v <= PJ_MAX[key] ? 'Apply' : null, act:`data-apply="${key}" data-v="${v}"`};
+}
+function pjMcard(m, p, ps, focus) {
+  const PM = _pj.PM, D = PM.D, L = PM.L, now = D[L].net, a = PM.arrival(p, m.net), b = PM.arrival(ps, m.net), done = !!a.reached, pct = done ? 1 : Math.max(0, Math.min(1, now / m.net)), col = done ? '#22C08A' : focus ? '#F5A623' : '#5B9BF5';
+  let sub;
+  if (done) { const n = L - a.i + 1; sub = `Reached · ${pjMo(n)} in a row`; }
+  else { const d = a.k && b.k ? a.k - b.k : 0; sub = `Trend: ${a.label || 'not reached'}${d > 0 ? ` · <b class="soon">${d} mo sooner</b>` : d < 0 ? ` · <b class="later">${-d} mo later</b>` : ''}`; }
+  return `<div class="mcard${focus?' goal':''}${done?' done':''}"><div class="mring">${PM.ring({size:64,stroke:7,pct,color:col})}<div class="mr-c">${done?'✓':Math.round(pct*100)+'%'}</div></div><div class="mtxt"><p class="mlabel">${m.label}</p><div class="mdate">${done?a.label:b.label||'Not reached'}</div><p class="msub">${sub}</p></div></div>`;
+}
+
+function pjDraw() {
+ const PM=_pj.PM,st=_pj.st;if(!PM||!pjRoot())return;
+ st.t=PM.lastAbs+st.k;   // keep the absolute goal month in step with the stepper
+ const {f$,fs,fK,f2}=PM,D=PM.D,L=PM.L,q=pjQ,set=pjSet,mo=pjMo,MAX=PJ_MAX,rate=pjRate;
+ const seg=w=>'<div class="seg" role="group" aria-label="Trend window">'+PM.WINDOWS.map(x=>`<button data-w="${x.id}" class="${x.id===w?'on':''}" aria-pressed="${x.id===w}">${x.label}</button>`).join('')+'</div>';
+ const cap=w=>{const f=PM.fit(w);return `<b>${fs(f.net)}/mo</b> net profit trend · ${f.from} – ${D[L].label}`};
+ const [cy,cm]=currentMonthKey().split('-').map(Number),off=(cy*12+cm-1)-PM.lastAbs;   // months from the last data month to today
+ const w=st.w,lv=st.lv,k=st.k,gm=PM.targets().find(m=>m.id===st.goal),T=gm.net,A=PM.A,gpr=PM.gpPerRx(),r0=PM.rebRate(),val=PM.value;
+ const tr=PM.plan(w,{}),pl=PM.plan(w,lv),aT=PM.arrival(tr,T),aP=PM.arrival(pl,T),sv=PM.solve(w,lv,T,k),f=tr.f,km=PM.lab(L+k),nk=pl.at(k);
+ const th=pjRoot().dataset.theme;pjRoot().querySelectorAll('[data-theme-set]').forEach(b=>b.classList.toggle('on',b.dataset.themeSet===th));
+ set('seg',seg(w));set('cap',cap(w));set('gmonth',km);{const dk=k-off;set('gaway',dk===0?'this month':dk>0?`${mo(dk)} from now`:`${mo(-dk)} ago`)}
+ q('[data-act="kprev"]').disabled=k<=1;q('[data-act="knext"]').disabled=k>=PJ_KMAX;q('[data-act="kprev12"]').disabled=k<=1;q('[data-act="knext12"]').disabled=k>=PJ_KMAX;
+ const pct=nk/T;
+ set('gring',PM.ring({size:116,stroke:12,pct,color:sv.met?'#22C08A':'#F5A623',glow:8})+`<div class="gr-c"><b>${Math.max(0,Math.round(pct*100))}%</b><span>of goal</span></div>`);
+ let chip='';if(aP.k){const d=k-aP.k;chip=d>0?`<i class="st ok">${mo(d)} early</i>`:d===0?'<i class="st ok">On time</i>':`<i class="st late">${mo(-d)} late</i>`}else if(aP.never)chip='<i class="st late">Not reached</i>';
+ set('gstats',`<div class="gs"><span>Current trend</span><b>${aT.label||'Not reached'}</b></div><div class="gs"><span>Your plan</span><b class="${sv.met?'ok':'late'}">${aP.label||'Not reached'}</b>${chip}</div><div class="gs"><span>Net profit, ${km}</span><b>${f$(nk)}</b><em>of ${f$(T)} needed</em></div>`);
+ let oh,ops=[];
+ if(sv.met){oh=`<b>On track.</b> Your plan clears the goal by <b>${f$(sv.room)}/mo</b> in ${km}.`;const room=Math.floor(sv.room/250)*250;
+  if(room>=250&&lv.add+room<=MAX.add)ops.push({n:'Room for new costs',a:`Up to ${f$(room)}/mo`,s:'for a hire or another cost, and still hit the goal',b:'Add as new cost',act:`data-apply="add" data-v="${lv.add+room}"`});
+  if(aP.k&&aP.k<k)ops.push({n:'Aim earlier',a:aP.label,s:'is the earliest month this plan gets there',b:'Set as goal',act:`data-act="setk" data-v="${aP.k}"`});
+ }else{const nd=sv.need;oh=`Close the <b>${f$(sv.gap)}/mo</b> gap in ${km} with any one of these:`;
+  if(nd.flat!=null)ops.push({n:'Hold expenses flat',a:nd.flat>=sv.gap?'Closes it':`Covers ${f$(nd.flat)}`,s:`stops the ${fs(f.exp)}/mo expense trend`,b:'Apply',act:'data-apply="flat" data-v="1"'});
+  ops.push(pjOpt('cut','Cut expenses',`−${f$(nd.cut-lv.cut)}/mo`,`from ${f$(D[L].exp)} today`,nd.cut));
+  ops.push(pjOpt('blister','Blister pack patients',`+${nd.blister-lv.blister} / mo`,`new patients, ${A.rxPerBlister} Rx each`,nd.blister));
+  ops.push(pjOpt('rx','Other new Rx',`+${nd.rx-lv.rx} / mo`,'transfers and walk-ins, above the trend',nd.rx));
+  ops.push(pjOpt('rebate','Rebate rate',`${isFinite(nd.rebate)?nd.rebate.toFixed(1):'—'}%`,`from ${rate().toFixed(1)}%`,nd.rebate));
+  ops.push(pjOpt('front','Front-store sales',`+${f$(nd.front-lv.front)}/mo`,`at ${Math.round(A.frontMargin*100)}% margin`,nd.front))}
+ set('gohead',oh);
+ set('gopts',ops.map(o=>`<div class="opt${o.b?'':' off'}"><span class="on">${o.n}</span><b class="oa">${o.a}</b><span class="os">${o.s}</span>${o.b?`<button class="ob" ${o.act}>${o.b}</button>`:`<span class="ox">${o.why||'Beyond slider range'}</span>`}</div>`).join(''));
+ {const ce=q('[data-k="chart"]');pjRenderChart(PM,ce,{wid:w,plan:pl,focus:st.goal,target:{k,net:T},planLabel:'Your plan',height:440,fill:ce.dataset.fill==='1',ms:PM.targets(),valLines:true})}
+ {const T_=PM.targets(),now=D[L].net;let li=0;T_.forEach((m,i)=>{if(now>=m.net)li=i});set('miles',T_.slice(li,li+3).map(m=>pjMcard(m,tr,pl,m.id===st.goal)).join(''))}
+ set('expnow',f$(D[L].exp));
+ set('s-flat',f.exp>0?`Trend adds ${f$(f.exp)}/mo to expenses each month`:'Expenses are not rising in this window');
+ const V={cut:lv.cut?`−${f$(lv.cut)}/mo`:'$0',add:lv.add?`+${f$(lv.add)}/mo`:'$0',blister:lv.blister?`+${lv.blister} / mo`:'0',rx:lv.rx?`+${lv.rx} / mo`:'0',front:lv.front?`+${f$(lv.front)}/mo`:'$0',rebate:`${rate().toFixed(1)}%`};
+ Object.keys(V).forEach(x=>{set('v-'+x,V[x]);const e=q(`[data-k="v-${x}"]`);if(e)e.classList.toggle('zero',x==='rebate'?lv.rebate==null:!lv[x])});
+ set('s-cut',lv.cut?`+${fK(val(lv.cut))} valuation`:`Each $1,000/mo adds ${fK(val(1000))} to valuation`);
+ set('s-add',lv.add?`−${fK(val(lv.add))} valuation`:`Each $1,000/mo takes ${fK(val(1000))} off valuation`);
+ set('s-blister',lv.blister?`+${lv.blister*A.rxPerBlister} Rx added each month`:`${A.rxPerBlister} Rx per patient, ${f2(gpr)} GP each`);
+ set('s-rx',lv.rx?`+${f$(lv.rx*gpr)}/mo GP added each month`:'Transfers and walk-ins above the trend');
+ set('s-front',`${Math.round(A.frontMargin*100)}% GP margin (estimate)${lv.front?` · +${f$(lv.front*A.frontMargin)}/mo GP`:''}`);
+ set('s-rebate',`Current ${r0.toFixed(1)}% (3-mo avg) · each point ≈ ${f$(D[L].rx*.01)}/mo today`);
+ ['flat','cut','add','blister','rx','front','rebate'].forEach(x=>set('i-'+x,pjImpact(x,T,aT)));
+ const mv=[];if(lv.flat)mv.push(`expenses held at ${f$(D[L].exp)}`);if(lv.cut)mv.push(`expenses cut ${f$(lv.cut)}/mo`);if(lv.add)mv.push(`new costs of ${f$(lv.add)}/mo`);if(lv.blister)mv.push(`+${lv.blister} blister pack patients/mo`);if(lv.rx)mv.push(`+${lv.rx} other Rx/mo`);if(lv.front)mv.push(`front-store +${f$(lv.front)}/mo`);if(lv.rebate!=null)mv.push(`rebate rate at ${lv.rebate.toFixed(1)}%`);
+ set('tsum',(mv.length?`What each month needs to look like with ${mv.join(', ')}.`:'No moves yet, so these are the current-trend numbers.')+(k>18?` Monthly through ${PM.lab(L+6)}, then every 6 months to the goal.`:''));
+ const rk=[];if(k<=18){for(let j=1;j<=Math.max(6,k);j++)rk.push(j)}else{for(let j=1;j<=6;j++)rk.push(j);for(let j=12;j<k;j+=6)rk.push(j);rk.push(k)}
+ const open=PM.targets().filter(m=>D[L].net<m.net),d=D[L];
+ let rows=`<tr class="act"><td>${d.label}<span class="tag">Actual</span>${off===0?'<span class="tag">This month</span>':''}</td><td>${d.cnt>0?d.cnt.toLocaleString('en-US'):'—'}</td><td>${f$(d.rx)}</td><td>${f$(d.gp)}</td><td>${f$(d.exp)}</td><td class="net">${f$(d.net)}</td><td>${d.net>0?fK(val(d.net)):'—'}</td></tr>`;
+ rk.forEach((j,ix)=>{const nt=pl.at(j),pv=pl.at(ix?rk[ix-1]:0),hit=open.filter(m=>nt>=m.net&&pv<m.net).map(m=>`<span class="mb${m.id===st.goal?' g':''}">${m.label.replace(' / month','')}</span>`).join('');
+  rows+=`<tr class="${j===k?'goal':''}"><td>${PM.lab(L+j)}${j===off?'<span class="tag">This month</span>':''}${j===k?'<span class="tag g">Goal</span>':''}</td><td>${PM.hasCnt?Math.max(0,Math.round(pl.cnt(j))).toLocaleString('en-US'):'—'}</td><td>${f$(Math.max(0,pl.rxs(j)))}</td><td>${f$(pl.gp(j))}</td><td>${f$(pl.exp(j))}</td><td class="net${nt>=T?' hit':''}">${f$(nt)}${hit}</td><td>${nt>0?fK(val(nt)):'—'}</td></tr>`});
+ set('trows',rows);
+ set('method',`Trend: least-squares slope over ${f.n} months (${f.from} – ${d.label}) for net profit, gross profit, expenses, Rx count and Rx sales, extended from ${d.label}. Moves start in ${PM.lab(L+1)}. Assumptions: ${f2(gpr)} GP and ${f2(PM.rxValue())} in sales per Rx (3-mo avg), ${A.rxPerBlister} Rx per blister pack patient, ${r0.toFixed(1)}% rebate rate (3-mo avg), ${Math.round(A.frontMargin*100)}% front-store margin (estimate). Valuation = monthly net profit × 12 × ${PM.S.multiple}, set in Settings; dotted lines mark each $1M of value ($1M = ${f$(PM.valNet())}/mo net profit).${D.length<=12?' All time and Past year match until there are 13+ months of data.':''}`);
+ q('[data-act="reset"]').disabled=!pjMovesList(lv).length;pjDrawPlans();
+ pjSave();
+}
+
+// Listeners live on the page element, which survives re-renders; they are
+// attached once and ignore events while the page shows its empty state.
+function pjBind(page) {
+  if (page._pjBound) return;
+  page._pjBound = true;
+  page.addEventListener('click', e => {
+    const th = e.target.closest && e.target.closest('[data-theme-set]');
+    if (th) {
+      const r = pjRoot(); if (!r) return;
+      r.dataset.theme = th.dataset.themeSet;
+      try { localStorage.setItem(PJ_THEME_KEY, r.dataset.theme); } catch (_) {}
+      if (_pj.PM) { _pj.pendingDel = -1; pjDraw(); }
+      return;
+    }
+    if (!_pj.PM) return;
+    const t = e.target.closest('[data-w],[data-act],[data-apply]');
+    if (_pj.pendingDel >= 0 && !(t && t.dataset.act === 'del')) { _pj.pendingDel = -1; pjDrawPlans(); }
+    if (!t) return;
+    const st = _pj.st;
+    if (t.dataset.w) st.w = t.dataset.w;
+    else if (t.dataset.apply) { const x = t.dataset.apply; st.lv[x] = x === 'flat' ? true : pjClamp(x, +t.dataset.v); }
+    else {
+      const a = t.dataset.act;
+      if (a === 'save-open') { pjOpenSave(true); return; }
+      if (a === 'save-cancel') { pjOpenSave(false); return; }
+      if (a === 'del') { const i = +t.dataset.i; if (_pj.pendingDel === i) { _pj.plans.splice(i, 1); pjSavePlans(); _pj.pendingDel = -1; } else _pj.pendingDel = i; pjDrawPlans(); return; }
+      if (a === 'load') { const p = _pj.plans[+t.dataset.i]; if (!p) return; const GS = pjGoalTags(), k = pjKFor(_pj.PM, _pj.PM.lastAbs + pjPlanOff(p)); _pj.st = { w: _pj.PM.win(p.w) ? p.w : 'six', goal: GS[p.goal] ? p.goal : '10k', k, t: _pj.PM.lastAbs + k, lv: Object.assign({}, PJ_LV0, p.lv) }; }
+      else if (a === 'kprev') st.k = Math.max(1, st.k - 1);
+      else if (a === 'knext') st.k = Math.min(PJ_KMAX, st.k + 1);
+      else if (a === 'kprev12') st.k = Math.max(1, st.k - 12);
+      else if (a === 'knext12') st.k = Math.min(PJ_KMAX, st.k + 12);
+      else if (a === 'setk') st.k = +t.dataset.v;
+      else if (a === 'reset') st.lv = Object.assign({}, PJ_LV0);
+      else return;
+    }
+    pjSync(); pjDraw();
+  });
+  page.addEventListener('submit', e => {
+    if (!_pj.PM || !e.target.matches('.psave')) return;
+    e.preventDefault();
+    const st = _pj.st, name = (pjQ('[data-name]').value || '').trim() || pjDefName();
+    const s = { name, w: st.w, goal: st.goal, k: st.k, t: _pj.PM.lastAbs + st.k, lv: Object.assign({}, st.lv) }, j = _pj.plans.findIndex(p => p.name === name);
+    if (j >= 0) _pj.plans[j] = s; else _pj.plans.push(s);
+    pjSavePlans(); pjOpenSave(false); pjDrawPlans();
+  });
+  page.addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.matches('[data-name]')) pjOpenSave(false); });
+  page.addEventListener('input', e => {
+    const x = e.target.dataset && e.target.dataset.l;
+    if (!x || !_pj.PM) return;
+    const st = _pj.st;
+    if (x === 'goal') st.goal = e.target.value;
+    else if (x === 'flat') st.lv.flat = e.target.checked;
+    else if (x === 'rebate') { const v = Math.round(+e.target.value * 10) / 10; st.lv.rebate = v === _pj.PM.rebRate() ? null : v; }
+    else st.lv[x] = +e.target.value;
+    pjDraw();
+  });
+}
 
 // ================================================================
 // PAGE: DASHBOARD
@@ -1448,8 +1855,8 @@ function dashRatesUpTo(sorted, idx){
 
 function dashGrowthCalc(sorted, idx){
   // Window of GROWTH_WINDOW_MONTHS ending on the selected month, i.e. N-1
-  // month-over-month rates. Matches calcRollingAvgGrowth() so the dashboard and
-  // the Forecast page can never disagree about what "average growth" means.
+  // month-over-month rates. Matches calcRollingAvgGrowth(), which feeds the
+  // growthRates.realistic fallback, so both mean the same "average growth".
   const start=Math.max(1, idx-(GROWTH_WINDOW_MONTHS-2)); const rates=[];
   for(let k=start;k<=idx;k++){ const p=calcMonthData(sorted[k-1]).totalGP, cu=calcMonthData(sorted[k]).totalGP; if(p>0) rates.push((cu-p)/p); }
   const avg = rates.length? rates.reduce((s,r)=>s+r,0)/rates.length : null;
@@ -2263,248 +2670,6 @@ function saveExpenses() {
 }
 
 // ================================================================
-// PAGE: FORECAST
-// ================================================================
-function renderForecast() {
-  syncRealisticRate(); // kept for dashboard use
-
-  const sc = settings.sCurve || {};
-  const DEFAULT_SC = {
-    pessimistic: {ceiling:80000,  monthsToCeiling:24},
-    realistic:   {ceiling:110000, monthsToCeiling:18},
-    optimistic:  {ceiling:150000, monthsToCeiling:12},
-  };
-  const scenarios = [
-    {key:'pessimistic', label:'Pessimistic', cls:'pess'},
-    {key:'realistic',   label:'Realistic',   cls:'real'},
-    {key:'optimistic',  label:'Optimistic',  cls:'opti'},
-  ];
-
-  const panels = scenarios.map(s => {
-    const cfg          = {...DEFAULT_SC[s.key], ...(sc[s.key]||{})};
-    const ceiling      = cfg.ceiling;
-    const monthsToCeil = cfg.monthsToCeiling;
-    const be           = calcBreakEvenSCurve(ceiling, monthsToCeil);
-    const lm           = latestMonth();
-    const lnp          = lm ? calcMonthData(lm).netProfit : -Infinity;
-
-    let moText, dateText, npText, annText;
-    if (!months.length) {
-      moText = 'No data'; dateText = '—'; npText = '—'; annText = '—';
-    } else if (lnp >= 0 || (be && be.already)) {
-      moText = 'Already profitable!'; dateText = 'Right now';
-      npText = fmt(lnp); annText = fmt(lnp * 12);
-    } else if (be) {
-      moText   = be.months + ' month' + (be.months !== 1 ? 's' : '');
-      dateText = be.date; npText = fmt(be.netProfit); annText = fmt(be.annualProfit);
-    } else {
-      moText = 'Not within 10 years'; dateText = '—'; npText = '—'; annText = '—';
-    }
-
-    return `
-      <div class="fc-panel ${s.cls}">
-        <h3>${s.label}</h3>
-        <div class="form-row" style="margin-bottom:10px">
-          <label style="font-size:.72rem">Rx Sales Ceiling ($/mo)</label>
-          <input type="number" value="${ceiling}" min="0" step="1000" style="margin-top:4px"
-            oninput="updSCurve('${s.key}','ceiling',this.value)">
-          <div class="hint">Mature independent pharmacies typically $80k–$150k/month</div>
-        </div>
-        <div class="form-row" style="margin-bottom:12px">
-          <label style="font-size:.72rem">Months to reach ceiling</label>
-          <input type="number" value="${monthsToCeil}" min="7" max="120" step="1" style="margin-top:4px"
-            oninput="updSCurve('${s.key}','monthsToCeiling',this.value)">
-          <div class="hint">How many months until growth naturally plateaus</div>
-        </div>
-        <div style="border-top:1px solid rgba(0,0,0,.08);padding-top:12px">
-          <div class="fc-stat"><div class="fc-stat-label">Months to break-even</div><div class="fc-stat-value">${moText}</div></div>
-          <div class="fc-stat"><div class="fc-stat-label">Projected date</div><div class="fc-stat-value">${dateText}</div></div>
-          <div class="fc-stat"><div class="fc-stat-label">Profit at break-even</div><div class="fc-stat-value pos">${npText}</div></div>
-          <div class="fc-stat"><div class="fc-stat-label">Annual profit (12mo post)</div><div class="fc-stat-value pos">${annText}</div></div>
-        </div>
-      </div>`;
-  }).join('');
-
-  document.getElementById('page-forecast').innerHTML = `
-    <div class="fc-grid">${panels}</div>
-    <div class="card">
-      <div class="card-title">24-Month Net Profit Forecast — S-Curve (Logistic) Model</div>
-      <div class="chart-wrap" style="height:380px"><canvas id="fcChart"></canvas></div>
-    </div>`;
-
-  renderForecastChart();
-}
-
-// updGrowth / resetRealisticRate kept — used by dashboard break-even KPI
-function updGrowth(key, val) {
-  settings.growthRates[key] = parseFloat(val) || 0;
-  if (key === 'realistic') settings.realisticIsAuto = false;
-  saveSettings();
-}
-
-function resetRealisticRate() {
-  settings.realisticIsAuto = true;
-  syncRealisticRate();
-}
-
-function renderForecastChart() {
-  destroyChart('forecast');
-  const canvas = document.getElementById('fcChart');
-  if (!canvas || !months.length) return;
-
-  const N   = 24;
-  const now = new Date();
-  const rates = sCurveNPRates();
-  if (!rates) return;
-  const {rxGPRate, rebRate, frontGP, expenses} = rates;
-
-  const sc = settings.sCurve || {};
-  const DEFAULT_SC = {
-    pessimistic: {ceiling:80000,  monthsToCeiling:24},
-    realistic:   {ceiling:110000, monthsToCeiling:18},
-    optimistic:  {ceiling:150000, monthsToCeiling:12},
-  };
-  const pcfg = {...DEFAULT_SC.pessimistic, ...(sc.pessimistic||{})};
-  const rcfg = {...DEFAULT_SC.realistic,   ...(sc.realistic  ||{})};
-  const ocfg = {...DEFAULT_SC.optimistic,  ...(sc.optimistic ||{})};
-
-  // Logistic NP projection anchored exactly to the last reported Rx Sales baseline.
-  //
-  // Offset correction ensures RxGrowth(0) = 0 for every scenario:
-  //   offset      = (ceiling - baseline) / (1 + e^(-k*(0-6)))
-  //   RxGrowth(t) = (ceiling - baseline) / (1 + e^(-k*(t-6))) - offset
-  //   Rx(t)       = baseline + RxGrowth(t)
-  //
-  // → All three lines start at the identical baseline NP at t=0 (month 1 on chart).
-  // → S-curve shape is fully preserved; each line flattens toward its own ceiling.
-  const lm       = latestMonth();
-  const baseline = parseFloat(lm.rxSales) || 0;
-
-  function scurveNP(ceiling, monthsToCeiling) {
-    const k       = sCurveK(monthsToCeiling);
-    const rxRange = Math.max(0, ceiling - baseline);
-    const offset  = rxRange / (1 + Math.exp(-k * (0 - 6))); // RxGrowth at t=0
-    return Array.from({length:N}, (_, i) => {
-      const t        = i + 1;
-      const rxGrowth = rxRange / (1 + Math.exp(-k * (t - 6))) - offset;
-      const rx       = baseline + rxGrowth;
-      return rx * (rxGPRate + rebRate) + frontGP - expenses;
-    });
-  }
-
-  // Net profit at ceiling (horizontal asymptote of each S-curve)
-  function npAtCeiling(ceiling) {
-    return ceiling * (rxGPRate + rebRate) + frontGP - expenses;
-  }
-
-  const pessNP = npAtCeiling(pcfg.ceiling);
-  const realNP = npAtCeiling(rcfg.ceiling);
-  const optiNP = npAtCeiling(ocfg.ceiling);
-
-  const fmtK = v => (Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + (Math.abs(v) / 1000).toFixed(0) + 'k' : String(Math.round(v)));
-
-  const labels = Array.from({length:N}, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() + i + 1, 1);
-    return d.toLocaleDateString('en-CA', {month:'short', year:'numeric'});
-  });
-
-  // afterDraw plugin: vertical line at month 6 + right-edge ceiling labels
-  const annotPlugin = {
-    id: 'fcAnnotations',
-    afterDraw(chart) {
-      const {ctx, scales:{x, y}, chartArea} = chart;
-      if (!x || !y || !chartArea) return;
-
-      // ── Vertical dashed line at month 6 (0-indexed: tick 5) ──
-      const vIdx = 5;
-      if (vIdx < x.ticks.length) {
-        const xPx = x.getPixelForTick(vIdx);
-        ctx.save();
-        ctx.setLineDash([6, 4]);
-        ctx.strokeStyle = 'rgba(100,116,139,.45)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(xPx, y.top);
-        ctx.lineTo(xPx, y.bottom);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(100,116,139,.72)';
-        ctx.font = '10px -apple-system,BlinkMacSystemFont,sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('Growth starts slowing', xPx + 4, y.top + 13);
-        ctx.restore();
-      }
-
-      // ── Right-edge labels for ceiling lines ──
-      const ceilings = [
-        {np: pessNP, color:'rgba(224,82,82,.75)',  label:`Pessimistic ceiling ($${fmtK(pcfg.ceiling)} Rx)`},
-        {np: realNP, color:'rgba(186,117,23,.75)', label:`Realistic ceiling ($${fmtK(rcfg.ceiling)} Rx)`},
-        {np: optiNP, color:'rgba(29,158,117,.75)', label:`Optimistic ceiling ($${fmtK(ocfg.ceiling)} Rx)`},
-      ];
-      ctx.save();
-      ctx.font = '9px -apple-system,BlinkMacSystemFont,sans-serif';
-      ctx.textAlign = 'right';
-      ceilings.forEach(({np, color, label}) => {
-        const yPx = y.getPixelForValue(np);
-        if (yPx >= y.top && yPx <= y.bottom) {
-          ctx.fillStyle = color;
-          ctx.fillText(label, chartArea.right - 2, yPx - 3);
-        }
-      });
-      ctx.restore();
-    },
-  };
-
-  charts.forecast = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        // ── Main S-curve scenarios ──
-        {label:'Pessimistic', data:scurveNP(pcfg.ceiling, pcfg.monthsToCeiling),
-          borderColor:'#E05252', backgroundColor:'rgba(224,82,82,.07)', fill:true, tension:.35, pointRadius:2, order:1},
-        {label:'Realistic',   data:scurveNP(rcfg.ceiling, rcfg.monthsToCeiling),
-          borderColor:'#BA7517', backgroundColor:'rgba(186,117,23,.07)', fill:true, tension:.35, pointRadius:2, order:1},
-        {label:'Optimistic',  data:scurveNP(ocfg.ceiling, ocfg.monthsToCeiling),
-          borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,.07)', fill:true, tension:.35, pointRadius:2, order:1},
-        // ── Break-even reference ──
-        {label:'Break-even ($0)', data:Array(N).fill(0),
-          borderColor:'rgba(0,0,0,.28)', borderDash:[8,5], borderWidth:1.5, pointRadius:0, fill:false, tension:0, order:2},
-        // ── Ceiling reference lines (hidden from legend, labeled by plugin) ──
-        {label:'_pessCeil', data:Array(N).fill(pessNP),
-          borderColor:'rgba(224,82,82,.28)', borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false, tension:0, order:3},
-        {label:'_realCeil', data:Array(N).fill(realNP),
-          borderColor:'rgba(186,117,23,.28)', borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false, tension:0, order:3},
-        {label:'_optiCeil', data:Array(N).fill(optiNP),
-          borderColor:'rgba(29,158,117,.28)', borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false, tension:0, order:3},
-      ],
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      layout: {padding: {right: 8}},
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {filter: item => !item.text.startsWith('_')}, // hide ceiling datasets
-        },
-        tooltip: {
-          filter: item => !item.dataset.label.startsWith('_'),
-          callbacks: {label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)}`},
-        },
-      },
-      scales: {
-        x: {grid:{display:false}},
-        y: {
-          ticks: {callback: v => fmtK(v)},
-          grid:  {color: ctx => ctx.tick.value === 0 ? 'rgba(0,0,0,.25)' : 'rgba(0,0,0,.05)'},
-        },
-      },
-    },
-    plugins: [annotPlugin],
-  });
-}
-
-// ================================================================
 // PAGE: SETTINGS
 // ================================================================
 function renderSettings() {
@@ -2562,7 +2727,7 @@ function renderSettings() {
       </div>
 
       <div class="setting-block" style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
-        <div class="setting-label">Projection &amp; Targets — Rate Basis</div>
+        <div class="setting-label">Dashboard Targets — Rate Basis</div>
         <p class="text-sm text-light mb-12">Controls the Rx GP % and Rebate % used for the <strong>next-month projection</strong> and the <strong>Rx Sales Targets</strong> (break-even &amp; $1M valuation). Your historical months always stay on the real Dispensing Fee + Markup numbers — this only affects forward-looking figures.</p>
         <div class="pill-toggle mb-12">
           <button class="pill-opt ${s.rateBasis!=='avg'?'active':''}" onclick="setSetting('rateBasis','manual');renderSettings();renderDashboard()">Manual %</button>
@@ -4398,7 +4563,17 @@ async function fetchUserRecord(email) {
   // Removed staff keep a tombstone doc so the bootstrap cannot resurrect them;
   // it must still read as no access, hitting the normal "Access denied" path.
   if (data.removed === true) return null;
+  data.pages = normalizePages(data.pages);
   return data;
+}
+
+// Projections replaced Forecast (Oct 2026). Stored permission docs can still
+// list 'Forecast': read it as Projections, and drop names no page uses, so the
+// app, the admin chips, roleLabel and a re-saved row all agree on real access.
+function normalizePages(pages) {
+  const p = Array.isArray(pages) ? pages.slice() : [];
+  if (p.includes('Forecast') && !p.includes('Projections')) p.push('Projections');
+  return p.filter(x => ALL_PAGES.includes(x));
 }
 
 // Default users that should always exist in Firestore.
@@ -4457,6 +4632,23 @@ async function bootstrapUsersIfNeeded() {
     console.warn('[Bootstrap] tombstone migration skipped:', e.code || e.message);
   }
 
+  // Projections replaced Forecast (Oct 2026). Anyone who could open Forecast
+  // gets Projections, so retiring the page never takes a view away. It runs
+  // before anything below can return early, and the backfill re-reads after it.
+  try {
+    const everyone = await col.get();
+    const toGrant  = everyone.docs.filter(d => {
+      const pg = (d.data() || {}).pages;
+      return Array.isArray(pg) && pg.includes('Forecast') && !pg.includes('Projections');
+    });
+    if (toGrant.length) {
+      await Promise.all(toGrant.map(d => col.doc(d.id).set({ pages: [...d.data().pages, 'Projections'] }, opts)));
+      console.log('[Bootstrap] Granted Projections to former Forecast users:', toGrant.map(d => d.id));
+    }
+  } catch (e) {
+    console.warn('[Bootstrap] Projections grant skipped:', e.code || e.message);
+  }
+
   // Read revocations fresh from Firestore — never from the in-memory settings,
   // which is still empty at this point. If it cannot be read, create nobody:
   // assuming an empty list is exactly how a removed user gets resurrected.
@@ -4485,7 +4677,7 @@ async function bootstrapUsersIfNeeded() {
     // Decide from what THIS entry is defined to grant, not from the role string
     // stored in Firestore. The admin panel lets role and pages be set
     // independently, so a stale or mistaken role of 'Full Access' on a clinic
-    // account would otherwise silently hand it all eight pages on the next
+    // account would otherwise silently hand it every page on the next
     // owner login — overriding the pages the owner had actually chosen.
     const intended = DEFAULT_USERS[i];
     const grantsAll = Array.isArray(intended.pages) && ALL_PAGES.every(p => intended.pages.includes(p));
@@ -4627,7 +4819,8 @@ let _adminUsers = []; // cached list for the admin panel
 
 async function loadAdminUsers() {
   const snap = await db.collection(FS_USERS).get();
-  _adminUsers = snap.docs.map(d => d.data()).filter(u => u && u.removed !== true);
+  _adminUsers = snap.docs.map(d => d.data()).filter(u => u && u.removed !== true)
+    .map(u => Object.assign(u, { pages: normalizePages(u.pages) }));
   // Join in login activity. Degrades quietly: if the rules do not allow reading
   // this collection yet, the panel simply shows "no sign-in recorded".
   try {
@@ -4995,9 +5188,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('signOutBtn').style.display = 'block';
     renderNav();
     document.getElementById('authGate').style.display = 'none';
-    const firstPage = PAGE_MAP.find(p => userRecord.pages.includes(p.name));
-    navigate(firstPage ? firstPage.id : 'dashboard');
-    console.log('[Auth] App ready. Page:', firstPage ? firstPage.id : 'dashboard');
+    const firstPage = landingPage();
+    navigate(firstPage);
+    console.log('[Auth] App ready. Page:', firstPage);
 
     // Prompt email/password users to change their temporary password
     const isEmailUser = user.providerData.some(p => p.providerId === 'password');
