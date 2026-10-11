@@ -644,6 +644,7 @@ const ALLOWED_EMAIL = '';
 const FS_COL             = 'pharmasave'; // top-level collection
 const FS_SETTINGS        = 'settings';
 const FS_MONTHS          = 'months';
+const FS_PLANS           = 'projectionPlans'; // pharmasave/projectionPlans {plans:{[id]:plan}}
 const FS_WEEKLY_DATA     = 'weeklyData';
 const FS_WEEKLY_TARGETS  = 'weeklyTargets';
 const FS_USERS           = 'users';      // access-control collection
@@ -1080,7 +1081,7 @@ const PJ_KEY = 'escarpment-projections-v2', PJ_PKEY = 'escarpment-projections-pl
 const PJ_KMAX = 72, PJ_MIN_MONTHS = 3;
 const PJ_LV0 = {flat:false,cut:0,add:0,blister:0,rx:0,front:0,rebate:null};
 const PJ_MAX = {cut:5000,add:10000,blister:30,rx:300,front:6000,rebate:16};
-let _pj = { PM:null, st:null, plans:null, pendingDel:-1 };
+let _pj = { PM:null, st:null, plans:null, plansState:'loading', plansGen:0, pendingDel:null };
 
 // One row per month in the shape the design's model expects — the same eight
 // columns as the Monthly Data CSV export it was built from.
@@ -1259,15 +1260,102 @@ function pjLoadState(PM) {
   const st = _pj.st;
   if (typeof st.t !== 'number' || !isFinite(st.t)) st.t = PM.lastAbs + st.k;
   st.k = pjKFor(PM, st.t);
-  if (!_pj.plans) {
-    try { _pj.plans = JSON.parse(localStorage.getItem(PJ_PKEY) || '[]') || []; } catch (e) { _pj.plans = []; }
-    if (!Array.isArray(_pj.plans)) _pj.plans = [];
-  }
 }
 const pjKFor      = (PM, t) => Math.max(1, Math.min(PJ_KMAX, t - PM.lastAbs));
 const pjPlanOff   = p => typeof p.t === 'number' ? p.t - _pj.PM.lastAbs : (+p.k || 6);   // older plans stored only k
 const pjSave      = () => { try { localStorage.setItem(PJ_KEY, JSON.stringify(_pj.st)); } catch (e) {} };
-const pjSavePlans = () => { try { localStorage.setItem(PJ_PKEY, JSON.stringify(_pj.plans)); } catch (e) {} };
+
+// ── Saved plans: shared through Firestore ─────────────────────────
+// One doc, pharmasave/projectionPlans, so plans follow you between devices and
+// everyone with Projections sees the same list. Each plan is its own key in a
+// map, so two devices saving at once never overwrite each other's plans. The
+// working goal and moves stay per browser (localStorage), as in the design.
+const pjPlansRef = () => db.collection(FS_COL).doc(FS_PLANS);
+const pjNewId    = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// Plans are written by other people's browsers too: never trust their shape.
+function pjCleanPlan(id, p) {
+  if (!p || typeof p !== 'object') return null;
+  const src = p.lv && typeof p.lv === 'object' ? p.lv : {}, lv = Object.assign({}, PJ_LV0);
+  ['cut','add','blister','rx','front'].forEach(k => { const v = Number(src[k]); lv[k] = isFinite(v) ? Math.min(PJ_MAX[k], Math.max(0, v)) : 0; });
+  lv.flat = src.flat === true;
+  const r = Number(src.rebate);
+  lv.rebate = src.rebate != null && isFinite(r) ? Math.min(PJ_MAX.rebate, Math.max(0, r)) : null;
+  const plan = { id: String(id), name: String(p.name || 'Untitled plan').slice(0, 48), w: String(p.w || 'six'), goal: String(p.goal || '10k'),
+                 k: isFinite(Number(p.k)) ? Number(p.k) : 6, lv,
+                 savedAt: typeof p.savedAt === 'string' ? p.savedAt : '', savedBy: typeof p.savedBy === 'string' ? p.savedBy : '' };
+  if (isFinite(Number(p.t)) && p.t !== null && p.t !== '') plan.t = Number(p.t);
+  return plan;
+}
+const pjPlanDoc   = p => { const d = { name: p.name, w: p.w, goal: p.goal, k: p.k, lv: Object.assign({}, PJ_LV0, p.lv), savedAt: p.savedAt, savedBy: p.savedBy }; if (typeof p.t === 'number') d.t = p.t; return d; };
+const pjSortPlans = a => a.sort((x, y) => (x.savedAt || '').localeCompare(y.savedAt || '') || x.name.localeCompare(y.name));
+
+async function pjFetchPlans() {
+  const gen = _pj.plansGen;
+  try {
+    const snap = await pjPlansRef().get();
+    const map  = snap.exists ? ((snap.data() || {}).plans || {}) : {};
+    if (gen !== _pj.plansGen) return;   // a save or delete happened meanwhile; its own state is newer
+    _pj.plans = pjSortPlans(Object.keys(map).map(id => pjCleanPlan(id, map[id])).filter(Boolean));
+    _pj.plansState = 'ok';
+    await pjMigrateLocalPlans();
+  } catch (e) {
+    console.warn('[Projections] could not load saved plans:', e.code || e.message);
+    if (gen === _pj.plansGen) _pj.plansState = 'error';
+  }
+  if (_pj.PM && pjRoot()) pjDrawPlans();
+}
+
+// Plans saved before they synced lived only in this browser. Upload any whose
+// name is not already shared, then forget the local copy.
+async function pjMigrateLocalPlans() {
+  let local = null;
+  try { local = JSON.parse(localStorage.getItem(PJ_PKEY) || 'null'); } catch (e) {}
+  if (!Array.isArray(local) || !local.length) return;
+  const names = new Set(_pj.plans.map(p => p.name)), add = {}, added = [];
+  local.forEach(lp => {
+    const c = pjCleanPlan(pjNewId(), Object.assign({}, lp, { savedAt: new Date().toISOString(), savedBy: (auth.currentUser && auth.currentUser.email) || '' }));
+    if (c && !names.has(c.name)) { names.add(c.name); add[c.id] = pjPlanDoc(c); added.push(c); }
+  });
+  try {
+    if (added.length) await pjPlansRef().set({ plans: add }, { merge: true });
+    try { localStorage.removeItem(PJ_PKEY); } catch (e) {}
+    if (added.length) { _pj.plans = pjSortPlans(_pj.plans.concat(added)); console.log('[Projections] Moved', added.length, 'local plan(s) to Firestore'); }
+  } catch (e) {
+    console.warn('[Projections] local plans not uploaded yet:', e.code || e.message);   // kept locally; retried next visit
+  }
+}
+
+async function pjSavePlan(plan) {
+  const before = _pj.plans ? _pj.plans.slice() : [];
+  _pj.plansGen++;
+  const list = (_pj.plans || []).filter(p => p.id !== plan.id);
+  _pj.plans = pjSortPlans(list.concat([plan]));
+  pjDrawPlans();
+  try {
+    await pjPlansRef().set({ plans: { [plan.id]: pjPlanDoc(plan) } }, { merge: true });
+  } catch (e) {
+    _pj.plansGen++;
+    _pj.plans = before; pjDrawPlans();
+    alert('Could not save "' + plan.name + '": ' + (e.code === 'permission-denied' ? 'your account is not allowed to change shared data.' : (e.code || e.message)));
+  }
+}
+
+async function pjDeletePlan(id) {
+  const before = _pj.plans ? _pj.plans.slice() : [];
+  const gone = before.find(p => p.id === id);
+  if (!gone) return;
+  _pj.plansGen++;
+  _pj.plans = before.filter(p => p.id !== id);
+  pjDrawPlans();
+  try {
+    await pjPlansRef().update(new firebase.firestore.FieldPath('plans', id), firebase.firestore.FieldValue.delete());
+  } catch (e) {
+    _pj.plansGen++;
+    _pj.plans = before; pjDrawPlans();
+    alert('Could not delete "' + gone.name + '": ' + (e.code === 'permission-denied' ? 'your account is not allowed to change shared data.' : (e.code || e.message)));
+  }
+}
 
 function pjLayout(theme) {
   const goalOpts = Array.from({length:10}, (_, i) => `<option value="${i+1}0k">$${i+1}0K / month</option>`).join('');
@@ -1317,10 +1405,11 @@ function renderProjections() {
   }
   _pj.PM = pjBuildModel(rows, pjValuationMultiple());
   pjLoadState(_pj.PM);
-  _pj.pendingDel = -1;
+  _pj.pendingDel = null;
   page.innerHTML = pjLayout(theme);
   pjSync();
   pjDraw();
+  pjFetchPlans();   // shows the cached list at once, then whatever other devices saved
 }
 
 const pjRoot = () => document.querySelector('#page-projections .pj');
@@ -1350,10 +1439,12 @@ function pjDefName() { const m = pjMovesList(_pj.st.lv); const s = m.length ? m.
 const pjSnap = x => JSON.stringify({w:x.w,goal:x.goal,t:_pj.PM.lastAbs+pjPlanOff(x),lv:Object.assign({},PJ_LV0,x.lv)});
 function pjGoalTags() { return Object.fromEntries(_pj.PM.targets().slice(1).map(m => [m.id, m.tag])); }
 function pjDrawPlans() {
-  const PM = _pj.PM, L = PM.L, GS = pjGoalTags(), cur = pjSnap(_pj.st), pd = _pj.pendingDel;
-  pjSet('plist', _pj.plans.length ? _pj.plans.map((p,i) => { const n = pjMovesList(Object.assign({},PJ_LV0,p.lv)).length, w = PM.win(p.w) || PM.win('six');
-    return `<div class="pchip${pjSnap(p)===cur?' on':''}"><button class="pload" data-act="load" data-i="${i}"><b>${pjEsc(p.name)}</b><span>${GS[p.goal]||GS['10k']} by ${PM.lab(L+pjPlanOff(p))} · ${w.label} · ${n?`${n} move${n>1?'s':''}`:'no moves'}</span></button><button class="pdel${pd===i?' arm':''}" data-act="del" data-i="${i}" aria-label="Delete ${pjEsc(p.name)}">${pd===i?'Delete':'×'}</button></div>`; }).join('')
-    : '<span class="pnone">None yet. Save a plan to come back to it or show it in a meeting.</span>');
+  const PM = _pj.PM, L = PM.L, GS = pjGoalTags(), cur = pjSnap(_pj.st), pd = _pj.pendingDel, plans = _pj.plans || [];
+  const note = _pj.plansState === 'error' ? '<span class="pnone">Couldn\'t load shared plans. Check your connection and reopen this page.</span>' : '';
+  const when = p => { const d = p.savedAt ? new Date(p.savedAt) : null; return (p.savedBy ? 'Saved by ' + p.savedBy : 'Saved') + (d && !isNaN(d) ? ' on ' + d.toLocaleDateString('en-CA', {month:'short', day:'numeric', year:'numeric'}) : ''); };
+  pjSet('plist', plans.length ? note + plans.map(p => { const n = pjMovesList(Object.assign({},PJ_LV0,p.lv)).length, w = PM.win(p.w) || PM.win('six'), id = pjEsc(p.id);
+    return `<div class="pchip${pjSnap(p)===cur?' on':''}"><button class="pload" data-act="load" data-id="${id}" title="${pjEsc(when(p))}"><b>${pjEsc(p.name)}</b><span>${GS[p.goal]||GS['10k']} by ${PM.lab(L+pjPlanOff(p))} · ${w.label} · ${n?`${n} move${n>1?'s':''}`:'no moves'}</span></button><button class="pdel${pd===p.id?' arm':''}" data-act="del" data-id="${id}" aria-label="Delete ${pjEsc(p.name)}">${pd===p.id?'Delete':'×'}</button></div>`; }).join('')
+    : note || (_pj.plans === null ? '<span class="pnone">Loading saved plans…</span>' : '<span class="pnone">None yet. Save a plan to come back to it or show it in a meeting. Saved plans are shared across your devices.</span>'));
 }
 function pjOpenSave(on) { const f = pjQ('.psave'), b = pjQ('[data-act="save-open"]'), i = pjQ('[data-name]'); if (!f) return; f.hidden = !on; b.hidden = on; if (on) { i.value = pjDefName(); i.focus(); i.select(); } }
 function pjImpact(key, T, aT) {
@@ -1445,12 +1536,12 @@ function pjBind(page) {
       const r = pjRoot(); if (!r) return;
       r.dataset.theme = th.dataset.themeSet;
       try { localStorage.setItem(PJ_THEME_KEY, r.dataset.theme); } catch (_) {}
-      if (_pj.PM) { _pj.pendingDel = -1; pjDraw(); }
+      if (_pj.PM) { _pj.pendingDel = null; pjDraw(); }
       return;
     }
     if (!_pj.PM) return;
     const t = e.target.closest('[data-w],[data-act],[data-apply]');
-    if (_pj.pendingDel >= 0 && !(t && t.dataset.act === 'del')) { _pj.pendingDel = -1; pjDrawPlans(); }
+    if (_pj.pendingDel != null && !(t && t.dataset.act === 'del')) { _pj.pendingDel = null; pjDrawPlans(); }
     if (!t) return;
     const st = _pj.st;
     if (t.dataset.w) st.w = t.dataset.w;
@@ -1459,8 +1550,8 @@ function pjBind(page) {
       const a = t.dataset.act;
       if (a === 'save-open') { pjOpenSave(true); return; }
       if (a === 'save-cancel') { pjOpenSave(false); return; }
-      if (a === 'del') { const i = +t.dataset.i; if (_pj.pendingDel === i) { _pj.plans.splice(i, 1); pjSavePlans(); _pj.pendingDel = -1; } else _pj.pendingDel = i; pjDrawPlans(); return; }
-      if (a === 'load') { const p = _pj.plans[+t.dataset.i]; if (!p) return; const GS = pjGoalTags(), k = pjKFor(_pj.PM, _pj.PM.lastAbs + pjPlanOff(p)); _pj.st = { w: _pj.PM.win(p.w) ? p.w : 'six', goal: GS[p.goal] ? p.goal : '10k', k, t: _pj.PM.lastAbs + k, lv: Object.assign({}, PJ_LV0, p.lv) }; }
+      if (a === 'del') { const id = t.dataset.id; if (_pj.pendingDel === id) { _pj.pendingDel = null; pjDeletePlan(id); } else { _pj.pendingDel = id; pjDrawPlans(); } return; }
+      if (a === 'load') { const p = (_pj.plans || []).find(x => x.id === t.dataset.id); if (!p) return; const GS = pjGoalTags(), k = pjKFor(_pj.PM, _pj.PM.lastAbs + pjPlanOff(p)); _pj.st = { w: _pj.PM.win(p.w) ? p.w : 'six', goal: GS[p.goal] ? p.goal : '10k', k, t: _pj.PM.lastAbs + k, lv: Object.assign({}, PJ_LV0, p.lv) }; }
       else if (a === 'kprev') st.k = Math.max(1, st.k - 1);
       else if (a === 'knext') st.k = Math.min(PJ_KMAX, st.k + 1);
       else if (a === 'kprev12') st.k = Math.max(1, st.k - 12);
@@ -1475,9 +1566,11 @@ function pjBind(page) {
     if (!_pj.PM || !e.target.matches('.psave')) return;
     e.preventDefault();
     const st = _pj.st, name = (pjQ('[data-name]').value || '').trim() || pjDefName();
-    const s = { name, w: st.w, goal: st.goal, k: st.k, t: _pj.PM.lastAbs + st.k, lv: Object.assign({}, st.lv) }, j = _pj.plans.findIndex(p => p.name === name);
-    if (j >= 0) _pj.plans[j] = s; else _pj.plans.push(s);
-    pjSavePlans(); pjOpenSave(false); pjDrawPlans();
+    const same = (_pj.plans || []).find(p => p.name === name);   // same name replaces that plan, as before
+    const plan = { id: same ? same.id : pjNewId(), name, w: st.w, goal: st.goal, k: st.k, t: _pj.PM.lastAbs + st.k, lv: Object.assign({}, st.lv),
+                   savedAt: new Date().toISOString(), savedBy: (auth.currentUser && auth.currentUser.email) || '' };
+    pjOpenSave(false);
+    pjSavePlan(plan);
   });
   page.addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.matches('[data-name]')) pjOpenSave(false); });
   page.addEventListener('input', e => {
