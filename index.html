@@ -246,6 +246,31 @@ input:focus{border-color:var(--navy)}
 .items-center{align-items:center}.justify-between{justify-content:space-between}.wrap{flex-wrap:wrap}
 .mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
 .text-sm{font-size:.84rem}.text-xs{font-size:.72rem}.text-light{color:var(--light)}.font-bold{font-weight:700}
+
+/* ── BANK & COLLECTIONS ─────────────────────────────────────────── */
+.bk .card{margin-bottom:18px}
+.bk-head h2{font-size:1.25rem;font-weight:800;color:var(--navy);margin:0}.bk-head p{color:var(--light);font-size:.85rem;margin:2px 0 14px}
+.bk-drop{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border:2px dashed var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:#fff;transition:border-color .15s,background .15s}
+.bk-drop.over{border-color:var(--navy);background:#eef2f8}.bk-drop b{display:block;color:var(--navy)}.bk-drop span{font-size:.8rem;color:var(--light)}
+.bk-uploads{display:flex;flex-direction:column;gap:6px;margin:-4px 0 16px}
+.bk-up{font-size:.82rem;padding:7px 12px;border-radius:8px;background:#f5f7fb;display:flex;gap:8px;align-items:baseline}.bk-up span{font-weight:800}
+.bk-up.ok{background:#e7f5ee}.bk-up.ok span{color:var(--teal)}.bk-up.err{background:#fbeaea}.bk-up.err span{color:var(--red)}
+.bk-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+.bk-kpi{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px 16px}.bk-kpi b{display:block;font-size:1.35rem;font-weight:800;color:var(--navy)}
+.bk-kpi span{font-size:.76rem;color:var(--light);font-weight:400}.bk-kpi.neg b{color:var(--red)}.bk-kpi.pos b{color:var(--teal)}.bk-kpi.warn b{color:var(--amber)}
+.bk-flag{border-left:4px solid var(--amber);background:#fdf8ef;padding:9px 13px;margin:8px 0;border-radius:0 8px 8px 0;font-size:.86rem}.bk-flag.red{border-color:var(--red);background:#fdf1f0}
+.bk-chip{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#eef2f8;color:var(--navy);white-space:nowrap}
+.bk-chip.ok{background:#e7f5ee;color:var(--teal)}.bk-chip.red{background:#fbeaea;color:var(--red)}.bk-chip.amber{background:#f7eedd;color:var(--amber)}
+.bk-sub{font-size:.74rem;color:var(--light);white-space:normal}.bk-note{font-size:.78rem;color:var(--light);margin:8px 0 0}
+.bk-tbl td,.bk-tbl th{padding:8px 10px}.bk-tbl td:first-child{white-space:normal;min-width:150px}.bk-tbl td.neg{color:var(--red)}.bk-tbl td.pos{color:var(--teal)}
+.bk-det{margin-top:12px}.bk-det summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:.88rem}
+.bk-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.bk-filters select,.bk-filters input{padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;width:auto}
+select.bk-cat{font-size:.8rem;padding:4px 6px;border:1px solid var(--border);border-radius:6px;max-width:220px}
+.bk-catbtn{font:inherit;font-size:.8rem;background:#f5f7fb;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--text);white-space:nowrap}
+.bk-catbtn:hover{border-color:var(--navy)}.bk-catbtn.ov{border-color:var(--navy);font-weight:700}.bk-catbtn.need{background:#fdf8ef;border-color:var(--amber);color:var(--amber);font-weight:700}
+.bk-file{display:flex;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.85rem}.bk-file span:first-child{flex:1}
+.bk-rule pre{background:#f5f7fb;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;white-space:pre}
+.bk-list{margin:6px 0 0 18px;font-size:.88rem;line-height:1.6}
 </style>
 <style>
 /* ============================================================
@@ -710,6 +735,7 @@ input:focus{border-color:var(--navy)}
 <div id="page-expenses"  class="page"></div>
 <div id="page-insights"  class="page"></div>
 <div id="page-settings"  class="page"></div>
+<div id="page-bank"      class="page"></div>
 <div id="page-weekly"   class="page"></div>
 <div id="page-ehc"      class="page"></div>
 
@@ -804,6 +830,7 @@ const PAGE_MAP = [
   { id:'weekly',    label:'Weekly Metrics', name:'Weekly Metrics' },
   { id:'monthly',   label:'Monthly Data',   name:'Monthly Data'   },
   { id:'expenses',  label:'Expenses',       name:'Expenses'       },
+  { id:'bank',      label:'Bank',           name:'Bank'           },   // owner-only by default; not in ALL_PAGES
   { id:'settings',  label:'Settings',       name:'Settings'       },
 ];
 
@@ -1101,6 +1128,7 @@ function renderPage(page) {
     case 'weekly':    renderWeekly();    break;
     case 'ehc':       renderEHC();       break;
     case 'settings':  renderSettings();  break;
+    case 'bank':      renderBank();      break;
   }
 }
 
@@ -2027,6 +2055,7 @@ function renderDashboard(animate){
         <div class="k-top"><span class="k-label">Monthly Expenses</span></div>
         <div class="k-num num navytxt">${fmt(c.expenses)}</div>
         <div class="k-sub">${(parseFloat(m.expenses)||0) > 0 ? 'Recorded for '+monthKeyToLabel(m.monthKey) : (settings.expenseMethod==='lump'?'Lump sum total':'Itemized operating total')}</div>
+        ${(a => a === null ? '' : `<div class="k-sub" title="Operating costs paid from the bank account this month (Bank page)">Paid from bank: <b>${fmt(a)}</b> · ${a > c.expenses ? fmt(a - c.expenses) + ' over' : fmt(c.expenses - a) + ' under'}</div>`)(bkActualExpenses(m.monthKey))}
       </section>
       <section class="kpi card">
         <div class="k-top"><span class="k-label">Months to Break-even</span></div>
@@ -2810,6 +2839,8 @@ function renderMonthly() {
 
   // Display order: newest first
   const sorted = [...months].sort((a,b) => b.monthKey.localeCompare(a.monthKey));
+  // Actual expenses paid from the bank (Bank page data), shown beside the entered figure.
+  const bkOn = bankData.loaded && !bankData.error && bankData.statements.length > 0;
 
   const rows = sorted.map(m => {
     const d = calcMonthData(m);
@@ -2823,6 +2854,7 @@ function renderMonthly() {
         <td>${fmt(d.totalGP)}</td>
         ${momCell(momMap[m.monthKey])}
         <td>${fmt(d.totalExp)}</td>
+        ${bkOn ? (a => `<td title="Paid from the bank account this month">${a === null ? '<span style="color:var(--light)">—</span>' : fmt(a) + `<div style="font-size:.7rem;color:${a > d.totalExp ? 'var(--red)' : 'var(--light)'}">${a > d.totalExp ? '+' : '−'}${fmt(Math.abs(a - d.totalExp))} vs entered</div>`}</td>`)(bkActualExpenses(m.monthKey)) : ''}
         <td class="${d.netProfit>=0?'pos':'neg'}">${fmt(d.netProfit)}</td>
         <td>
           <div class="flex gap-8">
@@ -2865,7 +2897,7 @@ function renderMonthly() {
         <table class="data-tbl">
           <thead><tr>
             <th>Month</th><th>Rx Sales</th><th>Rx Count</th><th>Front Store</th><th>Rebate</th>
-            <th>Total GP</th><th>MoM Growth</th><th>Expenses</th><th>Net Profit</th><th></th>
+            <th>Total GP</th><th>MoM Growth</th><th>Expenses</th>${bkOn ? '<th>Actual (bank)</th>' : ''}<th>Net Profit</th><th></th>
           </tr></thead>
           <tbody>${rows}</tbody>
           <tfoot><tr class="tot-row">
@@ -2873,6 +2905,7 @@ function renderMonthly() {
             <td><strong>${fmt(tot.gp)}</strong></td>
             ${momAvgCell}
             <td><strong>${fmt(tot.exp)}</strong></td>
+            ${bkOn ? `<td><strong>${fmt(months.reduce((s, m) => s + (bkActualExpenses(m.monthKey) || 0), 0))}</strong></td>` : ''}
             <td class="${tot.np>=0?'pos':'neg'}"><strong>${fmt(tot.np)}</strong></td>
             <td></td>
           </tr></tfoot>
@@ -2998,6 +3031,624 @@ function saveExpenses() {
   saveSettings();
   const a = document.getElementById('expAlertArea');
   if (a) { a.innerHTML = '<div class="alert alert-success">Expenses saved!</div>'; setTimeout(()=>{if(a)a.innerHTML='';},3000); }
+}
+
+// ================================================================
+// PAGE: BANK & COLLECTIONS
+// ================================================================
+// Matches what Kroll billed each payer against what actually reached the TD
+// account, using each payer's own payment schedule, and shows where the rest of
+// the money went (waived copays, actual expenses, drug purchases, partner money).
+// Statements and Kroll reports are read IN THE BROWSER with pdf.js; only the
+// extracted numbers are stored, in the `bank` collection, which the Firestore
+// rule restricts to users whose pages include 'Bank'.
+const FS_BANK = 'bank';
+const BK_PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+let bankData = { loaded: false, loading: null, error: null, statements: [], kroll: [], overrides: {}, ver: 0 };
+let _bkUi = { month: 'all', cat: 'all', q: '', uploads: [], busy: false };
+
+// Payers, how they pay, and which Kroll plans they cover. ODB and TELUS
+// schedules are the published ones; for the rest, lagDays (claim → deposit)
+// is the best fit to Oct 2025 – Sep 2026 in this account.
+const BK_PAYERS = [
+  { id:'odb', name:'ODB', plans:['Ontario Drug Benefits'], schedule:'odb',
+    how:'Twice a month: claims 23rd–8th are paid at month end, claims 9th–22nd mid next month.', src:'Ontario Drug Programs Reference Manual §11.4' },
+  { id:'esi', name:'ESI / Express Scripts', plans:['ESI Canada'], schedule:'weekly', lagDays:2,
+    how:'Weekly on Wednesdays, about 4.5 days after the claim.', src:'Express Scripts Canada provider FAQ' },
+  { id:'nihb', name:'NIHB (via Express Scripts)', plans:['Non Insured Health Benefits (NIHB)'], schedule:'biweekly', lagDays:8,
+    how:'Every second Tuesday (the small “Express Scripts” deposits).', src:'Deposit pattern' },
+  { id:'telus', name:'TELUS Health (Assure + PSHCP)', plans:['Assure', 'Public Service Health Care Plan'], match:/^TELUS Health/i, schedule:'telus', feePerClaim:0.10,
+    how:'Twice a month at $0.10 per claim: claims 1st–15th paid ~16th, 16th–month end paid ~1st.', src:'TELUS Health pharmacy manual p.23' },
+  { id:'gsc', name:'Green Shield', plans:['Green Shield Canada'], match:/^GSCI\b/, schedule:'biweekly', lagDays:6,
+    how:'Every second Tuesday.', src:'Deposit pattern' },
+  { id:'claimsecure', name:'ClaimSecure', plans:['Claim Secure', 'Claim Secure Patient Assistance Card'], match:/^CLAIMSECURE/i, schedule:'biweekly', lagDays:6,
+    how:'Every second Tuesday by direct deposit; by cheque before enrolment.', src:'Deposit pattern · ClaimSecure eProfile' },
+  { id:'medavie', name:'Medavie Blue Cross', plans:['Ontario Blue Cross', 'Canadian Armed Forces (National Defence)', 'RCMP', 'Veterans Affairs Canada'], match:/^MEDAVIE BLUE/i, schedule:'biweekly', lagDays:8,
+    how:'Every second Wednesday.', src:'Deposit pattern' },
+  { id:'ifhp', name:'IFHP (Medavie)', plans:['Interim Federal Health Plan'], match:/^MEDAVIE(?! BLUE)/i, schedule:'biweekly', lagDays:4,
+    how:'Every second Wednesday (“MEDAVIE MSP”).', src:'Deposit pattern' },
+  { id:'mdm', name:'MDM', plans:['MDM'], match:/^MDM\b/i, schedule:'monthly', lagDays:8,
+    how:'About monthly.', src:'Deposit pattern' },
+  { id:'nexgen', name:'NexgenRx', plans:['Nexgen Rx'], match:/^NEXGEN/i, schedule:'monthly', lagDays:2,
+    how:'Monthly, around the 1st.', src:'Deposit pattern' },
+];
+const BK_IGNORE_PLANS = ['Grand Total', 'Cash', 'Ontario Narcotic Monitoring Program'];
+
+// What every bank line can be. `group` drives every total on the page.
+const BK_CATS = Object.assign(
+  Object.fromEntries(BK_PAYERS.map(p => ['payer:' + p.id, { label: p.name, group: 'payer' }])),
+  {
+    'cards':             { label: 'Card sales (Global Payments)', group: 'customer' },
+    'patient-etransfer': { label: 'Patient e-transfers',          group: 'customer' },
+    'cash-deposit':      { label: 'Cash deposit',                 group: 'customer' },
+    'cheque-deposit':    { label: 'Cheque deposit (source unknown)', group: 'other-in' },
+    'rebates':           { label: 'Pharmasave rebates',           group: 'rebate' },
+    'other-in':          { label: 'Other income',                 group: 'other-in' },
+    'capital-in':        { label: 'Partner / owner money in',     group: 'capital' },
+    'unknown-in':        { label: 'Unrecognised deposit',         group: 'other-in' },
+    'cogs':              { label: 'McKesson (drugs)',             group: 'cogs' },
+    'rent':              { label: 'Rent / cheques',               group: 'opex' },
+    'payroll':           { label: 'Payroll (e-transfers)',        group: 'opex' },
+    'payroll-tax':       { label: 'Payroll remittances (CRA)',    group: 'opex' },
+    'bills':             { label: 'Bills paid by e-transfer',     group: 'opex' },
+    'etfr-expense':      { label: 'Expenses paid by e-transfer',  group: 'opex' },
+    'etfr-other':        { label: 'Other e-transfers out',        group: 'opex' },
+    'credit-card':       { label: 'Credit card payments',         group: 'opex' },
+    'phone':             { label: 'Phone & internet',             group: 'opex' },
+    'pharmasave-fees':   { label: 'Pharmasave fees',              group: 'opex' },
+    'insurance':         { label: 'Insurance',                    group: 'opex' },
+    'lease':             { label: 'Equipment lease (RCAP)',       group: 'opex' },
+    'card-fees':         { label: 'Card processing fees',         group: 'opex' },
+    'bank-fees':         { label: 'Bank fees & interest',         group: 'opex' },
+    'cash-out':          { label: 'Cash withdrawals',             group: 'opex' },
+    'purchases':         { label: 'Other purchases',              group: 'opex' },
+    'unknown-out':       { label: 'Unrecognised payment',         group: 'opex' },
+    'capital-out':       { label: 'Partner / owner money out',    group: 'capital' },
+  });
+const BK_ESI_RX = /^(ESI\b|Express Scripts)/i;
+
+// Rules learned from 12 months of this account. `same` = the other lines on
+// the same date, needed to split ESI's weekly payment from NIHB's small one.
+function bkCategorize(t, same) {
+  const d = t.desc;
+  if (t.kind === 'credit') {
+    if (/^ODB\b/.test(d)) return 'payer:odb';
+    if (BK_ESI_RX.test(d)) {
+      // NIHB comes as a small "Express Scripts" deposit every second Tuesday
+      // (Wednesday after a Monday holiday); ESI's own payment is the weekly one.
+      const wd = new Date(t.date + 'T12:00:00').getDay();
+      const bigger = same.some(o => o !== t && o.kind === 'credit' && BK_ESI_RX.test(o.desc) && o.amount > t.amount);
+      return /^Express Scripts/i.test(d) && (wd === 2 || bigger) ? 'payer:nihb' : 'payer:esi';
+    }
+    for (const p of BK_PAYERS) if (p.match && p.match.test(d)) return 'payer:' + p.id;
+    if (/^GBL (VI|MC|AX|IDP)/.test(d)) return 'cards';
+    if (/^PHARMASAVE DRUG/i.test(d)) return t.amount >= 10000 ? 'capital-in' : 'rebates';
+    if (/^E-TRANSFER|E-TFR .*EPAY/i.test(d)) return t.amount >= 5000 ? 'capital-in' : 'patient-etransfer';
+    if (/TFR-FR \d/.test(d) || /^GC \d+-TRANSFER/.test(d)) return 'capital-in';
+    if (/^MOBILE DEPOSIT/.test(d)) return 'cheque-deposit';
+    if (/^(GC \d+-DEPOSIT|DEPOSIT)$/.test(d)) return Number.isInteger(Math.round(t.amount * 100) / 100) ? 'cash-deposit' : 'cheque-deposit';
+    if (/^COLUMBIA/i.test(d)) return 'other-in';
+    return 'unknown-in';
+  }
+  if (/^McKesson/i.test(d)) return 'cogs';
+  if (/^CHQ#/.test(d)) return 'rent';
+  if (/ SALA$/.test(d)) return 'payroll';
+  if (/^EMPTX/.test(d)) return 'payroll-tax';
+  if (/^SEND E-TFR FEE/.test(d)) return 'bank-fees';
+  if (/E-TFR \*\S+ BPY$/.test(d)) return 'bills';
+  if (/E-TFR \*\S+ EXP$/.test(d)) return 'etfr-expense';
+  if (/^SEND E-TFR/.test(d)) return 'etfr-other';
+  if (/TFR-TO C\/C/.test(d)) return 'credit-card';
+  if (/TFR-TO \d/.test(d)) return 'capital-out';
+  if (/^Telus Comm/i.test(d)) return 'phone';
+  if (/^PHARMASAVE DRUG/i.test(d)) return 'pharmasave-fees';
+  if (/^AVIVA\b|\bINS$/i.test(d)) return 'insurance';
+  if (/^RCAP/i.test(d)) return 'lease';
+  if (/MERCH FEES/i.test(d)) return 'card-fees';
+  if (/^(SERVICE CHARGE|MONTHLY PLAN FEE|BUS LINE FEE|OVERDRAFT INTEREST|CASH DEP FEE|TAX PYT FEE)/.test(d)) return 'bank-fees';
+  if (/CASH WITHDRA/i.test(d)) return 'cash-out';
+  if (/^(SHOPPERS|SOBEYS|DOLLARAMA|SDM)\b/i.test(d)) return 'purchases';
+  return 'unknown-out';
+}
+
+// ── PDF reading (pdf.js, loaded only when a file is dropped) ──────────
+let _bkPdfjs = null;
+function bkLoadPdfJs() {
+  if (_bkPdfjs) return _bkPdfjs;
+  _bkPdfjs = new Promise((resolve, reject) => {
+    if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+    const s = document.createElement('script');
+    s.src = BK_PDFJS + 'pdf.min.js';
+    s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = BK_PDFJS + 'pdf.worker.min.js'; resolve(window.pdfjsLib); };
+    s.onerror = () => { _bkPdfjs = null; reject(new Error('Could not load the PDF reader from cdnjs.cloudflare.com')); };
+    document.head.appendChild(s);
+  });
+  return _bkPdfjs;
+}
+async function bkPdfItems(buf) {
+  const pdfjs = await bkLoadPdfJs();
+  const doc = await pdfjs.getDocument({ data: buf, verbosity: 0 }).promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const tc = await (await doc.getPage(i)).getTextContent();
+    pages.push(tc.items.filter(it => it.str && it.str.trim()).map(it => ({ x: it.transform[4], y: it.transform[5], s: it.str })));
+  }
+  return pages;
+}
+const BK_MON = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
+const bkAmt = s => parseFloat(String(s).replace(/[$,]/g, ''));
+const bkPlanKey = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+function bkRows(items) {   // positioned text → lines, top to bottom, words left to right
+  const rows = new Map();
+  items.forEach(it => { const y = Math.round(it.y * 2) / 2; if (!rows.has(y)) rows.set(y, []); rows.get(y).push(it); });
+  return [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([y, its]) => ({ y, its: its.sort((a, b) => a.x - b.x) }));
+}
+// TD business statement. The columns sit at fixed positions on every page
+// (DESCRIPTION | CHEQUE/DEBIT | DEPOSIT/CREDIT | DATE | BALANCE), and every
+// page prints its own credit/debit counts and totals, which must match.
+function parseTDStatement(pages) {
+  const all1 = pages[0].map(i => i.s).join(' ');
+  const pm = all1.match(/([A-Z]{3}) ?(\d\d)\/(\d\d) ?- ?([A-Z]{3}) ?(\d\d)\/(\d\d)/);
+  if (!pm || !/TORONTO-DOMINION|Statement of Account/i.test(all1)) return null;
+  const endMon = BK_MON[pm[4]], endYr = 2000 + Number(pm[6]), startMon = BK_MON[pm[1]], startYr = 2000 + Number(pm[3]);
+  const acct = (all1.match(/\b(\d{4}-\d{7})\b/) || [])[1] || '';
+  const loc = (pages.flat().map(i => i.s).join(' ').match(/LINE OF CREDIT LIMIT:\s*\$([\d,]+\.\d\d)/) || [])[1];
+  const txns = [], checks = []; let opening = null;
+  pages.forEach((items, pi) => {
+    const stated = {}; const pc = [0, 0], pd = [0, 0];
+    bkRows(items).forEach(({ its }) => {
+      const sum = its.map(i => i.s).join(' ').match(/^\s*(Credits|Debits)\s+(\d+)\s+([\d,]+\.\d\d)/);
+      if (sum) { stated[sum[1]] = [Number(sum[2]), bkAmt(sum[3])]; return; }
+      const col = (a, b) => its.filter(i => i.x >= a && i.x < b).map(i => i.s.trim()).join(' ').trim();
+      const desc = col(-1e9, 197), deb = col(197, 299).replace(/ /g, ''), cre = col(299, 401).replace(/ /g, ''), dat = col(401, 433).replace(/ /g, ''), bal = col(433, 1e9).replace(/ /g, '');
+      const balNum = bal && /\d/.test(bal) ? bkAmt(bal.replace(/OD/i, '')) * (/OD/i.test(bal) ? -1 : 1) : null;
+      if (/^BALANCE FORWARD/.test(desc)) { if (opening === null && balNum !== null) opening = balNum; return; }
+      const dm = dat.match(/^([A-Z]{3})(\d{2})$/);
+      if (!dm || !BK_MON[dm[1]] || !(deb || cre)) return;
+      const mon = BK_MON[dm[1]], day = Number(dm[2]), yr = mon <= endMon ? endYr : endYr - 1;
+      const isDeb = !!deb, amount = bkAmt(isDeb ? deb : cre);
+      if (!isFinite(amount)) return;
+      if (isDeb) { pd[0]++; pd[1] += amount; } else { pc[0]++; pc[1] += amount; }
+      txns.push({ date: `${yr}-${String(mon).padStart(2, '0')}-${String(day).padStart(2, '0')}`, desc, kind: isDeb ? 'debit' : 'credit', amount, balance: balNum });
+    });
+    const sc = stated.Credits || [0, 0], sd = stated.Debits || [0, 0];
+    checks.push(pc[0] === sc[0] && Math.abs(pc[1] - sc[1]) < 0.005 && pd[0] === sd[0] && Math.abs(pd[1] - sd[1]) < 0.005);
+  });
+  let run = opening, breaks = 0;
+  txns.forEach(t => {
+    run = Math.round((run + (t.kind === 'credit' ? t.amount : -t.amount)) * 100) / 100;
+    if (t.balance !== null && Math.abs(run - t.balance) > 0.005) { breaks++; run = t.balance; }
+  });
+  const iso = (m, d, y) => `${y}-${String(m).padStart(2, '0')}-${d}`;
+  return { type: 'td', account: acct, from: iso(startMon, pm[2], startYr), to: iso(endMon, pm[5], endYr), opening, closing: run,
+           locLimit: loc ? bkAmt(loc) : null, txns, pagesOk: checks.every(Boolean), balanceBreaks: breaks };
+}
+// Kroll Plan Billing Summary: one line per plan with 7 numbers.
+function parseKrollSummary(pages) {
+  const text = pages.flat().map(i => i.s).join(' ');
+  if (!/Plan Billing Summary/i.test(text)) return null;
+  const dm = text.match(/Adjudication Date\s*-\s*(\d\d)-(\d\d)-(\d{4})\s*to\s*(\d\d)-(\d\d)-(\d{4})/i);
+  if (!dm) return null;
+  const rows = {}; let pendingName = '';
+  const isNum = s => /^-?[\d,]+(\.\d+)?$/.test(s.trim());
+  pages.forEach(items => bkRows(items).forEach(({ its }) => {
+    const nums = its.filter(i => isNum(i.s)), name = its.filter(i => !isNum(i.s)).map(i => i.s.trim()).join(' ').replace(/\s+/g, ' ').trim();
+    if (nums.length === 7) {
+      const nm = (name || pendingName).trim(); pendingName = '';
+      if (!nm || /^Page\b/i.test(nm)) return;
+      const v = nums.map(i => bkAmt(i.s));
+      rows[nm] = { registered: v[0], active: v[1], rx: v[2], paid: v[3] };
+    } else if (!nums.length && name && !/Report|Pharmasave|Phone|Parameters|Adjudication|Plan Name|# of|Printed/i.test(name)) {
+      pendingName = name;   // a plan name that wrapped onto its own line
+    }
+  }));
+  return { type: 'kroll', from: `${dm[3]}-${dm[2]}-${dm[1]}`, to: `${dm[6]}-${dm[5]}-${dm[4]}`, rows };
+}
+
+// ── Storage ──────────────────────────────────────────────────────────
+function bkCanSee() { return !!userRecord && userRecord.pages.includes('Bank'); }
+async function loadBank() {
+  if (!bkCanSee()) return;
+  if (bankData.loading) return bankData.loading;
+  bankData.loading = (async () => {
+    try {
+      const snap = await db.collection(FS_BANK).get();
+      const st = [], kr = []; let ov = {};
+      snap.docs.forEach(d => {
+        const v = d.data() || {};
+        if (v.type === 'td' && Array.isArray(v.txns)) st.push(Object.assign({ id: d.id }, v));
+        else if (v.type === 'kroll' && v.rows) kr.push(Object.assign({ id: d.id }, v));
+        else if (d.id === 'config') ov = (v.overrides && typeof v.overrides === 'object') ? v.overrides : {};
+      });
+      st.sort((a, b) => a.from.localeCompare(b.from)); kr.sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
+      Object.assign(bankData, { loaded: true, error: null, statements: st, kroll: kr, overrides: ov, ver: bankData.ver + 1 });
+    } catch (e) {
+      console.warn('[Bank] load failed:', e.code || e.message);
+      Object.assign(bankData, { loaded: true, error: e.code || e.message });
+    } finally { bankData.loading = null; }
+  })();
+  return bankData.loading;
+}
+
+// ── The model: every transaction categorised, every month and payer totalled ──
+const bkDim = mk => { const [y, m] = mk.split('-').map(Number); return new Date(y, m, 0).getDate(); };
+const bkAdd = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+let _bkCache = null;
+function bkModel() {
+  const sig = bankData.ver + '|' + JSON.stringify(bankData.overrides) + '|' + (months || []).map(m => m.monthKey + ':' + m.frontSales + ':' + m.expenses).join(',');
+  if (_bkCache && _bkCache.sig === sig) return _bkCache.model;
+  const model = bkBuildModel();
+  _bkCache = { sig, model };
+  return model;
+}
+function bkBuildModel() {
+  const T = [];
+  bankData.statements.forEach(st => {
+    let run = st.opening;
+    st.txns.forEach((t, i) => {
+      run = Math.round((run + (t.kind === 'credit' ? t.amount : -t.amount)) * 100) / 100;
+      const same = st.txns.filter(o => o.date === t.date);
+      const auto = bkCategorize(t, same), key = st.id + '#' + i, ov = bankData.overrides[key];
+      const cat = ov && BK_CATS[ov] ? ov : auto;
+      T.push(Object.assign({}, t, { key, cat, auto, overridden: cat !== auto, group: BK_CATS[cat].group, bal: run, st: st.id }));
+    });
+  });
+  T.sort((a, b) => a.date.localeCompare(b.date));
+  const first = bankData.statements[0], last = bankData.statements[bankData.statements.length - 1];
+  const asOf = last ? last.to : null;
+  // Kroll: whole-month reports give the monthly billing; any other range is a
+  // claim-window report used to check a single deposit exactly.
+  const kMonth = {}, kWin = [];
+  bankData.kroll.forEach(k => {
+    const mk = k.from.slice(0, 7), full = k.from.endsWith('-01') && k.to === `${mk}-${String(bkDim(mk)).padStart(2, '0')}`;
+    if (full) kMonth[mk] = k; else kWin.push(k);
+  });
+  const kMonths = Object.keys(kMonth).sort();
+  const planPaid = (k, plans) => { const want = new Set(plans.map(bkPlanKey)); return Object.entries(k.rows).reduce((s, [n, v]) => s + (want.has(bkPlanKey(n)) ? (v.paid || 0) : 0), 0); };
+  const planRx = (k, plans) => { const want = new Set(plans.map(bkPlanKey)); return Object.entries(k.rows).reduce((s, [n, v]) => s + (want.has(bkPlanKey(n)) ? (v.rx || 0) : 0), 0); };
+  const mapped = new Set(BK_PAYERS.flatMap(p => p.plans).concat(BK_IGNORE_PLANS).map(bkPlanKey));
+  const otherPaid = k => Object.entries(k.rows).reduce((s, [n, v]) => s + (mapped.has(bkPlanKey(n)) ? 0 : (v.paid || 0)), 0);
+  // billed for a payer between two dates, spreading each month evenly by day
+  const billedBetween = (plans, a, b) => {
+    let tot = 0;
+    for (const mk of kMonths) {
+      const ms = mk + '-01', me = `${mk}-${String(bkDim(mk)).padStart(2, '0')}`;
+      const lo = a > ms ? a : ms, hi = b < me ? b : me;
+      if (lo > hi) continue;
+      const days = (new Date(hi + 'T12:00:00') - new Date(lo + 'T12:00:00')) / 864e5 + 1;
+      tot += planPaid(kMonth[mk], plans) * days / bkDim(mk);
+    }
+    return tot;
+  };
+  const kStart = kMonths.length ? kMonths[0] + '-01' : null;
+  const kEnd = kMonths.length ? `${kMonths[kMonths.length - 1]}-${String(bkDim(kMonths[kMonths.length - 1])).padStart(2, '0')}` : null;
+
+  // per payer
+  const payers = BK_PAYERS.map(p => {
+    const deps = T.filter(t => t.cat === 'payer:' + p.id && (!kStart || t.date >= kStart));
+    const billed = kMonths.reduce((s, mk) => s + planPaid(kMonth[mk], p.plans), 0);
+    const claims = kMonths.reduce((s, mk) => s + planRx(kMonth[mk], p.plans), 0);
+    const received = deps.reduce((s, t) => s + t.amount, 0);
+    const lastDep = deps.length ? deps[deps.length - 1] : null;
+    // how far the deposits so far have paid, by the payer's schedule
+    let paidThrough = kStart ? bkAdd(kStart, -1) : null;
+    if (lastDep) {
+      const d = new Date(lastDep.date + 'T12:00:00'), y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
+      const iso = dt => dt.toISOString().slice(0, 10);
+      if (p.schedule === 'odb') paidThrough = day >= 24 ? iso(new Date(y, m, 8, 12)) : day <= 4 ? iso(new Date(y, m - 1, 8, 12)) : iso(new Date(y, m - 1, 22, 12));
+      else if (p.schedule === 'telus') paidThrough = day <= 5 ? iso(new Date(y, m, 0, 12)) : iso(new Date(y, m, 15, 12));
+      else paidThrough = bkAdd(lastDep.date, -(p.lagDays || 7));
+    }
+    const fees = (p.feePerClaim || 0) * claims;
+    const expectedOwed = kEnd && paidThrough && paidThrough < kEnd ? billedBetween(p.plans, bkAdd(paidThrough, 1), kEnd) : 0;
+    const owed = billed - received;
+    const unexplained = owed - expectedOwed - fees;
+    const recent = kMonths.slice(-3).reduce((s, mk) => s + planPaid(kMonth[mk], p.plans), 0);
+    // Short (paid less than billed) is what matters. Being paid a little ahead
+    // of the estimate is almost always timing, so it needs a bigger margin.
+    const tol = Math.max(250, 0.03 * recent);
+    const status = billed < 1 && received < 1 ? 'none' : unexplained > tol ? 'short' : -unexplained > Math.max(500, 0.05 * billed) ? 'over' : 'ok';
+    // the first claims that went unpaid for a long time (e.g. before direct-deposit enrolment)
+    const firstDep = deps.length ? deps[0].date : null, firstBill = kMonths.find(mk => planPaid(kMonth[mk], p.plans) > 0);
+    const slowStart = firstBill && (!firstDep || (new Date(firstDep) - new Date(firstBill + '-01')) / 864e5 > 60) ? { from: firstBill, firstDep } : null;
+    let next = null;
+    if (asOf) {
+      const d = new Date(asOf + 'T12:00:00'), y = d.getFullYear(), m = d.getMonth(), day = d.getDate(), iso = dt => dt.toISOString().slice(0, 10);
+      if (p.schedule === 'odb') next = day < 15 ? iso(new Date(y, m, 15, 12)) : day < bkDim(asOf.slice(0, 7)) - 1 ? iso(new Date(y, m + 1, 0, 12)) : iso(new Date(y, m + 1, 15, 12));
+      else if (p.schedule === 'telus') next = day < 16 ? iso(new Date(y, m, 16, 12)) : iso(new Date(y, m + 1, 1, 12));
+      else if (lastDep) next = bkAdd(lastDep.date, p.schedule === 'weekly' ? 7 : p.schedule === 'biweekly' ? 14 : 30);
+    }
+    return Object.assign({}, p, { billed, claims, received, owed, expectedOwed, fees, unexplained, status, deps, lastDep, paidThrough, slowStart, next });
+  });
+  const otherBilled = kMonths.reduce((s, mk) => s + otherPaid(kMonth[mk]), 0);
+
+  // per month
+  const mset = new Set(T.map(t => t.date.slice(0, 7)).concat(kMonths));
+  const monthsAll = [...mset].sort().filter(mk => !first || mk >= first.from.slice(0, 7));
+  // a month counts as covered once the statements reach its last few days
+  const covered = mk => !!asOf && asOf >= `${mk}-${String(bkDim(mk) - 3).padStart(2, '0')}`;
+  const byMonth = monthsAll.map(mk => {
+    const ts = T.filter(t => t.date.slice(0, 7) === mk);
+    const g = grp => ts.filter(t => t.group === grp).reduce((s, t) => s + t.amount, 0);
+    const cat = c => ts.filter(t => t.cat === c).reduce((s, t) => s + t.amount, 0);
+    const k = kMonth[mk];
+    const md = (months || []).find(m => m.monthKey === mk);
+    const front = md ? (parseFloat(md.frontSales) || 0) : null;
+    const krollCash = k ? planPaid(k, ['Cash']) : null;
+    const owedByCustomers = krollCash !== null && front !== null ? krollCash + front : null;
+    const banked = cat('cards') + cat('patient-etransfer') + cat('cash-deposit');
+    const capIn = ts.filter(t => t.cat === 'capital-in').reduce((s, t) => s + t.amount, 0), capOut = ts.filter(t => t.cat === 'capital-out').reduce((s, t) => s + t.amount, 0);
+    const credits = ts.filter(t => t.kind === 'credit').reduce((s, t) => s + t.amount, 0), debits = ts.filter(t => t.kind === 'debit').reduce((s, t) => s + t.amount, 0);
+    const endBal = ts.length ? ts[ts.length - 1].bal : null;
+    return { mk, ts, hasBank: ts.length > 0 && covered(mk), hasKroll: !!k,
+      billedPlans: k ? BK_PAYERS.reduce((s, p) => s + planPaid(k, p.plans), 0) + otherPaid(k) : null,
+      receivedPlans: g('payer'), krollCash, front, owedByCustomers, banked, gap: owedByCustomers !== null && ts.length ? owedByCustomers - banked : null,
+      opex: g('opex'), cogs: g('cogs'), rebates: g('rebate'), capIn, capOut, operating: credits - debits - (capIn - capOut), endBal,
+      budget: md ? (parseFloat(md.expenses) || 0) : null };
+  });
+  return { T, payers, otherBilled, byMonth, kMonths, kMonth, kWin, asOf, first, last, billedBetween, planPaid };
+}
+
+// Actual expenses paid from the bank for a month (null when that month's statement isn't in).
+function bkActualExpenses(monthKey) {
+  if (!bankData.loaded || bankData.error || !bankData.statements.length) return null;
+  const row = bkModel().byMonth.find(r => r.mk === monthKey);
+  return row && row.hasBank ? row.opex : null;
+}
+
+// ── Upload ───────────────────────────────────────────────────────────
+async function bkHandleFiles(fileList) {
+  const files = [...fileList].filter(f => /\.pdf$/i.test(f.name));
+  if (!files.length || _bkUi.busy) return;
+  _bkUi.busy = true; _bkUi.uploads = files.map(f => ({ name: f.name, state: 'reading' }));
+  renderBank();
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], u = _bkUi.uploads[i];
+    try {
+      const pages = await bkPdfItems(new Uint8Array(await f.arrayBuffer()));
+      const td = parseTDStatement(pages), kr = td ? null : parseKrollSummary(pages);
+      if (td) {
+        if (!td.pagesOk || td.balanceBreaks) throw new Error("the transactions read don't add up to TD's page totals, so it wasn't saved");
+        const id = 'td-' + td.from;
+        await db.collection(FS_BANK).doc(id).set(Object.assign({}, td, { fileName: f.name, importedAt: new Date().toISOString(), importedBy: (auth.currentUser && auth.currentUser.email) || '' }));
+        Object.assign(u, { state: 'ok', msg: `TD statement ${bkD(td.from)} – ${bkD(td.to)} · ${td.txns.length} transactions · matches TD's page totals` });
+      } else if (kr) {
+        const id = 'kroll-' + kr.from + '_' + kr.to;
+        await db.collection(FS_BANK).doc(id).set(Object.assign({}, kr, { fileName: f.name, importedAt: new Date().toISOString(), importedBy: (auth.currentUser && auth.currentUser.email) || '' }));
+        const tot = kr.rows['Grand Total'] ? kr.rows['Grand Total'].paid : 0;
+        Object.assign(u, { state: 'ok', msg: `Kroll Plan Billing Summary ${bkD(kr.from)} – ${bkD(kr.to)} · ${Object.keys(kr.rows).length} plans · ${fmt(tot)}` });
+      } else throw new Error("not a TD statement or a Kroll Plan Billing Summary");
+    } catch (e) {
+      Object.assign(u, { state: 'err', msg: e.code === 'permission-denied' ? 'Firestore refused the save: add the Bank rule shown below' : (e.message || String(e)) });
+    }
+    renderBank();
+  }
+  _bkUi.busy = false;
+  bankData.loaded = false; await loadBank();
+  renderBank();
+}
+async function bkRemove(id) {
+  if (!confirm('Remove this imported file from the Bank page? The PDF itself is not affected.')) return;
+  try { await db.collection(FS_BANK).doc(id).delete(); } catch (e) { alert('Could not remove it: ' + (e.code || e.message)); return; }
+  bankData.loaded = false; await loadBank(); renderBank();
+}
+async function bkSetCat(key, cat) {
+  const auto = bkModel().T.find(t => t.key === key);
+  const clear = !cat || (auto && auto.auto === cat);
+  try {
+    if (clear) await db.collection(FS_BANK).doc('config').update(new firebase.firestore.FieldPath('overrides', key), firebase.firestore.FieldValue.delete());
+    else await db.collection(FS_BANK).doc('config').set({ overrides: { [key]: cat } }, { merge: true });
+    if (clear) delete bankData.overrides[key]; else bankData.overrides[key] = cat;
+  } catch (e) {
+    if (clear && e.code === 'not-found') delete bankData.overrides[key];
+    else { alert('Could not save the category: ' + (e.code || e.message)); }
+  }
+  renderBank();
+}
+
+// ── Rendering ────────────────────────────────────────────────────────
+const bkD = iso => { const d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }); };
+const bkM = mk => { const [y, m] = mk.split('-').map(Number); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1] + " '" + String(y).slice(2); };
+const bk$ = v => v === null || v === undefined ? '—' : (v < -0.5 ? '−' : '') + '$' + Math.round(Math.abs(v)).toLocaleString('en-CA');
+const bkS = v => (v >= 0.5 ? '+' : v <= -0.5 ? '−' : '') + '$' + Math.round(Math.abs(v)).toLocaleString('en-CA');
+const bkC = v => v === null || v === undefined ? '—' : (v < 0 ? '−' : '') + '$' + Math.abs(v).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });   // to the cent, for the transaction list
+const BK_RULE = `match /bank/{doc} {
+  allow read, write: if request.auth != null
+    && 'Bank' in get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.pages;
+}`;
+
+let _bkRendering = false;
+function renderBank() {
+  if (_bkRendering) return;   // never re-enter while the page is being replaced
+  _bkRendering = true;
+  try { renderBankInner(); } finally { _bkRendering = false; }
+}
+function renderBankInner() {
+  const el = document.getElementById('page-bank');
+  if (!el) return;
+  if (!bkCanSee()) { el.innerHTML = '<div class="card">You don\'t have access to this page.</div>'; return; }
+  if (!bankData.loaded) {
+    el.innerHTML = '<div class="card" style="text-align:center;color:var(--light)">Loading bank data…</div>';
+    loadBank().then(() => { if (currentPage === 'bank') renderBank(); });
+    return;
+  }
+  const up = `
+    <div class="bk-drop" id="bkDrop">
+      <div><b>Drop TD statements and Kroll Plan Billing Summary PDFs here</b><span>Several at once is fine. They're read in this browser; only the numbers are saved. Re-uploading a file replaces it.</span></div>
+      <label class="btn btn-primary btn-sm">Choose PDFs<input type="file" accept="application/pdf" multiple style="display:none" id="bkFile"></label>
+    </div>
+    ${_bkUi.uploads.length ? `<div class="bk-uploads">${_bkUi.uploads.map(u => `<div class="bk-up ${u.state}"><span>${u.state === 'ok' ? '✓' : u.state === 'err' ? '✕' : '…'}</span><b>${esc(u.name)}</b> ${esc(u.msg || 'Reading…')}</div>`).join('')}</div>` : ''}`;
+  if (bankData.error) {
+    el.innerHTML = `<div class="bk">${up}<div class="card bk-rule"><div class="card-title">One-time setup: lock the bank data to the Bank page</div>
+      <p>Firestore refused to read the bank data (<code>${esc(bankData.error)}</code>). Bank data lives in its own <code>bank</code> collection, and the database denies it by default. Add this block in <b>Firebase console → Firestore → Rules</b>, inside <code>match /databases/{database}/documents { … }</code>, beside your other <code>match</code> blocks, then press <b>Publish</b>:</p>
+      <pre>${esc(BK_RULE)}</pre>
+      <p class="text-sm text-light">Only users who have <b>Bank</b> ticked in Settings → Users can then read or write it. You already have it; sign out and back in once so your user record picks it up.</p></div></div>`;
+    bkBindUpload(); return;
+  }
+  if (!bankData.statements.length && !bankData.kroll.length) {
+    el.innerHTML = `<div class="bk">${up}<div class="card"><div class="card-title">Bank &amp; Collections</div>
+      <p>Upload your TD business-account statements and the Kroll <b>Plan Billing Summary</b> for the same months. The page then:</p>
+      <ul class="bk-list"><li>matches every insurer and ODB deposit against what Kroll billed, using each payer's own payment schedule</li>
+      <li>shows what's still owed and whether any of it is overdue</li><li>shows the patient-pay that never reached the bank (waived copays)</li>
+      <li>shows actual expenses next to your budget, drug purchases, and partner money in and out</li></ul></div></div>`;
+    bkBindUpload(); return;
+  }
+
+  const M = bkModel(), P = M.payers.filter(p => p.status !== 'none');
+  const last3 = M.byMonth.filter(r => r.hasBank).slice(-3);
+  const avg = (rows, f) => rows.length ? rows.reduce((s, r) => s + f(r), 0) / rows.length : 0;
+  const owedAll = P.reduce((s, p) => s + p.owed, 0), expAll = P.reduce((s, p) => s + p.expectedOwed + p.fees, 0);
+  const gapRows = M.byMonth.filter(r => r.gap !== null), gap12 = gapRows.slice(-12).reduce((s, r) => s + r.gap, 0), owe12 = gapRows.slice(-12).reduce((s, r) => s + r.owedByCustomers, 0);
+  const capNet = M.byMonth.slice(-12).reduce((s, r) => s + r.capIn - r.capOut, 0);
+  const lastBal = M.T.length ? M.T[M.T.length - 1].bal : null, loc = M.last && M.last.locLimit;
+  const opAvg = avg(last3, r => r.operating);
+  const kpis = [
+    [bk$(lastBal), `in the bank on ${M.asOf ? bkD(M.asOf) : '—'}${loc ? ` · line of credit ${bk$(loc)}` : ''}`, lastBal < 0 ? 'neg' : ''],
+    [bk$(owedAll), `owed by insurers &amp; ODB · ${bk$(expAll)} of it is normal payment lag`, ''],
+    [bk$(gap12), `patient-pay not banked (${owe12 ? Math.round(gap12 / owe12 * 100) : 0}%) · mostly waived copays`, gap12 > 0 ? 'warn' : ''],
+    [bkS(opAvg) + '/mo', 'cash from operations, last 3 months (excl. partner money)', opAvg < 0 ? 'neg' : 'pos'],
+    [bk$(capNet), 'partner / owner money in, net, last 12 months', ''],
+  ];
+
+  // flags
+  const flags = [];
+  P.forEach(p => {
+    if (p.status === 'short') flags.push(['red', `<b>${esc(p.name)}: ${bk$(p.unexplained)} more billed than paid</b> after allowing for the normal lag (${bk$(p.expectedOwed + p.fees)}). Check the payer's statements/EOBs for rejections, reversals or unpaid cheques.`]);
+    if (p.status === 'over') flags.push(['', `<b>${esc(p.name)}: ${bk$(-p.unexplained)} more paid than billed</b> in these months. Usually timing (a payment covering claims before the first Kroll month loaded) or Kroll's report differing from the payer's.`]);
+    if (p.slowStart && p.billed > 500) flags.push(['', `<b>${esc(p.name)}: no direct deposits from ${bkM(p.slowStart.from)} until ${p.slowStart.firstDep ? bkD(p.slowStart.firstDep) : 'now'}.</b> Payments before then came by cheque or not at all. Match them against the payer's statements.`]);
+  });
+  const unk = M.T.filter(t => t.cat === 'unknown-in' || t.cat === 'unknown-out' || t.cat === 'cheque-deposit');
+  if (unk.length) flags.push(['', `<b>${unk.length} transaction${unk.length > 1 ? 's' : ''} need a category</b> (unrecognised or cheque deposits, ${bk$(unk.reduce((s, t) => s + t.amount, 0))}). Set them in the transaction list below. A cheque from an insurer should be filed under that insurer.`]);
+  if (last3.length && last3.every(r => r.gap !== null) && last3.reduce((s, r) => s + r.gap, 0) > 0.08 * last3.reduce((s, r) => s + r.owedByCustomers, 0))
+    flags.push(['', `<b>Patient-pay gap ${bk$(last3.reduce((s, r) => s + r.gap, 0))} over the last 3 months.</b> Kroll books a waived copay as a cash sale, so Rx Sales on the Dashboard include money that is never collected.`]);
+  const neg = M.T.filter(t => t.bal < 0);
+  if (neg.length) { const lo = neg.reduce((a, t) => t.bal < a.bal ? t : a); flags.push(['', `<b>Overdrawn on ${new Set(neg.map(t => t.date)).size} days</b> between ${bkD(neg[0].date)} and ${bkD(neg[neg.length - 1].date)}; lowest ${bk$(lo.bal)} on ${bkD(lo.date)}.`]); }
+  const noRemit = M.byMonth.filter((r, i) => {
+    const nxt = M.byMonth[i + 1];
+    return r.ts.filter(t => t.cat === 'payroll').reduce((s, t) => s + t.amount, 0) > 1000 && nxt && nxt.hasBank && ![r, nxt].some(x => x.ts.some(t => t.cat === 'payroll-tax'));
+  });
+  if (noRemit.length) flags.push(['', `<b>Payroll with no CRA remittance (EMPTX) that month or the next: ${noRemit.map(r => bkM(r.mk)).join(', ')}</b> (${bk$(noRemit.reduce((s, r) => s + r.ts.filter(t => t.cat === 'payroll').reduce((a, t) => a + t.amount, 0), 0))} of pay). Confirm source deductions were remitted from somewhere.`]);
+  for (let i = 1; i < bankData.statements.length; i++) {
+    const a = bankData.statements[i - 1], b = bankData.statements[i];
+    if (Math.abs((a.closing || 0) - (b.opening || 0)) > 0.005 || bkAdd(a.to, 3) < b.from) flags.push(['red', `<b>Statement gap:</b> ${bkD(a.to)} closes at ${bk$(a.closing)} but the next statement (${bkD(b.from)}) opens at ${bk$(b.opening)}. A statement may be missing.`]);
+  }
+  const missingK = M.byMonth.filter(r => r.hasBank && !r.hasKroll).map(r => bkM(r.mk));
+  if (missingK.length) flags.push(['', `<b>No Kroll Plan Billing Summary for ${missingK.join(', ')}.</b> Billing for those months can't be checked yet.`]);
+
+  // payer table
+  const stChip = p => p.status === 'ok' ? '<span class="bk-chip ok">On track</span>' : p.status === 'short' ? `<span class="bk-chip red">${bk$(p.unexplained)} unpaid</span>` : `<span class="bk-chip amber">${bk$(-p.unexplained)} extra</span>`;
+  const payerRows = P.map(p => `<tr>
+      <td><b>${esc(p.name)}</b><div class="bk-sub">${esc(p.how)}</div></td>
+      <td>${bk$(p.billed)}</td><td>${bk$(p.received)}</td><td>${bk$(p.owed)}</td><td>${bk$(p.expectedOwed + p.fees)}</td><td>${stChip(p)}</td>
+      <td>${p.lastDep ? `${bkD(p.lastDep.date)}<div class="bk-sub">${bk$(p.lastDep.amount)}</div>` : '—'}</td>
+      <td>${p.next ? bkD(p.next) : '—'}</td></tr>`).join('');
+  const otherRow = M.otherBilled > 0.5 ? `<tr><td><b>Other plans</b><div class="bk-sub">Billed to plans with no deposit pattern yet (e.g. STI SmartCard, out-of-province)</div></td><td>${bk$(M.otherBilled)}</td><td>—</td><td>${bk$(M.otherBilled)}</td><td>—</td><td><span class="bk-chip amber">Check</span></td><td>—</td><td>—</td></tr>` : '';
+
+  // ODB payment by payment
+  const odb = M.payers.find(p => p.id === 'odb');
+  let cum = 0;
+  const odbRows = odb.deps.map(t => {
+    const d = new Date(t.date + 'T12:00:00'), y = d.getFullYear(), m = d.getMonth(), day = d.getDate(), iso = dt => dt.toISOString().slice(0, 10);
+    let a, b;
+    if (day >= 24 || day <= 4) { const pm = day <= 4 ? m - 1 : m; a = iso(new Date(y, pm - 1, 23, 12)); b = iso(new Date(y, pm, 8, 12)); }
+    else { a = iso(new Date(y, m - 1, 9, 12)); b = iso(new Date(y, m - 1, 22, 12)); }
+    const exact = M.kWin.find(k => k.from === a && k.to === b);
+    const billed = exact ? M.planPaid(exact, odb.plans) : M.billedBetween(odb.plans, a, b);
+    cum += t.amount - billed;
+    return `<tr><td>${bkD(t.date)}</td><td>${bkD(a).replace(/, \d{4}/, '')} – ${bkD(b)}</td><td>${bk$(billed)}${exact ? ' <span class="bk-chip ok">exact</span>' : ''}</td><td>${bk$(t.amount)}</td><td>${bkS(t.amount - billed)}</td><td>${bkS(cum)}</td></tr>`;
+  }).join('');
+
+  // months
+  const monthRows = M.byMonth.map(r => `<tr>
+      <td><b>${bkM(r.mk)}</b>${r.hasBank ? '' : ' <span class="bk-sub">no statement</span>'}</td>
+      <td>${bk$(r.billedPlans)}</td><td>${r.hasBank ? bk$(r.receivedPlans) : '—'}</td>
+      <td>${bk$(r.owedByCustomers)}</td><td>${r.hasBank ? bk$(r.banked) : '—'}</td><td>${r.gap === null ? '—' : bkS(r.gap)}</td>
+      <td>${r.hasBank ? bk$(r.opex) : '—'}</td><td>${bk$(r.budget)}</td><td>${r.hasBank && r.budget !== null ? bkS(r.budget - r.opex) : '—'}</td>
+      <td>${r.hasBank ? bk$(r.cogs) : '—'}</td><td>${r.hasBank ? bk$(r.rebates) : '—'}</td><td>${r.hasBank ? bkS(r.capIn - r.capOut) : '—'}</td>
+      <td>${r.hasBank ? bkS(r.operating) : '—'}</td><td class="${r.endBal < 0 ? 'neg' : ''}">${bk$(r.endBal)}</td></tr>`).join('');
+
+  // expenses by category (last 12 statement months)
+  const ex12 = M.byMonth.filter(r => r.hasBank).slice(-12), exMonths = ex12.map(r => r.mk);
+  const exCats = Object.keys(BK_CATS).filter(c => BK_CATS[c].group === 'opex' || c === 'cogs');
+  const exRows = exCats.map(c => {
+    const vals = ex12.map(r => r.ts.filter(t => t.cat === c).reduce((s, t) => s + t.amount, 0)), tot = vals.reduce((s, v) => s + v, 0);
+    return tot > 0.5 ? `<tr><td>${esc(BK_CATS[c].label)}</td>${vals.map(v => `<td>${v ? bk$(v) : ''}</td>`).join('')}<td><b>${bk$(tot)}</b></td></tr>` : '';
+  }).join('');
+
+  // partner money
+  const capRows = M.T.filter(t => BK_CATS[t.cat].group === 'capital');
+  let capRun = 0;
+  const capHtml = capRows.map(t => { capRun += t.kind === 'credit' ? t.amount : -t.amount; return `<tr><td>${bkD(t.date)}</td><td>${esc(t.desc)}</td><td>${t.kind === 'credit' ? bk$(t.amount) : ''}</td><td>${t.kind === 'debit' ? bk$(t.amount) : ''}</td><td>${bkS(capRun)}</td></tr>`; }).join('');
+
+  // transactions
+  const monthsOpt = [...new Set(M.T.map(t => t.date.slice(0, 7)))].sort().reverse();
+  const q = _bkUi.q.trim().toLowerCase();
+  const list = M.T.filter(t => (_bkUi.month === 'all' || t.date.slice(0, 7) === _bkUi.month) && (_bkUi.cat === 'all' || t.cat === _bkUi.cat || (_bkUi.cat === 'needs' && /unknown|cheque-deposit/.test(t.cat))) && (!q || t.desc.toLowerCase().includes(q))).reverse();
+  const shown = list.slice(0, 400);
+  const catOpts = sel => Object.entries(BK_CATS).map(([id, c]) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${esc(c.label)}</option>`).join('');
+  // A button per row; the dropdown is built only for the row being changed.
+  const txRows = shown.map(t => `<tr><td>${bkD(t.date)}</td><td>${esc(t.desc)}</td><td class="neg">${t.kind === 'debit' ? bkC(t.amount) : ''}</td><td class="pos">${t.kind === 'credit' ? bkC(t.amount) : ''}</td><td>${bkC(t.bal)}</td>
+      <td><button class="bk-catbtn${t.overridden ? ' ov' : ''}${/unknown|cheque-deposit/.test(t.cat) ? ' need' : ''}" data-key="${esc(t.key)}" data-cat="${t.cat}" title="Change category">${esc(BK_CATS[t.cat].label)}</button></td></tr>`).join('');
+
+  // files
+  const files = bankData.statements.map(s => [s.id, `TD ${bkD(s.from)} – ${bkD(s.to)}`, `${s.txns.length} txns`]).concat(bankData.kroll.map(k => [k.id, `Kroll ${bkD(k.from)} – ${bkD(k.to)}`, `${Object.keys(k.rows).length} plans`]));
+
+  el.innerHTML = `<div class="bk">
+    <div class="bk-head"><div><h2>Bank &amp; Collections</h2><p>${M.first ? `Bank ${bkD(M.first.from)} – ${bkD(M.asOf)}` : 'No statements yet'} · Kroll ${M.kMonths.length ? `${bkM(M.kMonths[0])} – ${bkM(M.kMonths[M.kMonths.length - 1])}` : 'none yet'}</p></div></div>
+    ${up}
+    <div class="bk-kpis">${kpis.map(([v, l, c]) => `<div class="bk-kpi ${c}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+    ${flags.length ? `<div class="card"><div class="card-title">Needs a look</div>${flags.map(([c, h]) => `<div class="bk-flag ${c}">${h}</div>`).join('')}</div>` : ''}
+    <div class="card"><div class="card-title">Insurers &amp; ODB — billed vs paid</div>
+      <p class="bk-note">“Normal lag” is what each payer's schedule says should still be unpaid at the last statement date (for TELUS, plus its $0.10 a claim). “Still owed” beyond that is flagged. Spreading a month's billing evenly by day makes this a ±few-hundred-dollar estimate; upload a Kroll report for a payer's exact claim window to check a payment to the cent.</p>
+      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Payer</th><th>Billed (Kroll)</th><th>Received</th><th>Still owed</th><th>Normal lag</th><th>Status</th><th>Last deposit</th><th>Next due</th></tr></thead><tbody>${payerRows}${otherRow}</tbody></table></div>
+      ${odbRows ? `<details class="bk-det"><summary>ODB, payment by payment</summary><div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Paid</th><th>Claims covered</th><th>Kroll billed</th><th>Deposited</th><th>Difference</th><th>Running</th></tr></thead><tbody>${odbRows}</tbody></table></div><p class="bk-note">ODB sends no remittance for online claims, so Kroll's total for the window <i>is</i> the check. Run the Plan Billing Summary for 23rd–8th or 9th–22nd and upload it to mark a payment “exact”.</p></details>` : ''}
+    </div>
+    <div class="card"><div class="card-title">Month by month</div>
+      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Month</th><th>Billed to plans</th><th>Received from plans</th><th>Patient-pay owed</th><th>Patient-pay banked</th><th>Not banked</th><th>Actual expenses</th><th>Budget (Monthly Data)</th><th>Budget − actual</th><th>McKesson</th><th>Rebates</th><th>Partner money</th><th>Operating cash</th><th>Balance</th></tr></thead><tbody>${monthRows}</tbody></table></div>
+      <p class="bk-note">Patient-pay owed = Kroll's <b>Cash</b> line (copays and cash prescriptions) + front-store sales from Monthly Data. Banked = card settlements + patient e-transfers + cash deposits. Operating cash = everything in − everything out, excluding partner/owner money.</p>
+    </div>
+    <div class="card"><div class="card-title">Where the money went</div>
+      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Category</th>${exMonths.map(mk => `<th>${bkM(mk)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${exRows}</tbody></table></div>
+    </div>
+    ${capHtml ? `<div class="card"><div class="card-title">Partner / owner money</div><div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Date</th><th>Description</th><th>In</th><th>Out</th><th>Net to date</th></tr></thead><tbody>${capHtml}</tbody></table></div></div>` : ''}
+    <div class="card"><div class="card-title">Transactions</div>
+      <div class="bk-filters">
+        <select id="bkMonth"><option value="all">All months</option>${monthsOpt.map(mk => `<option value="${mk}" ${mk === _bkUi.month ? 'selected' : ''}>${bkM(mk)}</option>`).join('')}</select>
+        <select id="bkCatF"><option value="all">All categories</option><option value="needs" ${_bkUi.cat === 'needs' ? 'selected' : ''}>Needs a category</option>${Object.entries(BK_CATS).map(([id, c]) => `<option value="${id}" ${id === _bkUi.cat ? 'selected' : ''}>${esc(c.label)}</option>`).join('')}</select>
+        <input id="bkQ" type="text" placeholder="Search descriptions" value="${esc(_bkUi.q)}">
+        <span class="bk-sub">${list.length} shown${list.length > shown.length ? ` (first ${shown.length})` : ''}</span>
+      </div>
+      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Date</th><th>Description</th><th>Out</th><th>In</th><th>Balance</th><th>Category</th></tr></thead><tbody>${txRows}</tbody></table></div>
+      <p class="bk-note">Changing a category is saved for everyone with access. Pick the automatic one again to go back to it.</p>
+    </div>
+    <div class="card"><div class="card-title">Imported files</div>
+      ${files.map(([id, l, n]) => `<div class="bk-file"><span>${esc(l)}</span><span class="bk-sub">${n}</span><button class="btn btn-ghost btn-xs" data-rm="${esc(id)}">Remove</button></div>`).join('')}
+    </div>
+  </div>`;
+  bkBindUpload();
+  const on = (id, ev, f) => { const x = document.getElementById(id); if (x) x.addEventListener(ev, f); };
+  on('bkMonth', 'change', e => { _bkUi.month = e.target.value; renderBank(); });
+  on('bkCatF', 'change', e => { _bkUi.cat = e.target.value; renderBank(); });
+  on('bkQ', 'change', e => { _bkUi.q = e.target.value; renderBank(); });
+  el.querySelectorAll('.bk-catbtn').forEach(b => b.addEventListener('click', () => {
+    const sel = document.createElement('select');
+    sel.className = 'bk-cat'; sel.innerHTML = catOpts(b.dataset.cat);
+    sel.addEventListener('change', () => bkSetCat(b.dataset.key, sel.value));
+    // Deferred: a change re-renders the page, which removes this dropdown and
+    // fires blur mid-render. By the time this runs, a changed one is gone.
+    sel.addEventListener('blur', () => setTimeout(() => { if (sel.isConnected) renderBank(); }, 0));
+    b.replaceWith(sel); sel.focus();
+  }));
+  el.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => bkRemove(b.dataset.rm)));
+}
+function bkBindUpload() {
+  const drop = document.getElementById('bkDrop'), file = document.getElementById('bkFile');
+  if (file) file.addEventListener('change', e => bkHandleFiles(e.target.files));
+  if (drop) {
+    ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', e => bkHandleFiles(e.dataTransfer.files));
+  }
 }
 
 // ================================================================
@@ -3290,7 +3941,7 @@ function renderSettings() {
           </div>
           <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px">Pages to grant access</div>
           <div id="newUserPageChecks" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:14px">
-            ${ALL_PAGES.map(pg => `
+            ${GRANTABLE_PAGES().map(pg => `
               <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;padding:4px 0">
                 <input type="checkbox" value="${pg}"> ${pg}
               </label>`).join('')}
@@ -4897,13 +5548,17 @@ async function fetchUserRecord(email) {
   return data;
 }
 
+// Every page that can be ticked for a user: ALL_PAGES plus pages that are
+// granted one by one (Bank). Full-access backfills only ever add ALL_PAGES.
+function GRANTABLE_PAGES() { return PAGE_MAP.map(p => p.name); }
+
 // Projections replaced Forecast (Oct 2026). Stored permission docs can still
 // list 'Forecast': read it as Projections, and drop names no page uses, so the
 // app, the admin chips, roleLabel and a re-saved row all agree on real access.
 function normalizePages(pages) {
   const p = Array.isArray(pages) ? pages.slice() : [];
   if (p.includes('Forecast') && !p.includes('Projections')) p.push('Projections');
-  return p.filter(x => ALL_PAGES.includes(x));
+  return p.filter(x => GRANTABLE_PAGES().includes(x));
 }
 
 // Default users that should always exist in Firestore.
@@ -5183,7 +5838,7 @@ function roleLabel(u) {
   const p = Array.isArray(u.pages) ? u.pages : [];
   if (u.email === OWNER_EMAIL) return 'Owner';
   if (!p.length) return 'No access';
-  if (ALL_PAGES.every(x => p.includes(x))) return 'Full Access';
+  if (ALL_PAGES.every(x => p.includes(x))) return p.includes('Bank') ? 'Full Access + Bank' : 'Full Access';
   if (p.length === 1) return p[0] + ' only';
   return p.length + ' of ' + ALL_PAGES.length + ' pages';
 }
@@ -5236,7 +5891,7 @@ function renderAdminUserList() {
     return;
   }
   el.innerHTML = _adminUsers.map(u => {
-    const pageChips = ALL_PAGES.map(pg => {
+    const pageChips = GRANTABLE_PAGES().map(pg => {
       const has = u.pages.includes(pg);
       return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin:2px;background:${has?'var(--navy)':'#e5e7eb'};color:${has?'#fff':'var(--light)'}">${pg}</span>`;
     }).join('');
@@ -5271,7 +5926,7 @@ function openEditUser(email) {
   // Replace the user's row with an inline edit form
   const existing = el.querySelectorAll('[data-edit-email]');
   existing.forEach(e => e.remove()); // close any open edit
-  const checkboxes = ALL_PAGES.map(pg => `
+  const checkboxes = GRANTABLE_PAGES().map(pg => `
     <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;padding:4px 0">
       <input type="checkbox" value="${pg}" ${u.pages.includes(pg)?'checked':''}
         ${u.email===OWNER_EMAIL && pg==='Settings' ? 'disabled checked' : ''}>
@@ -5409,6 +6064,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const handleUser = async (user, gen) => {
     if (!user) {
       userRecord = null;
+      bankData = { loaded: false, loading: null, error: null, statements: [], kroll: [], overrides: {}, ver: bankData.ver + 1 };
       document.getElementById('mainNav').innerHTML            = '';
       document.getElementById('authGate').style.display      = 'flex';
       document.getElementById('signInBtn').style.display     = 'flex';
@@ -5435,7 +6091,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (TRUSTED_EMAILS.includes(user.email)) {
         const role = user.email === OWNER_EMAIL ? 'Owner' : 'Full Access';
         console.log('[Auth] Trusted email — full access granted, role:', role);
-        userRecord = { email: user.email, pages: [...ALL_PAGES], role };
+        userRecord = { email: user.email, pages: [...ALL_PAGES, ...(user.email === OWNER_EMAIL ? ['Bank'] : [])], role };
 
         // Owner: always write their own user doc before loadState runs.
         // This is idempotent (merge:true) and guarantees the doc exists
@@ -5446,7 +6102,7 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
             await withTimeout(
               db.collection(FS_USERS).doc(OWNER_EMAIL).set(
-                { email: OWNER_EMAIL, pages: [...ALL_PAGES], role: 'Owner' },
+                { email: OWNER_EMAIL, pages: [...ALL_PAGES, 'Bank'], role: 'Owner' },
                 { merge: true }
               ), 6000
             );
@@ -5520,6 +6176,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authGate').style.display = 'none';
     const firstPage = landingPage();
     navigate(firstPage);
+    // A trusted non-owner can still be granted Bank in Settings → Users; the fast
+    // path above doesn't read their doc, so pick that grant up in the background.
+    if (TRUSTED_EMAILS.includes(user.email) && user.email !== OWNER_EMAIL) {
+      fetchUserRecord(user.email).then(r => {
+        if (r && r.pages.includes('Bank') && userRecord && !userRecord.pages.includes('Bank')) { userRecord.pages.push('Bank'); renderNav(); }
+      }).catch(() => {});
+    }
+    // Bank data feeds the Dashboard and Monthly Data "actual expenses" too.
+    if (bkCanSee()) loadBank().then(() => { if (['dashboard', 'monthly'].includes(currentPage)) renderPage(currentPage); });
     console.log('[Auth] App ready. Page:', firstPage);
 
     // Prompt email/password users to change their temporary password
