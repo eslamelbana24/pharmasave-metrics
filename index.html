@@ -3294,6 +3294,17 @@ function bkBuildModel() {
     });
   });
   T.sort((a, b) => a.date.localeCompare(b.date));
+  // Pay sometimes goes out without the SALA code (or coded AP). An e-transfer for
+  // exactly the amount of a SALA payment within 3 days is part of the same pay run.
+  const pay = T.filter(t => t.auto === 'payroll');
+  T.forEach(t => {
+    if (t.auto !== 'etfr-other') return;
+    const d = Date.parse(t.date);
+    if (!pay.some(o => Math.abs(o.amount - t.amount) < 0.005 && Math.abs(Date.parse(o.date) - d) <= 3 * 864e5)) return;
+    t.auto = 'payroll';
+    if (t.overridden) t.overridden = t.cat !== 'payroll';
+    else Object.assign(t, { cat: 'payroll', group: BK_CATS.payroll.group });
+  });
   const first = bankData.statements[0], last = bankData.statements[bankData.statements.length - 1];
   const asOf = last ? last.to : null;
   // Kroll: whole-month reports give the monthly billing; any other range is a
@@ -3308,18 +3319,20 @@ function bkBuildModel() {
   const planRx = (k, plans) => { const want = new Set(plans.map(bkPlanKey)); return Object.entries(k.rows).reduce((s, [n, v]) => s + (want.has(bkPlanKey(n)) ? (v.rx || 0) : 0), 0); };
   const mapped = new Set(BK_PAYERS.flatMap(p => p.plans).concat(BK_IGNORE_PLANS).map(bkPlanKey));
   const otherPaid = k => Object.entries(k.rows).reduce((s, [n, v]) => s + (mapped.has(bkPlanKey(n)) ? 0 : (v.paid || 0)), 0);
-  // billed for a payer between two dates, spreading each month evenly by day
-  const billedBetween = (plans, a, b) => {
+  // a payer's billing (or claim count) between two dates, spreading each month
+  // evenly by day. Days are counted by calendar date (lo and hi are always in
+  // the same month), so a daylight-saving change can't add or drop an hour.
+  const spread = (fn, plans, a, b) => {
     let tot = 0;
     for (const mk of kMonths) {
       const ms = mk + '-01', me = `${mk}-${String(bkDim(mk)).padStart(2, '0')}`;
       const lo = a > ms ? a : ms, hi = b < me ? b : me;
       if (lo > hi) continue;
-      const days = (new Date(hi + 'T12:00:00') - new Date(lo + 'T12:00:00')) / 864e5 + 1;
-      tot += planPaid(kMonth[mk], plans) * days / bkDim(mk);
+      tot += fn(kMonth[mk], plans) * (Number(hi.slice(8)) - Number(lo.slice(8)) + 1) / bkDim(mk);
     }
     return tot;
   };
+  const billedBetween = (plans, a, b) => spread(planPaid, plans, a, b);
   const kStart = kMonths.length ? kMonths[0] + '-01' : null;
   const kEnd = kMonths.length ? `${kMonths[kMonths.length - 1]}-${String(bkDim(kMonths[kMonths.length - 1])).padStart(2, '0')}` : null;
 
@@ -3339,10 +3352,16 @@ function bkBuildModel() {
       else if (p.schedule === 'telus') paidThrough = day <= 5 ? iso(new Date(y, m, 0, 12)) : iso(new Date(y, m, 15, 12));
       else paidThrough = bkAdd(lastDep.date, -(p.lagDays || 7));
     }
-    const fees = (p.feePerClaim || 0) * claims;
-    const expectedOwed = kEnd && paidThrough && paidThrough < kEnd ? billedBetween(p.plans, bkAdd(paidThrough, 1), kEnd) : 0;
+    const win = kEnd && paidThrough && paidThrough < kEnd ? [bkAdd(paidThrough, 1), kEnd] : null;
+    const expectedOwed = win ? billedBetween(p.plans, win[0], win[1]) : 0;
+    // TELUS keeps $0.10 a claim, so that part of what it paid never arrives. Claims
+    // still in the unpaid window are already in expectedOwed in full.
+    const fees = (p.feePerClaim || 0) * (claims - (win ? spread(planRx, p.plans, win[0], win[1]) : 0));
     const owed = billed - received;
     const unexplained = owed - expectedOwed - fees;
+    // the part of what's owed that the schedule explains (a payer that's paid
+    // ahead of the estimate has no lag left to explain)
+    const lagPart = Math.min(Math.max(owed, 0), expectedOwed + fees);
     const recent = kMonths.slice(-3).reduce((s, mk) => s + planPaid(kMonth[mk], p.plans), 0);
     // Short (paid less than billed) is what matters. Being paid a little ahead
     // of the estimate is almost always timing, so it needs a bigger margin.
@@ -3358,7 +3377,7 @@ function bkBuildModel() {
       else if (p.schedule === 'telus') next = day < 16 ? iso(new Date(y, m, 16, 12)) : iso(new Date(y, m + 1, 1, 12));
       else if (lastDep) next = bkAdd(lastDep.date, p.schedule === 'weekly' ? 7 : p.schedule === 'biweekly' ? 14 : 30);
     }
-    return Object.assign({}, p, { billed, claims, received, owed, expectedOwed, fees, unexplained, status, deps, lastDep, paidThrough, slowStart, next });
+    return Object.assign({}, p, { billed, claims, received, owed, expectedOwed, fees, unexplained, lagPart, status, deps, lastDep, paidThrough, slowStart, next });
   });
   const otherBilled = kMonths.reduce((s, mk) => s + otherPaid(kMonth[mk]), 0);
 
@@ -3375,15 +3394,20 @@ function bkBuildModel() {
     const md = (months || []).find(m => m.monthKey === mk);
     const front = md ? (parseFloat(md.frontSales) || 0) : null;
     const krollCash = k ? planPaid(k, ['Cash']) : null;
-    const owedByCustomers = krollCash !== null && front !== null ? krollCash + front : null;
+    // When the statements end partway through the month, compare only the sales
+    // that could have reached the bank: cards settle the next business day.
+    const partial = !!asOf && asOf.slice(0, 7) === mk && Number(asOf.slice(8)) < bkDim(mk);
+    const settledTo = partial ? bkAdd(asOf, -1) : null;
+    const settledFrac = partial ? Number(settledTo.slice(8)) / bkDim(mk) : 1;
+    const owedByCustomers = krollCash !== null && front !== null ? (krollCash + front) * settledFrac : null;
     const banked = cat('cards') + cat('patient-etransfer') + cat('cash-deposit');
     const capIn = ts.filter(t => t.cat === 'capital-in').reduce((s, t) => s + t.amount, 0), capOut = ts.filter(t => t.cat === 'capital-out').reduce((s, t) => s + t.amount, 0);
     const credits = ts.filter(t => t.kind === 'credit').reduce((s, t) => s + t.amount, 0), debits = ts.filter(t => t.kind === 'debit').reduce((s, t) => s + t.amount, 0);
     const endBal = ts.length ? ts[ts.length - 1].bal : null;
-    return { mk, ts, hasBank: ts.length > 0 && covered(mk), hasKroll: !!k,
+    return { mk, ts, hasBank: ts.length > 0 && covered(mk), hasKroll: !!k, partial, settledTo,
       billedPlans: k ? BK_PAYERS.reduce((s, p) => s + planPaid(k, p.plans), 0) + otherPaid(k) : null,
       receivedPlans: g('payer'), krollCash, front, owedByCustomers, banked, gap: owedByCustomers !== null && ts.length ? owedByCustomers - banked : null,
-      opex: g('opex'), cogs: g('cogs'), rebates: g('rebate'), capIn, capOut, operating: credits - debits - (capIn - capOut), endBal,
+      opex: g('opex'), cogs: g('cogs'), rebates: g('rebate'), otherIn: g('other-in'), capIn, capOut, operating: credits - debits - (capIn - capOut), endBal,
       budget: md ? (parseFloat(md.expenses) || 0) : null };
   });
   return { T, payers, otherBilled, byMonth, kMonths, kMonth, kWin, asOf, first, last, billedBetween, planPaid };
@@ -3497,23 +3521,27 @@ function renderBankInner() {
   const M = bkModel(), P = M.payers.filter(p => p.status !== 'none');
   const last3 = M.byMonth.filter(r => r.hasBank).slice(-3);
   const avg = (rows, f) => rows.length ? rows.reduce((s, r) => s + f(r), 0) / rows.length : 0;
-  const owedAll = P.reduce((s, p) => s + p.owed, 0), expAll = P.reduce((s, p) => s + p.expectedOwed + p.fees, 0);
-  const gapRows = M.byMonth.filter(r => r.gap !== null), gap12 = gapRows.slice(-12).reduce((s, r) => s + r.gap, 0), owe12 = gapRows.slice(-12).reduce((s, r) => s + r.owedByCustomers, 0);
-  const capNet = M.byMonth.slice(-12).reduce((s, r) => s + r.capIn - r.capOut, 0);
+  const owedAll = P.reduce((s, p) => s + p.owed, 0), lagAll = P.reduce((s, p) => s + p.lagPart, 0);
+  // only months the statements cover, so a Kroll report uploaded ahead of its statement can't shift the window
+  const banked12 = M.byMonth.filter(r => r.hasBank).slice(-12);
+  const gapRows = banked12.filter(r => r.gap !== null), gap12 = gapRows.reduce((s, r) => s + r.gap, 0), owe12 = gapRows.reduce((s, r) => s + r.owedByCustomers, 0);
+  const capNet = banked12.reduce((s, r) => s + r.capIn - r.capOut, 0);
   const lastBal = M.T.length ? M.T[M.T.length - 1].bal : null, loc = M.last && M.last.locLimit;
   const opAvg = avg(last3, r => r.operating);
   const kpis = [
     [bk$(lastBal), `in the bank on ${M.asOf ? bkD(M.asOf) : '—'}${loc ? ` · line of credit ${bk$(loc)}` : ''}`, lastBal < 0 ? 'neg' : ''],
-    [bk$(owedAll), `owed by insurers &amp; ODB · ${bk$(expAll)} of it is normal payment lag`, ''],
-    [bk$(gap12), `patient-pay not banked (${owe12 ? Math.round(gap12 / owe12 * 100) : 0}%) · mostly waived copays`, gap12 > 0 ? 'warn' : ''],
+    [bk$(owedAll), `owed by insurers &amp; ODB · ${bk$(lagAll)} normal payment lag, ${bk$(owedAll - lagAll)} beyond it`, owedAll - lagAll > 1000 ? 'warn' : ''],
+    [bk$(gap12), `patient-pay not banked (${owe12 ? Math.round(gap12 / owe12 * 100) : 0}%) · waived copays or cash not deposited`, gap12 > 0 ? 'warn' : ''],
     [bkS(opAvg) + '/mo', 'cash from operations, last 3 months (excl. partner money)', opAvg < 0 ? 'neg' : 'pos'],
     [bk$(capNet), 'partner / owner money in, net, last 12 months', ''],
   ];
 
   // flags
   const flags = [];
+  const cheques = M.T.filter(t => t.cat === 'cheque-deposit');
+  const chequeNote = name => cheques.length ? ` ${cheques.length === 1 ? 'One cheque deposit' : `${cheques.length} cheque deposits`} (${cheques.map(t => `${bkC(t.amount)} on ${bkD(t.date)}`).join(', ')}) ${cheques.length === 1 ? "isn't" : "aren't"} assigned to any payer; if ${cheques.length === 1 ? 'it came' : 'any came'} from ${esc(name)}, file ${cheques.length === 1 ? 'it' : 'them'} under ${esc(name)} in the transaction list and this shrinks.` : '';
   P.forEach(p => {
-    if (p.status === 'short') flags.push(['red', `<b>${esc(p.name)}: ${bk$(p.unexplained)} more billed than paid</b> after allowing for the normal lag (${bk$(p.expectedOwed + p.fees)}). Check the payer's statements/EOBs for rejections, reversals or unpaid cheques.`]);
+    if (p.status === 'short') flags.push(['red', `<b>${esc(p.name)}: ${bk$(p.unexplained)} more billed than paid</b> after allowing for the normal lag (${bk$(p.lagPart)}).${chequeNote(p.name)} Check the payer's statements/EOBs for rejections, reversals or unpaid cheques.`]);
     if (p.status === 'over') flags.push(['', `<b>${esc(p.name)}: ${bk$(-p.unexplained)} more paid than billed</b> in these months. Usually timing (a payment covering claims before the first Kroll month loaded) or Kroll's report differing from the payer's.`]);
     if (p.slowStart && p.billed > 500) flags.push(['', `<b>${esc(p.name)}: no direct deposits from ${bkM(p.slowStart.from)} until ${p.slowStart.firstDep ? bkD(p.slowStart.firstDep) : 'now'}.</b> Payments before then came by cheque or not at all. Match them against the payer's statements.`]);
   });
@@ -3521,8 +3549,14 @@ function renderBankInner() {
   if (unk.length) flags.push(['', `<b>${unk.length} transaction${unk.length > 1 ? 's' : ''} need a category</b> (unrecognised or cheque deposits, ${bk$(unk.reduce((s, t) => s + t.amount, 0))}). Set them in the transaction list below. A cheque from an insurer should be filed under that insurer.`]);
   if (last3.length && last3.every(r => r.gap !== null) && last3.reduce((s, r) => s + r.gap, 0) > 0.08 * last3.reduce((s, r) => s + r.owedByCustomers, 0))
     flags.push(['', `<b>Patient-pay gap ${bk$(last3.reduce((s, r) => s + r.gap, 0))} over the last 3 months.</b> Kroll books a waived copay as a cash sale, so Rx Sales on the Dashboard include money that is never collected.`]);
-  const neg = M.T.filter(t => t.bal < 0);
-  if (neg.length) { const lo = neg.reduce((a, t) => t.bal < a.bal ? t : a); flags.push(['', `<b>Overdrawn on ${new Set(neg.map(t => t.date)).size} days</b> between ${bkD(neg[0].date)} and ${bkD(neg[neg.length - 1].date)}; lowest ${bk$(lo.bal)} on ${bkD(lo.date)}.`]); }
+  const etf = M.T.filter(t => t.cat === 'etfr-other'), etfBig = etf.filter(t => t.amount >= 1000);
+  if (etfBig.length) flags.push(['', `<b>${bk$(etf.reduce((s, t) => s + t.amount, 0))} of e-transfers out with no memo</b> counted as expenses, including ${etfBig.map(t => `${bk$(t.amount)} on ${bkD(t.date)}`).join(', ')}. If any were partner repayments or draws, file them as Partner / owner money out so they leave Actual expenses.`]);
+  // Overdraft: calendar days that ended below zero. A day with no transactions
+  // (weekends, holidays) keeps the previous close, and overdraft interest runs on it too.
+  const close = new Map(); M.T.forEach(t => close.set(t.date, t.bal));   // date order, so the last write is TD's end-of-day balance
+  const od = []; let eod = null;
+  if (M.T.length) for (let d = M.T[0].date; d <= M.asOf; d = bkAdd(d, 1)) { if (close.has(d)) eod = close.get(d); if (eod !== null && eod < 0) od.push([d, eod]); }
+  if (od.length) { const lo = od.reduce((a, x) => x[1] < a[1] ? x : a); flags.push(['', `<b>Overdrawn at the end of ${od.length} day${od.length > 1 ? 's' : ''}</b> (weekends and holidays included) between ${bkD(od[0][0])} and ${bkD(od[od.length - 1][0])}; lowest ${bk$(lo[1])} on ${bkD(lo[0])}.`]); }
   const noRemit = M.byMonth.filter((r, i) => {
     const nxt = M.byMonth[i + 1];
     return r.ts.filter(t => t.cat === 'payroll').reduce((s, t) => s + t.amount, 0) > 1000 && nxt && nxt.hasBank && ![r, nxt].some(x => x.ts.some(t => t.cat === 'payroll-tax'));
@@ -3536,12 +3570,14 @@ function renderBankInner() {
   if (missingK.length) flags.push(['', `<b>No Kroll Plan Billing Summary for ${missingK.join(', ')}.</b> Billing for those months can't be checked yet.`]);
 
   // payer table
+  // a due date already behind the last statement: nothing left to pay, or late
+  const nextCell = p => !p.next ? '—' : p.next >= M.asOf ? bkD(p.next) : p.owed < 25 ? '<span class="bk-sub">Nothing owed</span>' : `${bkD(p.next)} <span class="bk-chip red">late</span>`;
   const stChip = p => p.status === 'ok' ? '<span class="bk-chip ok">On track</span>' : p.status === 'short' ? `<span class="bk-chip red">${bk$(p.unexplained)} unpaid</span>` : `<span class="bk-chip amber">${bk$(-p.unexplained)} extra</span>`;
   const payerRows = P.map(p => `<tr>
       <td><b>${esc(p.name)}</b><div class="bk-sub">${esc(p.how)}</div></td>
-      <td>${bk$(p.billed)}</td><td>${bk$(p.received)}</td><td>${bk$(p.owed)}</td><td>${bk$(p.expectedOwed + p.fees)}</td><td>${stChip(p)}</td>
+      <td>${bk$(p.billed)}</td><td>${bk$(p.received)}</td><td>${bk$(p.owed)}</td><td>${bk$(p.lagPart)}</td><td>${stChip(p)}</td>
       <td>${p.lastDep ? `${bkD(p.lastDep.date)}<div class="bk-sub">${bk$(p.lastDep.amount)}</div>` : '—'}</td>
-      <td>${p.next ? bkD(p.next) : '—'}</td></tr>`).join('');
+      <td>${nextCell(p)}</td></tr>`).join('');
   const otherRow = M.otherBilled > 0.5 ? `<tr><td><b>Other plans</b><div class="bk-sub">Billed to plans with no deposit pattern yet (e.g. STI SmartCard, out-of-province)</div></td><td>${bk$(M.otherBilled)}</td><td>—</td><td>${bk$(M.otherBilled)}</td><td>—</td><td><span class="bk-chip amber">Check</span></td><td>—</td><td>—</td></tr>` : '';
 
   // ODB payment by payment
@@ -3560,12 +3596,13 @@ function renderBankInner() {
 
   // months
   const monthRows = M.byMonth.map(r => `<tr>
-      <td><b>${bkM(r.mk)}</b>${r.hasBank ? '' : ' <span class="bk-sub">no statement</span>'}</td>
+      <td><b>${bkM(r.mk)}</b>${!r.hasBank ? ' <span class="bk-sub">no statement</span>' : r.partial ? `<div class="bk-sub">to ${bkD(M.asOf).replace(/, \d{4}/, '')}</div>` : ''}</td>
       <td>${bk$(r.billedPlans)}</td><td>${r.hasBank ? bk$(r.receivedPlans) : '—'}</td>
-      <td>${bk$(r.owedByCustomers)}</td><td>${r.hasBank ? bk$(r.banked) : '—'}</td><td>${r.gap === null ? '—' : bkS(r.gap)}</td>
+      <td>${bk$(r.owedByCustomers)}${r.partial && r.owedByCustomers !== null ? `<div class="bk-sub">sales to ${bkD(r.settledTo).replace(/, \d{4}/, '')}</div>` : ''}</td><td>${r.hasBank ? bk$(r.banked) : '—'}</td><td>${r.gap === null ? '—' : bkS(r.gap)}</td>
       <td>${r.hasBank ? bk$(r.opex) : '—'}</td><td>${bk$(r.budget)}</td><td>${r.hasBank && r.budget !== null ? bkS(r.budget - r.opex) : '—'}</td>
-      <td>${r.hasBank ? bk$(r.cogs) : '—'}</td><td>${r.hasBank ? bk$(r.rebates) : '—'}</td><td>${r.hasBank ? bkS(r.capIn - r.capOut) : '—'}</td>
+      <td>${r.hasBank ? bk$(r.cogs) : '—'}</td><td>${r.hasBank ? bk$(r.rebates) : '—'}</td><td>${r.hasBank ? (r.otherIn ? bk$(r.otherIn) : '') : '—'}</td><td>${r.hasBank ? bkS(r.capIn - r.capOut) : '—'}</td>
       <td>${r.hasBank ? bkS(r.operating) : '—'}</td><td class="${r.endBal < 0 ? 'neg' : ''}">${bk$(r.endBal)}</td></tr>`).join('');
+  const cashDeps = M.T.filter(t => t.cat === 'cash-deposit');
 
   // expenses by category (last 12 statement months)
   const ex12 = M.byMonth.filter(r => r.hasBank).slice(-12), exMonths = ex12.map(r => r.mk);
@@ -3599,13 +3636,13 @@ function renderBankInner() {
     <div class="bk-kpis">${kpis.map(([v, l, c]) => `<div class="bk-kpi ${c}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
     ${flags.length ? `<div class="card"><div class="card-title">Needs a look</div>${flags.map(([c, h]) => `<div class="bk-flag ${c}">${h}</div>`).join('')}</div>` : ''}
     <div class="card"><div class="card-title">Insurers &amp; ODB — billed vs paid</div>
-      <p class="bk-note">“Normal lag” is what each payer's schedule says should still be unpaid at the last statement date (for TELUS, plus its $0.10 a claim). “Still owed” beyond that is flagged. Spreading a month's billing evenly by day makes this a ±few-hundred-dollar estimate; upload a Kroll report for a payer's exact claim window to check a payment to the cent.</p>
+      <p class="bk-note">“Normal lag” is the part of “Still owed” that each payer's schedule says shouldn't have arrived by the last statement date (for TELUS, also the $0.10 a claim it keeps). Anything owed beyond that is flagged. Spreading a month's billing evenly by day makes this a ±few-hundred-dollar estimate; upload a Kroll report for a payer's exact claim window to check a payment to the cent.</p>
       <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Payer</th><th>Billed (Kroll)</th><th>Received</th><th>Still owed</th><th>Normal lag</th><th>Status</th><th>Last deposit</th><th>Next due</th></tr></thead><tbody>${payerRows}${otherRow}</tbody></table></div>
       ${odbRows ? `<details class="bk-det"><summary>ODB, payment by payment</summary><div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Paid</th><th>Claims covered</th><th>Kroll billed</th><th>Deposited</th><th>Difference</th><th>Running</th></tr></thead><tbody>${odbRows}</tbody></table></div><p class="bk-note">ODB sends no remittance for online claims, so Kroll's total for the window <i>is</i> the check. Run the Plan Billing Summary for 23rd–8th or 9th–22nd and upload it to mark a payment “exact”.</p></details>` : ''}
     </div>
     <div class="card"><div class="card-title">Month by month</div>
-      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Month</th><th>Billed to plans</th><th>Received from plans</th><th>Patient-pay owed</th><th>Patient-pay banked</th><th>Not banked</th><th>Actual expenses</th><th>Budget (Monthly Data)</th><th>Budget − actual</th><th>McKesson</th><th>Rebates</th><th>Partner money</th><th>Operating cash</th><th>Balance</th></tr></thead><tbody>${monthRows}</tbody></table></div>
-      <p class="bk-note">Patient-pay owed = Kroll's <b>Cash</b> line (copays and cash prescriptions) + front-store sales from Monthly Data. Banked = card settlements + patient e-transfers + cash deposits. Operating cash = everything in − everything out, excluding partner/owner money.</p>
+      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Month</th><th>Billed to plans</th><th>Deposited by plans</th><th>Patient-pay owed</th><th>Patient-pay banked</th><th>Not banked</th><th>Actual expenses</th><th>Budget (Monthly Data)</th><th>Budget − actual</th><th>McKesson</th><th>Rebates</th><th>Other in</th><th>Partner money</th><th>Operating cash</th><th>Balance</th></tr></thead><tbody>${monthRows}</tbody></table></div>
+      <p class="bk-note">Billed is by claim date; Deposited is what plans paid that month, mostly for earlier claims (ODB pays up to six weeks later), so the two don't line up month by month. The payer table above does the matching. Patient-pay owed = Kroll's <b>Cash</b> line (copays and cash prescriptions) + front-store sales from Monthly Data; in a month the statements end partway through, only the days that could have settled. Banked = card settlements + patient e-transfers + cash deposits (${cashDeps.length} cash deposit${cashDeps.length === 1 ? '' : 's'} in all, ${bk$(cashDeps.reduce((s, t) => s + t.amount, 0))}). Other in = cheques not yet assigned to a payer and other income. Operating cash = Deposited + Banked + Rebates + Other in − Actual expenses − McKesson; add Partner money to get the change in the balance.</p>
     </div>
     <div class="card"><div class="card-title">Where the money went</div>
       <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Category</th>${exMonths.map(mk => `<th>${bkM(mk)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${exRows}</tbody></table></div>
