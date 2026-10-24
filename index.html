@@ -271,6 +271,32 @@ select.bk-cat{font-size:.8rem;padding:4px 6px;border:1px solid var(--border);bor
 .bk-file{display:flex;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.85rem}.bk-file span:first-child{flex:1}
 .bk-rule pre{background:#f5f7fb;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;white-space:pre}
 .bk-list{margin:6px 0 0 18px;font-size:.88rem;line-height:1.6}
+/* Health page: chart tokens are the validated data-viz palette */
+.hl{--hl-s1:#2a78d6;--hl-s2:#eb6834;--hl-s3:#1baf7a;--hl-up:#2a78d6;--hl-down:#e34948;--hl-total:#52514e;--hl-grid:#e7ebf2;--hl-axis:#c3cad6;--hl-muted:#8a96a8;--hl-surface:#fff;--hl-tint:rgba(208,59,59,.07);--hl-wash:rgba(27,58,107,.05)}
+.hl-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:800px){.hl-tiles{grid-template-columns:1fr 1fr}}@media(max-width:460px){.hl-tiles{grid-template-columns:1fr}}
+.hl-tile{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px 16px}.hl-tile span{display:block;font-size:.78rem;color:var(--light)}
+.hl-tile b{display:block;font-size:1.45rem;font-weight:800;color:var(--navy);margin:2px 0}.hl-tile em{display:block;font-style:normal;font-size:.78rem;color:var(--light)}
+.hl-sc{display:grid;grid-template-columns:170px 104px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--border);font-size:.86rem;align-items:start}.hl-sc:first-of-type{border-top:0}
+.hl-sc span:last-child{color:var(--light)}
+@media(max-width:640px){.hl-sc{grid-template-columns:1fr auto}.hl-sc span:last-child{grid-column:1/-1}}
+.hl-st{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;white-space:nowrap}
+.hl-st i{width:17px;height:17px;border-radius:50%;display:inline-grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;color:#0b0b0b}
+.hl-st.good i{background:#0ca30c;color:#fff}.hl-st.warn i{background:#fab219}.hl-st.serious i{background:#ec835a}.hl-st.critical i{background:#d03b3b;color:#fff}.hl-st.info i{background:#dde2ea;color:var(--navy)}
+.hl-lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--light);margin:-8px 0 10px}.hl-lg span{display:inline-flex;align-items:center;gap:6px}
+.hl-lg b{width:12px;height:12px;border-radius:3px;display:inline-block}.hl-lg b.ln{height:3px;width:16px;border-radius:2px}
+.hl-ch{position:relative;width:100%}.hl-ch svg{display:block;width:100%;overflow:visible}
+.hl-ch text{font:12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;fill:var(--hl-muted);font-variant-numeric:tabular-nums}.hl-ch text.lbl{fill:var(--light);font-weight:600}
+.hl-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.hl-2>.card{min-width:0}@media(max-width:800px){.hl-2{grid-template-columns:1fr}}
+.hl-wf{display:grid;grid-template-columns:240px 1fr 76px;gap:12px;align-items:center;padding:5px 0;font-size:.86rem}
+.hl-wf .lab small{display:block;color:var(--light);font-size:.74rem;font-weight:400;line-height:1.35}.hl-wf.tot .lab,.hl-wf.tot .val{font-weight:800}
+.hl-wf .track{position:relative;height:22px}.hl-wf .zero{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--hl-axis)}
+.hl-wf .bar{position:absolute;top:3px;height:16px;border-radius:4px}.hl-wf .bar.up{background:var(--hl-up)}.hl-wf .bar.down{background:var(--hl-down)}.hl-wf .bar.total{background:var(--hl-total)}
+.hl-wf .val{text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.hl-wf{grid-template-columns:1fr 70px}.hl-wf .lab{grid-column:1/-1}}
+.hl-tip{position:absolute;pointer-events:none;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.8rem;box-shadow:0 6px 20px rgba(20,40,70,.16);min-width:170px;z-index:500;display:none}
+.hl-tip .t{font-weight:700;margin-bottom:4px;color:var(--text)}.hl-tip .r{display:flex;align-items:center;gap:6px;color:var(--light);font-variant-numeric:tabular-nums}
+.hl-tip .r b{width:10px;height:10px;border-radius:2px;flex:none}.hl-tip .r span:last-child{margin-left:auto;padding-left:12px;color:var(--text)}.hl-tip .n{color:var(--light);font-size:.74rem;margin-top:4px;max-width:240px}
 </style>
 <style>
 /* ============================================================
@@ -736,6 +762,7 @@ select.bk-cat{font-size:.8rem;padding:4px 6px;border:1px solid var(--border);bor
 <div id="page-insights"  class="page"></div>
 <div id="page-settings"  class="page"></div>
 <div id="page-bank"      class="page"></div>
+<div id="page-health"    class="page"></div>
 <div id="page-weekly"   class="page"></div>
 <div id="page-ehc"      class="page"></div>
 
@@ -830,9 +857,11 @@ const PAGE_MAP = [
   { id:'weekly',    label:'Weekly Metrics', name:'Weekly Metrics' },
   { id:'monthly',   label:'Monthly Data',   name:'Monthly Data'   },
   { id:'expenses',  label:'Expenses',       name:'Expenses'       },
+  { id:'health',    label:'Health',         name:'Health', needs:'Bank' },   // opens for whoever can see Bank; not granted on its own
   { id:'bank',      label:'Bank',           name:'Bank'           },   // owner-only by default; not in ALL_PAGES
   { id:'settings',  label:'Settings',       name:'Settings'       },
 ];
+const pageAllowed = p => !!userRecord && userRecord.pages.includes(p.needs || p.name);
 
 // ================================================================
 // KEYS & DEFAULTS (kept for reference / export format)
@@ -1084,16 +1113,15 @@ function renderNav() {
   const nav = document.getElementById('mainNav');
   if (!nav || !userRecord) return;
   nav.innerHTML = PAGE_MAP
-    .filter(p => userRecord.pages.includes(p.name))
+    .filter(pageAllowed)
     .map(p => `<button class="nav-btn${currentPage===p.id?' active':''}" data-page="${p.id}" onclick="navigate('${p.id}')">${p.label}</button>`)
     .join('');
 }
 
 function landingPage() {
-  const allowed = p => !!userRecord && userRecord.pages.includes(p.name);
   const home = PAGE_MAP.find(p => p.id === LANDING_PAGE);
-  if (home && allowed(home)) return home.id;
-  const first = PAGE_MAP.find(allowed);
+  if (home && pageAllowed(home)) return home.id;
+  const first = PAGE_MAP.find(pageAllowed);
   return first ? first.id : 'dashboard';
 }
 
@@ -1101,7 +1129,7 @@ function navigate(page) {
   // Access guard — silently redirect to the landing page if not permitted
   if (userRecord) {
     const entry = PAGE_MAP.find(p => p.id === page);
-    if (entry && !userRecord.pages.includes(entry.name)) page = landingPage();
+    if (entry && !pageAllowed(entry)) page = landingPage();
   }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1129,6 +1157,7 @@ function renderPage(page) {
     case 'ehc':       renderEHC();       break;
     case 'settings':  renderSettings();  break;
     case 'bank':      renderBank();      break;
+    case 'health':    renderHealth();    break;
   }
 }
 
@@ -2055,7 +2084,7 @@ function renderDashboard(animate){
         <div class="k-top"><span class="k-label">Monthly Expenses</span></div>
         <div class="k-num num navytxt">${fmt(c.expenses)}</div>
         <div class="k-sub">${(parseFloat(m.expenses)||0) > 0 ? 'Recorded for '+monthKeyToLabel(m.monthKey) : (settings.expenseMethod==='lump'?'Lump sum total':'Itemized operating total')}</div>
-        ${(a => a === null ? '' : `<div class="k-sub" title="Operating costs paid from the bank account this month (Bank page)">Paid from bank: <b>${fmt(a)}</b> · ${a > c.expenses ? fmt(a - c.expenses) + ' over' : fmt(c.expenses - a) + ' under'}</div>`)(bkActualExpenses(m.monthKey))}
+        ${(s => !s ? '' : `<div class="k-sub" title="Expenses paid from the TD account (Bank page). The rest of what's entered in Monthly Data was paid from other accounts.">From TD, ${bkM(s.last.mk)}: <b>${fmt(s.last.td)}</b> of ${fmt(s.last.entered)} entered</div>${s.m3 ? `<div class="k-sub" title="Paid from TD of the total entered, over the last 3 and 12 months that have a statement">3 mo: ${fmt(s.m3.td)} of ${fmt(s.m3.entered)}${s.m12 ? ` · 12 mo: ${fmt(s.m12.td)} of ${fmt(s.m12.entered)}` : ''}</div>` : ''}`)(bkExpenseSummary())}
       </section>
       <section class="kpi card">
         <div class="k-top"><span class="k-label">Months to Break-even</span></div>
@@ -3419,6 +3448,17 @@ function bkActualExpenses(monthKey) {
   const row = bkModel().byMonth.find(r => r.mk === monthKey);
   return row && row.hasBank ? row.opex : null;
 }
+// For the Dashboard: expenses paid from TD next to what Monthly Data has, for the
+// latest month with a statement and the last 3 / 12 such months. Monthly Data
+// also includes costs paid from other accounts, so TD is normally the smaller.
+function bkExpenseSummary() {
+  if (!bankData.loaded || bankData.error || !bankData.statements.length) return null;
+  const td = new Map(bkModel().byMonth.filter(r => r.hasBank).map(r => [r.mk, r.opex]));
+  const rows = months.filter(m => td.has(m.monthKey)).map(m => ({ mk: m.monthKey, td: td.get(m.monthKey), entered: parseFloat(m.expenses) || 0 }));
+  if (!rows.length) return null;
+  const tot = rs => rs.reduce((a, r) => ({ td: a.td + r.td, entered: a.entered + r.entered }), { td: 0, entered: 0 });
+  return { last: rows[rows.length - 1], m3: rows.length >= 3 ? tot(rows.slice(-3)) : null, m12: rows.length >= 12 ? tot(rows.slice(-12)) : null };
+}
 
 // ── Upload ───────────────────────────────────────────────────────────
 async function bkHandleFiles(fileList) {
@@ -3686,6 +3726,247 @@ function bkBindUpload() {
     ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
     drop.addEventListener('drop', e => bkHandleFiles(e.dataTransfer.files));
   }
+}
+
+// ================================================================
+// PAGE: HEALTH
+// ================================================================
+// A one-page financial health check: profit from Monthly Data, cash from the
+// Bank page's model, over the last 12 months that have both. Same access as
+// the Bank page. Expenses entered in Monthly Data include costs paid from
+// other accounts, so Monthly Data is the profit view and TD is the cash view.
+const HL_ST = { good: ['✓', 'Good'], warn: ['!', 'Watch'], serious: ['▲', 'Act soon'], critical: ['✕', 'Act now'], info: ['i', 'Note'] };
+let _hlTip = null;
+
+function hlData() {
+  const M = bkModel(), md = new Map(months.map(m => [m.monthKey, m]));
+  const rows = M.byMonth.filter(r => r.hasBank && md.has(r.mk)).slice(-12).map(r => {
+    const m = md.get(r.mk), c = calcMonthData(m);
+    const rx = parseFloat(m.rxSales) || 0, front = parseFloat(m.frontSales) || 0;
+    return { r, mk: r.mk, rx, front, cnt: parseFloat(m.rxCount) || 0, gp: c.totalGP, rebate: c.rebate, exp: c.totalExp, np: c.netProfit, cogsImpl: rx + front - (c.totalGP - c.rebate) };
+  });
+  return { M, rows };
+}
+
+// ── chart helpers (SVG; colors from the .hl tokens) ──────────────────
+const hlK = (v, dp) => { const a = Math.abs(v); return (v < -0.5 ? '−' : '') + (a >= 1000 ? '$' + (a / 1000).toFixed(dp ?? (a >= 100000 ? 0 : 1)) + 'K' : '$' + Math.round(a).toLocaleString('en-CA')); };
+function hlTipShow(host, x, y, html) {
+  if (!_hlTip) { _hlTip = document.createElement('div'); _hlTip.className = 'hl-tip'; document.body.appendChild(_hlTip); }
+  _hlTip.innerHTML = html; _hlTip.style.display = 'block';
+  const hr = host.getBoundingClientRect(), tw = _hlTip.offsetWidth, th = _hlTip.offsetHeight;
+  let left = hr.left + window.scrollX + x + 14;
+  if (left + tw > window.scrollX + document.documentElement.clientWidth - 8) left = hr.left + window.scrollX + x - tw - 14;
+  _hlTip.style.left = Math.max(8, left) + 'px'; _hlTip.style.top = Math.max(window.scrollY + 8, hr.top + window.scrollY + y - th / 2) + 'px';
+}
+const hlTipHide = () => { if (_hlTip) _hlTip.style.display = 'none'; };
+const hlTipRow = (c, n, v) => `<div class="r"><b style="background:${c}"></b><span>${n}</span><span>${v}</span></div>`;
+function hlNice(min, max, n = 4) {
+  min = Math.min(0, min); max = Math.max(0, max);
+  const raw = (max - min || 1) / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  const st = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p, lo = Math.floor(min / st) * st, hi = Math.ceil(max / st) * st, ticks = [];
+  for (let v = lo; v <= hi + st / 2; v += st) ticks.push(Math.round(v));
+  return { lo, hi, ticks };
+}
+// a bar with its data end (away from the baseline) rounded
+function hlBar(x, w, y0, y1, r = 4) {
+  const h = Math.abs(y1 - y0); if (h < 0.5) return '';
+  r = Math.min(r, h, w / 2);
+  return y1 < y0 ? `M${x},${y0}V${y1 + r}Q${x},${y1} ${x + r},${y1}H${x + w - r}Q${x + w},${y1} ${x + w},${y1 + r}V${y0}Z`
+                 : `M${x},${y0}V${y1 - r}Q${x},${y1} ${x + r},${y1}H${x + w - r}Q${x + w},${y1} ${x + w},${y1 - r}V${y0}Z`;
+}
+function hlFrame(el, height, yr, mr = 14) {
+  const W = Math.max(280, el.clientWidth), m = { l: 54, r: mr, t: 10, b: 26 }, h = height - m.t - m.b, cs = getComputedStyle(el), cv = n => cs.getPropertyValue(n).trim();
+  const y = v => m.t + h - (v - yr.lo) / (yr.hi - yr.lo) * h;
+  const g = yr.ticks.map(t => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="${cv(t === 0 ? '--hl-axis' : '--hl-grid')}"/><text x="${m.l - 8}" y="${y(t) + 4}" text-anchor="end">${hlK(t, 0)}</text>`).join('');
+  return { W, m, h, y, g, cv };
+}
+// columns: grouped, or stacked (positive values only)
+function hlCols(el, labels, longs, series, { stacked = false, height = 240, extra } = {}) {
+  const n = labels.length, vals = series.flatMap(s => s.values);
+  const yr = stacked ? hlNice(0, Math.max(...labels.map((_, i) => series.reduce((s, x) => s + Math.max(0, x.values[i]), 0)))) : hlNice(Math.min(...vals), Math.max(...vals));
+  const f = hlFrame(el, height, yr), band = (f.W - f.m.l - f.m.r) / n, col = s => f.cv(s.color);
+  let marks = '', hits = '', xl = '';
+  for (let i = 0; i < n; i++) {
+    const x0 = f.m.l + i * band;
+    if (stacked) {
+      const w = Math.min(26, band * 0.56), x = x0 + (band - w) / 2; let acc = 0;
+      series.forEach((s, k) => {
+        const v = s.values[i]; if (v <= 0) return;
+        const top = series.slice(k + 1).every(o => o.values[i] <= 0), ya = f.y(acc) - (acc > 0 ? 2 : 0), yb = f.y(acc + v);
+        marks += top ? `<path d="${hlBar(x, w, ya, yb)}" fill="${col(s)}"/>` : `<rect x="${x}" y="${yb}" width="${w}" height="${Math.max(0, ya - yb)}" fill="${col(s)}"/>`;
+        acc += v;
+      });
+    } else {
+      const k = series.length, w = Math.min(18, (band * 0.72 - 2 * (k - 1)) / k), tot = w * k + 2 * (k - 1);
+      series.forEach((s, j) => { marks += `<path d="${hlBar(x0 + (band - tot) / 2 + j * (w + 2), w, f.y(0), f.y(s.values[i]))}" fill="${col(s)}"/>`; });
+    }
+    hits += `<rect class="hit" data-i="${i}" x="${x0}" y="${f.m.t}" width="${band}" height="${f.h}" fill="transparent"/>`;
+    if (f.W >= 560 || i % 2 === 0) xl += `<text x="${x0 + band / 2}" y="${height - 8}" text-anchor="middle">${labels[i]}</text>`;
+  }
+  el.innerHTML = `<svg viewBox="0 0 ${f.W} ${height}" height="${height}">${f.g}<rect class="wash" y="${f.m.t}" width="${band}" height="${f.h}" fill="${f.cv('--hl-wash')}" style="display:none"/>${marks}${xl}${hits}</svg>`;
+  const wash = el.querySelector('.wash');
+  el.querySelectorAll('.hit').forEach(r => {
+    const i = +r.dataset.i;
+    r.addEventListener('mousemove', e => { wash.setAttribute('x', r.getAttribute('x')); wash.style.display = ''; const p = el.getBoundingClientRect();
+      hlTipShow(el, e.clientX - p.left, e.clientY - p.top, `<div class="t">${longs[i]}</div>${series.map(s => hlTipRow(col(s), s.name, s.signed ? bkS(s.values[i]) : bk$(s.values[i]))).join('')}${extra ? extra(i) : ''}`); });
+    r.addEventListener('mouseleave', () => { wash.style.display = 'none'; hlTipHide(); });
+  });
+}
+// lines over monthly or daily points; xlabels = [[index, text], ...]
+function hlLines(el, series, xlabels, tipTitle, { height = 250, refs = [], spans = [], label = true } = {}) {
+  const n = series[0].values.length, yr = hlNice(Math.min(...series.flatMap(s => s.values), ...refs.map(r => r.y)), Math.max(...series.flatMap(s => s.values)));
+  const direct = label && el.clientWidth >= 640, f = hlFrame(el, height, yr, direct ? 112 : 14), col = s => f.cv(s.color);
+  const pw = f.W - f.m.l - f.m.r, X = i => f.m.l + (n === 1 ? pw / 2 : i / (n - 1) * pw), surf = f.cv('--hl-surface');
+  let g = '';
+  spans.forEach(s => { const a = X(s.from), b = X(s.to); g += `<rect x="${a}" y="${f.m.t}" width="${Math.max(1, b - a)}" height="${f.h}" fill="${f.cv('--hl-tint')}"/>${b - a > 70 ? `<text x="${(a + b) / 2}" y="${f.m.t + 14}" text-anchor="middle" class="lbl">${s.label}</text>` : ''}`; });
+  refs.forEach(r => { g += `<line x1="${f.m.l}" x2="${f.W - f.m.r}" y1="${f.y(r.y)}" y2="${f.y(r.y)}" stroke="${f.cv('--hl-muted')}"/><text x="${f.m.l + 6}" y="${f.y(r.y) - 5}" class="lbl">${r.label}</text>`; });
+  series.forEach(s => { g += `<path d="${s.values.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + f.y(v).toFixed(1)).join('')}" fill="none" stroke="${col(s)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(n - 1)}" cy="${f.y(s.values[n - 1])}" r="4" fill="${col(s)}" stroke="${surf}" stroke-width="2"/>`; });
+  if (direct) {
+    const ends = series.map(s => ({ s, y: f.y(s.values[n - 1]) })).sort((a, b) => a.y - b.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
+    ends.forEach(e => { g += `<text x="${X(n - 1) + 10}" y="${e.y + 4}" class="lbl">${e.s.short || e.s.name}</text>`; });
+  }
+  const xl = xlabels.filter((_, k) => f.W >= 560 || k % 2 === 0).map(([i, t]) => `<text x="${X(i)}" y="${height - 8}" text-anchor="middle">${t}</text>`).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${f.W} ${height}" height="${height}">${f.g}${g}${xl}<line class="xh" y1="${f.m.t}" y2="${f.m.t + f.h}" stroke="${f.cv('--hl-axis')}" style="display:none"/><g class="dots"></g><rect class="hit" x="${f.m.l}" y="${f.m.t}" width="${pw}" height="${f.h}" fill="transparent"/></svg>`;
+  const xh = el.querySelector('.xh'), dots = el.querySelector('.dots'), hit = el.querySelector('.hit');
+  hit.addEventListener('mousemove', e => {
+    const p = el.getBoundingClientRect(), i = Math.max(0, Math.min(n - 1, Math.round(((e.clientX - p.left) * f.W / p.width - f.m.l) / pw * (n - 1))));
+    xh.setAttribute('x1', X(i)); xh.setAttribute('x2', X(i)); xh.style.display = '';
+    dots.innerHTML = series.map(s => `<circle cx="${X(i)}" cy="${f.y(s.values[i])}" r="4.5" fill="${col(s)}" stroke="${surf}" stroke-width="2"/>`).join('');
+    hlTipShow(el, X(i) * p.width / f.W, e.clientY - p.top, `<div class="t">${tipTitle(i)}</div>${series.map(s => hlTipRow(col(s), s.name, bk$(s.values[i]))).join('')}`);
+  });
+  hit.addEventListener('mouseleave', () => { xh.style.display = 'none'; dots.innerHTML = ''; hlTipHide(); });
+}
+function hlWaterfall(steps) {
+  let run = 0; const pts = [0];
+  steps.forEach(s => { run = s.total ? s.value : run + s.value; pts.push(run); });
+  const lo = Math.min(...pts), hi = Math.max(...pts), P = v => (v - lo) / ((hi - lo) || 1) * 100;
+  run = 0;
+  return steps.map(s => {
+    let a, b, cls;
+    if (s.total) { a = Math.min(0, s.value); b = Math.max(0, s.value); run = s.value; cls = 'total'; }
+    else { a = Math.min(run, run + s.value); b = Math.max(run, run + s.value); run += s.value; cls = s.value >= 0 ? 'up' : 'down'; }
+    return `<div class="hl-wf${s.total ? ' tot' : ''}"><div class="lab">${s.label}${s.note ? `<small>${s.note}</small>` : ''}</div>
+      <div class="track"><div class="zero" style="left:${P(0)}%"></div><div class="bar ${cls}" style="left:${P(a)}%;width:${Math.max(0.4, P(b) - P(a))}%"></div></div>
+      <div class="val">${s.total ? hlK(s.value) : (s.value >= 0 ? '+' : '') + hlK(s.value)}</div></div>`;
+  }).join('');
+}
+
+let _hlResize;
+window.addEventListener('resize', () => { clearTimeout(_hlResize); _hlResize = setTimeout(() => { if (currentPage === 'health') renderHealth(); }, 150); });
+function renderHealth() {
+  const el = document.getElementById('page-health');
+  if (!el) return;
+  if (!bkCanSee()) { el.innerHTML = '<div class="card">You don\'t have access to this page.</div>'; return; }
+  if (!bankData.loaded) {
+    el.innerHTML = '<div class="card" style="text-align:center;color:var(--light)">Loading bank data…</div>';
+    loadBank().then(() => { if (currentPage === 'health') renderHealth(); });
+    return;
+  }
+  const { M, rows } = bankData.error ? { rows: [] } : hlData();
+  if (rows.length < 3) {
+    el.innerHTML = `<div class="card"><div class="card-title">Financial health</div><p>This page needs at least three months that have both a TD statement (uploaded on the <a href="#" onclick="navigate('bank');return false">Bank</a> page) and Monthly Data. ${rows.length ? `It has ${rows.length} so far.` : ''}</p></div>`;
+    return;
+  }
+  const sum = (f, rs = rows) => rs.reduce((s, x) => s + (f(x) || 0), 0);
+  const L3 = rows.slice(-3), P3 = rows.length >= 6 ? rows.slice(-6, -3) : null, first = rows[0], last = rows[rows.length - 1];
+  const span = `${bkM(first.mk)} – ${bkM(last.mk)}`, l3span = `${bkM(L3[0].mk)} – ${bkM(last.mk)}`;
+  const labels = rows.map((x, i) => { const [y, m] = x.mk.split('-').map(Number); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1] + (i === 0 || m === 1 ? " '" + String(y).slice(2) : ''); });
+  const longs = rows.map(x => monthKeyToLabel(x.mk));
+
+  // balance: end of each day, carried over days with no transactions
+  const start = first.mk + '-01', end = M.asOf, close = new Map();
+  M.T.forEach(t => close.set(t.date, t.bal));
+  const before = M.T.filter(t => t.date < start);
+  const startBal = before.length ? before[before.length - 1].bal : M.first.opening;
+  const daily = []; let b = startBal;
+  for (let d = start; d <= end; d = bkAdd(d, 1)) { if (close.has(d)) b = close.get(d); daily.push([d, b]); }
+  const bal = daily[daily.length - 1][1], loc = (M.last && M.last.locLimit) || 0;
+  // overdrawn stretches; a few positive days in between don't end a stretch
+  const spans = []; daily.forEach(([, v], i) => { if (v < 0) { const s = spans[spans.length - 1]; if (s && i - s.to <= 7) { s.to = i; s.n++; } else spans.push({ from: i, to: i, n: 1 }); } });
+  spans.forEach(s => { s.label = `Overdrawn ${s.n} day${s.n > 1 ? 's' : ''}`; });
+
+  // headline numbers
+  const outDay = sum(x => x.r.opex + x.r.cogs, L3) / sum(x => bkDim(x.mk), L3);
+  const days = outDay > 0 ? bal / outDay : null, target = Math.round(outDay * 14 / 1000) * 1000;
+  const np3 = sum(x => x.np, L3) / 3, gp3 = sum(x => x.gp, L3) / 3, op3 = sum(x => x.r.operating, L3) / 3;
+  const capNet = sum(x => x.r.capIn - x.r.capOut), capIn = sum(x => x.r.capIn), capOut = sum(x => x.r.capOut);
+  const P = M.payers.filter(p => p.status !== 'none'), owed = P.reduce((s, p) => s + p.owed, 0), lag = P.reduce((s, p) => s + p.lagPart, 0), beyond = owed - lag;
+  const shortP = P.filter(p => p.status === 'short');
+  const gapRows = rows.filter(x => x.r.gap !== null), gapOwed = sum(x => x.r.owedByCustomers, gapRows), gapPct = gapOwed ? sum(x => x.r.gap, gapRows) / gapOwed : null;
+  const growth = P3 && sum(x => x.cnt, P3) ? sum(x => x.cnt, L3) / sum(x => x.cnt, P3) - 1 : null;
+  const gpRx = last.cnt ? last.gp / last.cnt : null;
+  const elsewhere = sum(x => x.exp - x.r.opex), tdOver = rows.slice(-6).filter(x => x.r.opex > x.exp * 1.05);
+  const rentHst = sum(x => x.r.ts.filter(t => t.cat === 'rent').reduce((s, t) => s + t.amount, 0)) * 13 / 113;
+  const hstSeen = M.T.some(t => t.date >= start && /GST|HST|CANADA RIT|RECEIVER GEN/i.test(t.desc));
+
+  // scorecard
+  const sc = [];
+  if (growth !== null) sc.push(['Growth', growth > 0 ? 'good' : 'warn', `Prescriptions ${growth >= 0 ? 'up' : 'down'} ${Math.abs(growth * 100).toFixed(0)}% on the 3 months before (${Math.round(sum(x => x.cnt, L3)).toLocaleString('en-CA')} in ${l3span}).`]);
+  sc.push(['Profit', np3 > 0.05 * gp3 ? 'good' : np3 > 0 ? 'warn' : 'serious', `Net profit averaged ${bkS(np3)} a month over ${l3span} (Monthly Data, so it includes costs paid from other accounts).`]);
+  sc.push(['Cash from operations', op3 > 0 && L3.every(x => x.r.operating > 0) ? 'good' : op3 > 0 ? 'warn' : 'serious', `${bkS(op3)} a month through TD over ${l3span}: ${L3.map(x => `${bkM(x.mk)} ${bkS(x.r.operating)}`).join(' · ')}.`]);
+  sc.push(['Cash cushion', bal < 0 ? 'critical' : days < 10 ? 'serious' : days < 14 ? 'warn' : 'good', `${bk$(bal)} on ${bkD(end)}${days !== null ? `, about ${Math.max(0, Math.round(days))} days of outgoings` : ''}. Target: two weeks (≈ ${bk$(target)}).${loc ? ` Line of credit ${bk$(loc)}.` : ''}`]);
+  sc.push(['Collections', beyond < 1000 ? 'good' : beyond < 5000 ? 'warn' : 'serious', `${bk$(owed)} owed by insurers & ODB; ${bk$(lag)} is normal lag, ${bk$(beyond)} beyond it${shortP.length ? ` (${shortP.map(p => `${esc(p.name)} ${bk$(p.unexplained)}`).join(', ')})` : ''}.`]);
+  if (gapPct !== null) sc.push(['Patient-pay banked', gapPct < 0.05 ? 'good' : gapPct < 0.12 ? 'warn' : 'serious', `${bk$(sum(x => x.r.gap, gapRows))} (${Math.round(gapPct * 100)}%) of copays, cash Rx and front-store sales didn't reach the bank over ${span}. Target under 5%.`]);
+  sc.push(['Expenses', tdOver.length ? 'warn' : 'info', `${bk$(elsewhere)} of entered expenses were paid from other accounts over ${span}.${tdOver.length ? ` TD paid more than was entered in ${tdOver.map(x => bkM(x.mk)).join(', ')}: check Monthly Data for those months.` : ''}`]);
+  if (!hstSeen) sc.push(['HST', 'warn', `No HST payments or refunds in the statements. Prescriptions are zero-rated, so the pharmacy can usually claim back the HST it pays${rentHst > 100 ? `: rent alone carried ≈ ${bk$(rentHst)} over ${span}` : ''}.`]);
+  const stHtml = s => `<span class="hl-st ${s}"><i>${HL_ST[s][0]}</i>${HL_ST[s][1]}</span>`;
+
+  // profit → cash bridge (closes by construction: what's left over is shown)
+  const kr = rows.filter(x => x.r.billedPlans !== null && x.r.krollCash !== null);
+  const steps = [
+    { label: 'Net profit (Monthly Data)', value: sum(x => x.np), total: true },
+    { label: 'Expenses paid from other accounts', value: elsewhere, note: 'Entered in Monthly Data but not paid from TD' },
+    { label: 'Insurers & ODB still to pay', value: sum(x => x.r.receivedPlans - x.r.billedPlans, kr), note: `${bk$(lag)} of what's owed now is normal lag` },
+    { label: 'Patient-pay not banked', value: sum(x => x.r.banked - x.r.krollCash - x.r.front, kr), note: 'Waived copays or cash not deposited' },
+    { label: 'Stock bought vs sold', value: -sum(x => x.r.cogs - x.cogsImpl), note: 'McKesson payments minus cost of goods sold' },
+    { label: 'Rebates received vs entered', value: sum(x => x.r.rebates - x.rebate) },
+    { label: 'Other money in', value: sum(x => x.r.otherIn), note: 'Cheques not assigned to a payer, other income' },
+  ];
+  const opTot = sum(x => x.r.operating), rest = opTot - steps.reduce((s, x) => s + x.value, 0);
+  if (Math.abs(rest) >= 1) steps.push({ label: 'Other differences', value: rest, note: 'Mostly Kroll vs Monthly Data sales' });
+  steps.push({ label: 'Operating cash (TD)', value: opTot, total: true, note: 'Everything in minus everything out, without partner money' },
+    { label: 'Partner money, net', value: capNet, note: `${bk$(capIn)} in, ${bk$(capOut)} out` },
+    { label: 'Change in the bank balance', value: bal - startBal, total: true, note: `${bk$(startBal)} → ${bk$(bal)}` });
+
+  const kpis = [
+    [`Rx sales, ${bkM(last.mk)}`, bk$(last.rx), `${last.cnt.toLocaleString('en-CA')} prescriptions${first.rx ? ` · ${(last.rx / first.rx).toFixed(1)}× ${bkM(first.mk)}` : ''}`],
+    ['Net profit, last 3 months', bkS(np3) + '/mo', `Monthly Data · ${L3.map(x => bkS(x.np)).join(' · ')}`],
+    ['Cash from operations, last 3 months', bkS(op3) + '/mo', 'Through TD, excluding partner money'],
+    [`In the bank, ${bkD(end).replace(/, \d{4}/, '')}`, bk$(bal), days !== null ? `≈ ${Math.max(0, Math.round(days))} days of outgoings${loc ? ` · line of credit ${bk$(loc)}` : ''}` : ''],
+    [`Partner money in, net, ${span}`, bk$(capNet), `${bk$(capIn)} in · ${bk$(capOut)} out`],
+    ['Owed by insurers & ODB', bk$(owed), `${bk$(lag)} normal lag · ${bk$(beyond)} beyond it`],
+  ];
+  const lg = items => `<div class="hl-lg">${items.map(([c, n, ln]) => `<span><b class="${ln ? 'ln' : ''}" style="background:var(${c})"></b>${n}</span>`).join('')}</div>`;
+
+  el.innerHTML = `<div class="hl">
+    <div class="bk-head"><div><h2>Financial health</h2><p>${span} · profit from Monthly Data, cash from TD statements to ${bkD(end)}${gpRx ? ` · gross profit per Rx ${'$' + gpRx.toFixed(2)} in ${bkM(last.mk)}` : ''}</p></div></div>
+    <div class="hl-tiles">${kpis.map(([k, v, d]) => `<div class="hl-tile"><span>${k}</span><b>${v}</b><em>${d}</em></div>`).join('')}</div>
+    <div class="card"><div class="card-title">Scorecard</div>${sc.map(([n, s, w]) => `<div class="hl-sc"><b>${n}</b>${stHtml(s)}<span>${w}</span></div>`).join('')}</div>
+    <div class="card"><div class="card-title">Sales by month</div>${lg([['--hl-s1', 'Prescriptions'], ['--hl-s2', 'Front store']])}<div class="hl-ch" id="hlRev"></div></div>
+    <div class="card"><div class="card-title">Gross profit vs expenses</div>${lg([['--hl-s1', 'Gross profit (incl. rebates)', 1], ['--hl-s2', 'Expenses (Monthly Data)', 1], ['--hl-s3', 'Paid from TD', 1]])}<div class="hl-ch" id="hlPl"></div>
+      <p class="bk-note">Monthly Data's expenses include costs paid from other accounts; “Paid from TD” is only the part that went through this account.</p></div>
+    <div class="hl-2">
+      <div class="card"><div class="card-title">Net profit by month</div><div class="hl-ch" id="hlNp"></div></div>
+      <div class="card"><div class="card-title">Operating cash &amp; partner money</div>${lg([['--hl-s1', 'Operating cash'], ['--hl-s2', 'Partner money (in − out)']])}<div class="hl-ch" id="hlCf"></div></div>
+    </div>
+    <div class="card"><div class="card-title">Bank balance, end of each day</div><div class="hl-ch" id="hlBal"></div></div>
+    <div class="card"><div class="card-title">Why profit and cash differ, ${span}</div>
+      ${lg([['--hl-up', 'Adds cash'], ['--hl-down', 'Uses cash'], ['--hl-total', 'Total']])}${hlWaterfall(steps)}</div>
+    <div class="card"><div class="card-title">Each month, by the 5th</div>
+      <ol class="bk-list"><li>Upload the TD statement and the Kroll Plan Billing Summary on the Bank page.</li><li>Enter Monthly Data, including costs paid from other accounts.</li><li>Clear the Bank page's “Needs a look” list.</li><li>Check the cash cushion before any partner repayment.</li><li>File HST when due.</li></ol></div>
+  </div>`;
+
+  hlCols(document.getElementById('hlRev'), labels, longs, [{ name: 'Prescriptions', color: '--hl-s1', values: rows.map(x => x.rx) }, { name: 'Front store', color: '--hl-s2', values: rows.map(x => x.front) }],
+    { stacked: true, extra: i => rows[i].cnt ? `<div class="n">${rows[i].cnt.toLocaleString('en-CA')} prescriptions · avg $${(rows[i].rx / rows[i].cnt).toFixed(2)}</div>` : '' });
+  hlLines(document.getElementById('hlPl'), [{ name: 'Gross profit', color: '--hl-s1', values: rows.map(x => x.gp) }, { name: 'Expenses (Monthly Data)', short: 'Expenses', color: '--hl-s2', values: rows.map(x => x.exp) }, { name: 'Paid from TD', color: '--hl-s3', values: rows.map(x => x.r.opex) }],
+    labels.map((l, i) => [i, l]), i => longs[i]);
+  hlCols(document.getElementById('hlNp'), labels, longs, [{ name: 'Net profit', color: '--hl-s1', values: rows.map(x => x.np), signed: true }], { height: 220 });
+  hlCols(document.getElementById('hlCf'), labels, longs, [{ name: 'Operating cash', color: '--hl-s1', values: rows.map(x => x.r.operating), signed: true }, { name: 'Partner money', color: '--hl-s2', values: rows.map(x => x.r.capIn - x.r.capOut), signed: true }],
+    { height: 220, extra: i => `<div class="n">Balance at month end ${bk$(rows[i].r.endBal)}</div>` });
+  hlLines(document.getElementById('hlBal'), [{ name: 'Balance', color: '--hl-s1', values: daily.map(d => d[1]) }],
+    daily.map((d, i) => [i, d[0]]).filter(([, d]) => d.endsWith('-01')).map(([i, d]) => [i, bkM(d.slice(0, 7)).replace(/ '\d\d/, '')]),
+    i => bkD(daily[i][0]), { label: false, refs: loc ? [{ y: -loc, label: `Line of credit limit −${bk$(loc)}` }] : [], spans });
 }
 
 // ================================================================
@@ -5587,7 +5868,7 @@ async function fetchUserRecord(email) {
 
 // Every page that can be ticked for a user: ALL_PAGES plus pages that are
 // granted one by one (Bank). Full-access backfills only ever add ALL_PAGES.
-function GRANTABLE_PAGES() { return PAGE_MAP.map(p => p.name); }
+function GRANTABLE_PAGES() { return PAGE_MAP.filter(p => !p.needs).map(p => p.name); }
 
 // Projections replaced Forecast (Oct 2026). Stored permission docs can still
 // list 'Forecast': read it as Projections, and drop names no page uses, so the
@@ -6221,7 +6502,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }).catch(() => {});
     }
     // Bank data feeds the Dashboard and Monthly Data "actual expenses" too.
-    if (bkCanSee()) loadBank().then(() => { if (['dashboard', 'monthly'].includes(currentPage)) renderPage(currentPage); });
+    if (bkCanSee()) loadBank().then(() => { if (['dashboard', 'monthly', 'health'].includes(currentPage)) renderPage(currentPage); });
     console.log('[Auth] App ready. Page:', firstPage);
 
     // Prompt email/password users to change their temporary password
