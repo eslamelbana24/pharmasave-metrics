@@ -278,7 +278,10 @@ select.bk-cat{font-size:.8rem;padding:4px 6px;border:1px solid var(--border);bor
 .hl-tile{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px 16px}.hl-tile span{display:block;font-size:.78rem;color:var(--light)}
 .hl-tile b{display:block;font-size:1.45rem;font-weight:800;color:var(--navy);margin:2px 0}.hl-tile em{display:block;font-style:normal;font-size:.78rem;color:var(--light)}
 .hl-sc{display:grid;grid-template-columns:170px 104px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--border);font-size:.86rem;align-items:start}.hl-sc:first-of-type{border-top:0}
-.hl-sc span:last-child{color:var(--light)}
+.hl-sc span:last-child{color:var(--light)}.hl-sc span:last-child b{color:var(--navy)}
+.hl-meter{height:8px;border-radius:4px;background:var(--hl-grid);margin:8px 0 3px;max-width:420px;overflow:hidden}.hl-meter div{height:100%;border-radius:4px;background:#ec835a}
+.hl-meter.good div{background:#0ca30c}.hl-meter.warn div{background:#fab219}.hl-meter.critical div{background:#d03b3b}
+.hl-meter-l{display:flex;justify-content:space-between;max-width:420px;font-size:.72rem;color:var(--hl-muted);font-variant-numeric:tabular-nums}
 @media(max-width:640px){.hl-sc{grid-template-columns:1fr auto}.hl-sc span:last-child{grid-column:1/-1}}
 .hl-st{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;white-space:nowrap}
 .hl-st i{width:17px;height:17px;border-radius:50%;display:inline-grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;color:#0b0b0b}
@@ -3905,7 +3908,9 @@ function renderHealth() {
   if (growth !== null) sc.push(['Growth', growth > 0 ? 'good' : 'warn', `Prescriptions ${growth >= 0 ? 'up' : 'down'} ${Math.abs(growth * 100).toFixed(0)}% on the 3 months before (${Math.round(sum(x => x.cnt, L3)).toLocaleString('en-CA')} in ${l3span}).`]);
   sc.push(['Profit', np3 > 0.05 * gp3 ? 'good' : np3 > 0 ? 'warn' : 'serious', `Net profit averaged ${bkS(np3)} a month over ${l3span} (Monthly Data, so it includes costs paid from other accounts).`]);
   sc.push(['Cash from operations', op3 > 0 && L3.every(x => x.r.operating > 0) ? 'good' : op3 > 0 ? 'warn' : 'serious', `${bkS(op3)} a month through TD over ${l3span}: ${L3.map(x => `${bkM(x.mk)} ${bkS(x.r.operating)}`).join(' · ')}.`]);
-  sc.push(['Cash cushion', bal < 0 ? 'critical' : days < 10 ? 'serious' : days < 14 ? 'warn' : 'good', `${bk$(bal)} on ${bkD(end)}${days !== null ? `, about ${Math.max(0, Math.round(days))} days of outgoings` : ''}. Target: two weeks (≈ ${bk$(target)}).${loc ? ` Line of credit ${bk$(loc)}.` : ''}`]);
+  const cushSt = bal < 0 ? 'critical' : days < 10 ? 'serious' : days < 14 ? 'warn' : 'good', cushGap = target - bal, cushPct = target > 0 ? Math.max(0, Math.min(100, bal / target * 100)) : 0;
+  sc.push(['Cash cushion', cushSt, `${bk$(bal)} on ${bkD(end)}${days !== null ? `, about ${Math.max(0, Math.round(days))} days of outgoings (≈ ${bk$(outDay)} a day over ${l3span})` : ''}. Target: two weeks, ≈ ${bk$(target)}. ${target > 0 ? (cushGap > 0 ? `<b>${bk$(cushGap)} short of the target.</b>` : `<b>${bk$(-cushGap)} above the target.</b>`) : ''}${loc ? ` Line of credit ${bk$(loc)}.` : ''}`
+    + (target > 0 ? `<div class="hl-meter ${cushSt}" role="img" aria-label="Cash cushion ${Math.round(cushPct)}% of target"><div style="width:${cushPct}%"></div></div><small class="hl-meter-l"><span>$0</span><span>${Math.round(Math.max(0, bal / target * 100))}% of target</span><span>${bk$(target)}</span></small>` : '')]);
   sc.push(['Collections', beyond < 1000 ? 'good' : beyond < 5000 ? 'warn' : 'serious', `${bk$(owed)} owed by insurers & ODB; ${bk$(lag)} is normal lag, ${bk$(beyond)} beyond it${shortP.length ? ` (${shortP.map(p => `${esc(p.name)} ${bk$(p.unexplained)}`).join(', ')})` : ''}.`]);
   if (gapPct !== null) sc.push(['Patient-pay banked', gapPct < 0.05 ? 'good' : gapPct < 0.12 ? 'warn' : 'serious', `${bk$(sum(x => x.r.gap, gapRows))} (${Math.round(gapPct * 100)}%) of copays, cash Rx and front-store sales didn't reach the bank over ${span}. Target under 5%.`]);
   sc.push(['Expenses', tdOver.length ? 'warn' : 'info', `${bk$(elsewhere)} of entered expenses were paid from other accounts over ${span}.${tdOver.length ? ` TD paid more than was entered in ${tdOver.map(x => bkM(x.mk)).join(', ')}: check Monthly Data for those months.` : ''}`]);
