@@ -1,0 +1,13 @@
+# Local only: settings, worktrees, OS files
+.DS_Store
+.claude/settings.local.json
+.claude/worktrees/
+.netlify/
+
+# Financial data and exports never go in this public repo
+*.pdf
+*.csv
+*.xlsx
+*.json
+!assets/**/*.json
+!.claude/launch.json
