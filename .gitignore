@@ -10,4 +10,3 @@
 *.xlsx
 *.json
 !assets/**/*.json
-!.claude/launch.json
