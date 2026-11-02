@@ -53,7 +53,8 @@ The module sits between `// PAGE: BANK & COLLECTIONS` and `// PAGE: HEALTH`.
 ## Owner decisions to respect
 - Monthly Data expenses are the full cost, including costs paid from accounts other than TD. Monthly Data is the profit view; TD is the cash view.
 - Kroll "Cash" plus front-store sales minus what's banked is shown as "patient-pay not banked". Don't speculate about its causes in anything committed here.
-- Partner-account transfers, e-transfers of $5,000 or more, and Pharmasave credits of $10,000 or more are partner/owner capital.
+- Transfers in from the partner account, e-transfers in of $5,000 or more, and Pharmasave credits of $10,000 or more are partner/owner capital.
+- Transfers out to the partner account (`TFR-TO <digits>`) are owners' pay and are already counted in Monthly Data's expenses. They're the `owner-pay` category (opex), not partner money. A real repayment can be re-filed as `capital-out` by hand.
 
 ## Testing (nothing here touches real data)
 - **Syntax:** extract the inline `<script>` from `index.html` and run `node --check` on it.

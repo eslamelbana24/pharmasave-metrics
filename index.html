@@ -2087,7 +2087,7 @@ function renderDashboard(animate){
         <div class="k-top"><span class="k-label">Monthly Expenses</span></div>
         <div class="k-num num navytxt">${fmt(c.expenses)}</div>
         <div class="k-sub">${(parseFloat(m.expenses)||0) > 0 ? 'Recorded for '+monthKeyToLabel(m.monthKey) : (settings.expenseMethod==='lump'?'Lump sum total':'Itemized operating total')}</div>
-        ${(s => !s ? '' : `<div class="k-sub" title="Expenses paid from the TD account (Bank page). The rest of what's entered in Monthly Data was paid from other accounts.">From TD, ${bkM(s.last.mk)}: <b>${fmt(s.last.td)}</b> of ${fmt(s.last.entered)} entered</div>${s.m3 ? `<div class="k-sub" title="Paid from TD of the total entered, over the last 3 and 12 months that have a statement">3 mo: ${fmt(s.m3.td)} of ${fmt(s.m3.entered)}${s.m12 ? ` · 12 mo: ${fmt(s.m12.td)} of ${fmt(s.m12.entered)}` : ''}</div>` : ''}`)(bkExpenseSummary())}
+        ${(s => !s ? '' : `<div class="k-sub" title="Expenses paid from the TD account (Bank page), owners' pay included. A month can be above or below what's entered, depending on when pay is drawn and on costs paid from other accounts.">From TD, ${bkM(s.last.mk)}: <b>${fmt(s.last.td)}</b> of ${fmt(s.last.entered)} entered</div>${s.m3 ? `<div class="k-sub" title="Paid from TD of the total entered, over the last 3 and 12 months that have a statement">3 mo: ${fmt(s.m3.td)} of ${fmt(s.m3.entered)}${s.m12 ? ` · 12 mo: ${fmt(s.m12.td)} of ${fmt(s.m12.entered)}` : ''}</div>` : ''}`)(bkExpenseSummary())}
       </section>
       <section class="kpi card">
         <div class="k-top"><span class="k-label">Months to Break-even</span></div>
@@ -3122,6 +3122,7 @@ const BK_CATS = Object.assign(
     'rent':              { label: 'Rent / cheques',               group: 'opex' },
     'payroll':           { label: 'Payroll (e-transfers)',        group: 'opex' },
     'payroll-tax':       { label: 'Payroll remittances (CRA)',    group: 'opex' },
+    'owner-pay':         { label: "Owners' pay (to partner account)", group: 'opex' },
     'bills':             { label: 'Bills paid by e-transfer',     group: 'opex' },
     'etfr-expense':      { label: 'Expenses paid by e-transfer',  group: 'opex' },
     'etfr-other':        { label: 'Other e-transfers out',        group: 'opex' },
@@ -3171,7 +3172,10 @@ function bkCategorize(t, same) {
   if (/E-TFR \*\S+ EXP$/.test(d)) return 'etfr-expense';
   if (/^SEND E-TFR/.test(d)) return 'etfr-other';
   if (/TFR-TO C\/C/.test(d)) return 'credit-card';
-  if (/TFR-TO \d/.test(d)) return 'capital-out';
+  // Owners' draws go to the partner account and are counted in Monthly Data's
+  // expenses, so they're a cost here too. A real repayment of partner money can
+  // be re-filed as Partner / owner money out.
+  if (/TFR-TO \d/.test(d)) return 'owner-pay';
   if (/^Telus Comm/i.test(d)) return 'phone';
   if (/^PHARMASAVE DRUG/i.test(d)) return 'pharmasave-fees';
   if (/^AVIVA\b|\bINS$/i.test(d)) return 'insurance';
@@ -3452,8 +3456,8 @@ function bkActualExpenses(monthKey) {
   return row && row.hasBank ? row.opex : null;
 }
 // For the Dashboard: expenses paid from TD next to what Monthly Data has, for the
-// latest month with a statement and the last 3 / 12 such months. Monthly Data
-// also includes costs paid from other accounts, so TD is normally the smaller.
+// latest month with a statement and the last 3 / 12 such months. TD includes
+// owners' pay, which is drawn in lumps, so a single month can be above or below.
 function bkExpenseSummary() {
   if (!bankData.loaded || bankData.error || !bankData.statements.length) return null;
   const td = new Map(bkModel().byMonth.filter(r => r.hasBank).map(r => [r.mk, r.opex]));
@@ -3575,7 +3579,7 @@ function renderBankInner() {
     [bk$(lastBal), `in the bank on ${M.asOf ? bkD(M.asOf) : '—'}${loc ? ` · line of credit ${bk$(loc)}` : ''}`, lastBal < 0 ? 'neg' : ''],
     [bk$(owedAll), `owed by insurers &amp; ODB · ${bk$(lagAll)} normal payment lag, ${bk$(owedAll - lagAll)} beyond it`, owedAll - lagAll > 1000 ? 'warn' : ''],
     [bk$(gap12), `patient-pay not banked (${owe12 ? Math.round(gap12 / owe12 * 100) : 0}%) · copays and front-store sales minus deposits`, gap12 > 0 ? 'warn' : ''],
-    [bkS(opAvg) + '/mo', 'cash from operations, last 3 months (excl. partner money)', opAvg < 0 ? 'neg' : 'pos'],
+    [bkS(opAvg) + '/mo', "cash from operations, last 3 months (after owners' pay, excl. partner money)", opAvg < 0 ? 'neg' : 'pos'],
     [bk$(capNet), 'partner / owner money in, net, last 12 months', ''],
   ];
 
@@ -3593,7 +3597,7 @@ function renderBankInner() {
   if (last3.length && last3.every(r => r.gap !== null) && last3.reduce((s, r) => s + r.gap, 0) > 0.08 * last3.reduce((s, r) => s + r.owedByCustomers, 0))
     flags.push(['', `<b>Patient-pay gap ${bk$(last3.reduce((s, r) => s + r.gap, 0))} over the last 3 months.</b> That's Kroll's Cash line plus front-store sales, minus what reached the bank.`]);
   const etf = M.T.filter(t => t.cat === 'etfr-other'), etfBig = etf.filter(t => t.amount >= 1000);
-  if (etfBig.length) flags.push(['', `<b>${bk$(etf.reduce((s, t) => s + t.amount, 0))} of e-transfers out with no memo</b> counted as expenses, including ${etfBig.map(t => `${bk$(t.amount)} on ${bkD(t.date)}`).join(', ')}. If any were partner repayments or draws, file them as Partner / owner money out so they leave Actual expenses.`]);
+  if (etfBig.length) flags.push(['', `<b>${bk$(etf.reduce((s, t) => s + t.amount, 0))} of e-transfers out with no memo</b> counted as expenses, including ${etfBig.map(t => `${bk$(t.amount)} on ${bkD(t.date)}`).join(', ')}. If any were owners' pay, file them as Owners' pay; if any paid back partner money, file them as Partner / owner money out so they leave Actual expenses.`]);
   // Overdraft: calendar days that ended below zero. A day with no transactions
   // (weekends, holidays) keeps the previous close, and overdraft interest runs on it too.
   const close = new Map(); M.T.forEach(t => close.set(t.date, t.bal));   // date order, so the last write is TD's end-of-day balance
@@ -3736,8 +3740,9 @@ function bkBindUpload() {
 // ================================================================
 // A one-page financial health check: profit from Monthly Data, cash from the
 // Bank page's model, over the last 12 months that have both. Same access as
-// the Bank page. Expenses entered in Monthly Data include costs paid from
-// other accounts, so Monthly Data is the profit view and TD is the cash view.
+// the Bank page. Monthly Data is the profit view and TD is the cash view. Both
+// count owners' pay as a cost: Monthly Data by month, TD when it's drawn.
+// Monthly Data can also include costs paid from other accounts.
 const HL_ST = { good: ['✓', 'Good'], warn: ['!', 'Watch'], serious: ['▲', 'Act soon'], critical: ['✕', 'Act now'], info: ['i', 'Note'] };
 let _hlTip = null;
 
@@ -3899,21 +3904,26 @@ function renderHealth() {
   const gapRows = rows.filter(x => x.r.gap !== null), gapOwed = sum(x => x.r.owedByCustomers, gapRows), gapPct = gapOwed ? sum(x => x.r.gap, gapRows) / gapOwed : null;
   const growth = P3 && sum(x => x.cnt, P3) ? sum(x => x.cnt, L3) / sum(x => x.cnt, P3) - 1 : null;
   const gpRx = last.cnt ? last.gp / last.cnt : null;
-  const elsewhere = sum(x => x.exp - x.r.opex), tdOver = rows.slice(-6).filter(x => x.r.opex > x.exp * 1.05);
+  // entered minus paid from TD: above zero = paid elsewhere or not drawn yet; below = TD paid more
+  const elsewhere = sum(x => x.exp - x.r.opex), expTot = sum(x => x.exp), tdOver = rows.slice(-6).filter(x => x.r.opex > x.exp * 1.05);
+  const expClose = Math.abs(elsewhere) <= 0.05 * expTot, overTxt = tdOver.map(x => bkM(x.mk)).join(', ');
   const rentHst = sum(x => x.r.ts.filter(t => t.cat === 'rent').reduce((s, t) => s + t.amount, 0)) * 13 / 113;
   const hstSeen = M.T.some(t => t.date >= start && /GST|HST|CANADA RIT|RECEIVER GEN/i.test(t.desc));
 
   // scorecard
   const sc = [];
   if (growth !== null) sc.push(['Growth', growth > 0 ? 'good' : 'warn', `Prescriptions ${growth >= 0 ? 'up' : 'down'} ${Math.abs(growth * 100).toFixed(0)}% on the 3 months before (${Math.round(sum(x => x.cnt, L3)).toLocaleString('en-CA')} in ${l3span}).`]);
-  sc.push(['Profit', np3 > 0.05 * gp3 ? 'good' : np3 > 0 ? 'warn' : 'serious', `Net profit averaged ${bkS(np3)} a month over ${l3span} (Monthly Data, so it includes costs paid from other accounts).`]);
+  sc.push(['Profit', np3 > 0.05 * gp3 ? 'good' : np3 > 0 ? 'warn' : 'serious', `Net profit averaged ${bkS(np3)} a month over ${l3span} (Monthly Data, which includes owners' pay and any costs paid from other accounts).`]);
   sc.push(['Cash from operations', op3 > 0 && L3.every(x => x.r.operating > 0) ? 'good' : op3 > 0 ? 'warn' : 'serious', `${bkS(op3)} a month through TD over ${l3span}: ${L3.map(x => `${bkM(x.mk)} ${bkS(x.r.operating)}`).join(' · ')}.`]);
   const cushSt = bal < 0 ? 'critical' : days < 10 ? 'serious' : days < 14 ? 'warn' : 'good', cushGap = target - bal, cushPct = target > 0 ? Math.max(0, Math.min(100, bal / target * 100)) : 0;
   sc.push(['Cash cushion', cushSt, `${bk$(bal)} on ${bkD(end)}${days !== null ? `, about ${Math.max(0, Math.round(days))} days of outgoings (≈ ${bk$(outDay)} a day over ${l3span})` : ''}. Target: two weeks, ≈ ${bk$(target)}. ${target > 0 ? (cushGap > 0 ? `<b>${bk$(cushGap)} short of the target.</b>` : `<b>${bk$(-cushGap)} above the target.</b>`) : ''}${loc ? ` Line of credit ${bk$(loc)}.` : ''}`
     + (target > 0 ? `<div class="hl-meter ${cushSt}" role="img" aria-label="Cash cushion ${Math.round(cushPct)}% of target"><div style="width:${cushPct}%"></div></div><small class="hl-meter-l"><span>$0</span><span>${Math.round(Math.max(0, bal / target * 100))}% of target</span><span>${bk$(target)}</span></small>` : '')]);
   sc.push(['Collections', beyond < 1000 ? 'good' : beyond < 5000 ? 'warn' : 'serious', `${bk$(owed)} owed by insurers & ODB; ${bk$(lag)} is normal lag, ${bk$(beyond)} beyond it${shortP.length ? ` (${shortP.map(p => `${esc(p.name)} ${bk$(p.unexplained)}`).join(', ')})` : ''}.`]);
   if (gapPct !== null) sc.push(['Patient-pay banked', gapPct < 0.05 ? 'good' : gapPct < 0.12 ? 'warn' : 'serious', `${bk$(sum(x => x.r.gap, gapRows))} (${Math.round(gapPct * 100)}%) of copays, cash Rx and front-store sales didn't reach the bank over ${span}. Target under 5%.`]);
-  sc.push(['Expenses', tdOver.length ? 'warn' : 'info', `${bk$(elsewhere)} of entered expenses were paid from other accounts over ${span}.${tdOver.length ? ` TD paid more than was entered in ${tdOver.map(x => bkM(x.mk)).join(', ')}: check Monthly Data for those months.` : ''}`]);
+  sc.push(['Expenses', expClose ? 'good' : elsewhere > 0 ? 'info' : 'warn', expClose
+    ? `TD paid ${bk$(expTot - elsewhere)} over ${span}, owners' pay included, against ${bk$(expTot)} entered in Monthly Data.${tdOver.length ? ` Single months swing with when pay is drawn (TD was higher in ${overTxt}).` : ''}`
+    : elsewhere > 0 ? `${bk$(elsewhere)} of the expenses entered over ${span} didn't go through TD: paid from other accounts, or not drawn yet.${tdOver.length ? ` TD paid more than was entered in ${overTxt}.` : ''}`
+    : `TD paid ${bk$(-elsewhere)} more than the expenses entered over ${span}, owners' pay included. Check Monthly Data for missing costs${tdOver.length ? `, starting with ${overTxt}` : ''}.`]);
   if (!hstSeen) sc.push(['HST', 'warn', `No HST payments or refunds in the statements. Prescriptions are zero-rated, so the pharmacy can usually claim back the HST it pays${rentHst > 100 ? `: rent alone carried ≈ ${bk$(rentHst)} over ${span}` : ''}.`]);
   const stHtml = s => `<span class="hl-st ${s}"><i>${HL_ST[s][0]}</i>${HL_ST[s][1]}</span>`;
 
@@ -3921,7 +3931,8 @@ function renderHealth() {
   const kr = rows.filter(x => x.r.billedPlans !== null && x.r.krollCash !== null);
   const steps = [
     { label: 'Net profit (Monthly Data)', value: sum(x => x.np), total: true },
-    { label: 'Expenses paid from other accounts', value: elsewhere, note: 'Entered in Monthly Data but not paid from TD' },
+    elsewhere >= 0 ? { label: 'Expenses not paid from TD', value: elsewhere, note: 'Entered in Monthly Data but paid from other accounts, or not drawn yet' }
+      : { label: 'Paid from TD beyond expenses entered', value: elsewhere, note: "Owners' pay drawn ahead of what's entered, or costs missing from Monthly Data" },
     { label: 'Insurers & ODB still to pay', value: sum(x => x.r.receivedPlans - x.r.billedPlans, kr), note: `${bk$(lag)} of what's owed now is normal lag` },
     { label: 'Patient-pay not banked', value: sum(x => x.r.banked - x.r.krollCash - x.r.front, kr), note: 'Copays and front-store sales minus deposits' },
     { label: 'Stock bought vs sold', value: -sum(x => x.r.cogs - x.cogsImpl), note: 'McKesson payments minus cost of goods sold' },
@@ -3930,14 +3941,14 @@ function renderHealth() {
   ];
   const opTot = sum(x => x.r.operating), rest = opTot - steps.reduce((s, x) => s + x.value, 0);
   if (Math.abs(rest) >= 1) steps.push({ label: 'Other differences', value: rest, note: 'Mostly Kroll vs Monthly Data sales' });
-  steps.push({ label: 'Operating cash (TD)', value: opTot, total: true, note: 'Everything in minus everything out, without partner money' },
+  steps.push({ label: 'Operating cash (TD)', value: opTot, total: true, note: "Everything in minus everything out, owners' pay included, without partner money" },
     { label: 'Partner money, net', value: capNet, note: `${bk$(capIn)} in, ${bk$(capOut)} out` },
     { label: 'Change in the bank balance', value: bal - startBal, total: true, note: `${bk$(startBal)} → ${bk$(bal)}` });
 
   const kpis = [
     [`Rx sales, ${bkM(last.mk)}`, bk$(last.rx), `${last.cnt.toLocaleString('en-CA')} prescriptions${first.rx ? ` · ${(last.rx / first.rx).toFixed(1)}× ${bkM(first.mk)}` : ''}`],
     ['Net profit, last 3 months', bkS(np3) + '/mo', `Monthly Data · ${L3.map(x => bkS(x.np)).join(' · ')}`],
-    ['Cash from operations, last 3 months', bkS(op3) + '/mo', 'Through TD, excluding partner money'],
+    ['Cash from operations, last 3 months', bkS(op3) + '/mo', "Through TD, after owners' pay, excluding partner money"],
     [`In the bank, ${bkD(end).replace(/, \d{4}/, '')}`, bk$(bal), days !== null ? `≈ ${Math.max(0, Math.round(days))} days of outgoings${loc ? ` · line of credit ${bk$(loc)}` : ''}` : ''],
     [`Partner money in, net, ${span}`, bk$(capNet), `${bk$(capIn)} in · ${bk$(capOut)} out`],
     ['Owed by insurers & ODB', bk$(owed), `${bk$(lag)} normal lag · ${bk$(beyond)} beyond it`],
@@ -3950,7 +3961,7 @@ function renderHealth() {
     <div class="card"><div class="card-title">Scorecard</div>${sc.map(([n, s, w]) => `<div class="hl-sc"><b>${n}</b>${stHtml(s)}<span>${w}</span></div>`).join('')}</div>
     <div class="card"><div class="card-title">Sales by month</div>${lg([['--hl-s1', 'Prescriptions'], ['--hl-s2', 'Front store']])}<div class="hl-ch" id="hlRev"></div></div>
     <div class="card"><div class="card-title">Gross profit vs expenses</div>${lg([['--hl-s1', 'Gross profit (incl. rebates)', 1], ['--hl-s2', 'Expenses (Monthly Data)', 1], ['--hl-s3', 'Paid from TD', 1]])}<div class="hl-ch" id="hlPl"></div>
-      <p class="bk-note">Monthly Data's expenses include costs paid from other accounts; “Paid from TD” is only the part that went through this account.</p></div>
+      <p class="bk-note">“Paid from TD” is every cost that went through this account, owners' pay included. Pay is drawn in lumps, so a month can sit above or below Monthly Data's expenses; Monthly Data can also include costs paid from other accounts.</p></div>
     <div class="hl-2">
       <div class="card"><div class="card-title">Net profit by month</div><div class="hl-ch" id="hlNp"></div></div>
       <div class="card"><div class="card-title">Operating cash &amp; partner money</div>${lg([['--hl-s1', 'Operating cash'], ['--hl-s2', 'Partner money (in − out)']])}<div class="hl-ch" id="hlCf"></div></div>
@@ -3959,7 +3970,7 @@ function renderHealth() {
     <div class="card"><div class="card-title">Why profit and cash differ, ${span}</div>
       ${lg([['--hl-up', 'Adds cash'], ['--hl-down', 'Uses cash'], ['--hl-total', 'Total']])}${hlWaterfall(steps)}</div>
     <div class="card"><div class="card-title">Each month, by the 5th</div>
-      <ol class="bk-list"><li>Upload the TD statement and the Kroll Plan Billing Summary on the Bank page.</li><li>Enter Monthly Data, including costs paid from other accounts.</li><li>Clear the Bank page's “Needs a look” list.</li><li>Check the cash cushion before any partner repayment.</li><li>File HST when due.</li></ol></div>
+      <ol class="bk-list"><li>Upload the TD statement and the Kroll Plan Billing Summary on the Bank page.</li><li>Enter Monthly Data, including costs paid from other accounts.</li><li>Clear the Bank page's “Needs a look” list.</li><li>Check the cash cushion before drawing owners' pay or repaying partners.</li><li>File HST when due.</li></ol></div>
   </div>`;
 
   hlCols(document.getElementById('hlRev'), labels, longs, [{ name: 'Prescriptions', color: '--hl-s1', values: rows.map(x => x.rx) }, { name: 'Front store', color: '--hl-s2', values: rows.map(x => x.front) }],
