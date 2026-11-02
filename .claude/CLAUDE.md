@@ -41,6 +41,7 @@ The module sits between `// PAGE: BANK & COLLECTIONS` and `// PAGE: HEALTH`.
   - MDM and NexgenRx: about monthly.
   - Other lag days were fitted to this account's deposits.
 - **Model:** `bkModel()` is cached by a signature. `bkBuildModel()` returns per-payer figures (billed, received, owed, `expectedOwed`, fees, unexplained, `lagPart`, status, `paidThrough`, `next`) and per-month figures (`otherIn`, `partial`, `settledTo`, `operating`, and so on).
+- **Payer figures stop at `payCut`**, the earlier of the last statement day and the end of the last Kroll month. Billing is spread by day for a partial month. A Kroll report uploaded before its TD statement (or the reverse) must not count a month of billing as owed, or deposits as overpaid.
 - **Day counts use calendar dates, never `Date` subtraction.** A DST bug came from exactly that.
 - **Overdraft days** are calendar days that ended below zero, carrying the balance over days with no transactions.
 - `bkExpenseSummary()` feeds the Dashboard's Monthly Expenses tile: TD-paid vs entered.

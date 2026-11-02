@@ -3371,14 +3371,19 @@ function bkBuildModel() {
   const billedBetween = (plans, a, b) => spread(planPaid, plans, a, b);
   const kStart = kMonths.length ? kMonths[0] + '-01' : null;
   const kEnd = kMonths.length ? `${kMonths[kMonths.length - 1]}-${String(bkDim(kMonths[kMonths.length - 1])).padStart(2, '0')}` : null;
+  // Billing and deposits are compared up to the same day, the earlier of the last
+  // statement day and the end of the last Kroll month. Otherwise a Kroll report
+  // uploaded before its TD statement counts a whole month of billing as unpaid.
+  const payCut = kEnd && asOf ? (asOf < kEnd ? asOf : kEnd) : (kEnd || asOf);
 
   // per payer
   const payers = BK_PAYERS.map(p => {
-    const deps = T.filter(t => t.cat === 'payer:' + p.id && (!kStart || t.date >= kStart));
-    const billed = kMonths.reduce((s, mk) => s + planPaid(kMonth[mk], p.plans), 0);
-    const claims = kMonths.reduce((s, mk) => s + planRx(kMonth[mk], p.plans), 0);
+    const allDeps = T.filter(t => t.cat === 'payer:' + p.id && (!kStart || t.date >= kStart));
+    const deps = allDeps.filter(t => !payCut || t.date <= payCut);
+    const billed = kStart ? billedBetween(p.plans, kStart, payCut) : 0;
+    const claims = kStart ? spread(planRx, p.plans, kStart, payCut) : 0;
     const received = deps.reduce((s, t) => s + t.amount, 0);
-    const lastDep = deps.length ? deps[deps.length - 1] : null;
+    const lastDep = deps.length ? deps[deps.length - 1] : null, latest = allDeps.length ? allDeps[allDeps.length - 1] : null;
     // how far the deposits so far have paid, by the payer's schedule
     let paidThrough = kStart ? bkAdd(kStart, -1) : null;
     if (lastDep) {
@@ -3388,7 +3393,7 @@ function bkBuildModel() {
       else if (p.schedule === 'telus') paidThrough = day <= 5 ? iso(new Date(y, m, 0, 12)) : iso(new Date(y, m, 15, 12));
       else paidThrough = bkAdd(lastDep.date, -(p.lagDays || 7));
     }
-    const win = kEnd && paidThrough && paidThrough < kEnd ? [bkAdd(paidThrough, 1), kEnd] : null;
+    const win = payCut && paidThrough && paidThrough < payCut ? [bkAdd(paidThrough, 1), payCut] : null;
     const expectedOwed = win ? billedBetween(p.plans, win[0], win[1]) : 0;
     // TELUS keeps $0.10 a claim, so that part of what it paid never arrives. Claims
     // still in the unpaid window are already in expectedOwed in full.
@@ -3398,7 +3403,7 @@ function bkBuildModel() {
     // the part of what's owed that the schedule explains (a payer that's paid
     // ahead of the estimate has no lag left to explain)
     const lagPart = Math.min(Math.max(owed, 0), expectedOwed + fees);
-    const recent = kMonths.slice(-3).reduce((s, mk) => s + planPaid(kMonth[mk], p.plans), 0);
+    const recent = kMonths.filter(mk => mk + '-01' <= payCut).slice(-3).reduce((s, mk) => s + planPaid(kMonth[mk], p.plans), 0);
     // Short (paid less than billed) is what matters. Being paid a little ahead
     // of the estimate is almost always timing, so it needs a bigger margin.
     const tol = Math.max(250, 0.03 * recent);
@@ -3411,11 +3416,12 @@ function bkBuildModel() {
       const d = new Date(asOf + 'T12:00:00'), y = d.getFullYear(), m = d.getMonth(), day = d.getDate(), iso = dt => dt.toISOString().slice(0, 10);
       if (p.schedule === 'odb') next = day < 15 ? iso(new Date(y, m, 15, 12)) : day < bkDim(asOf.slice(0, 7)) - 1 ? iso(new Date(y, m + 1, 0, 12)) : iso(new Date(y, m + 1, 15, 12));
       else if (p.schedule === 'telus') next = day < 16 ? iso(new Date(y, m, 16, 12)) : iso(new Date(y, m + 1, 1, 12));
-      else if (lastDep) next = bkAdd(lastDep.date, p.schedule === 'weekly' ? 7 : p.schedule === 'biweekly' ? 14 : 30);
+      else if (latest) next = bkAdd(latest.date, p.schedule === 'weekly' ? 7 : p.schedule === 'biweekly' ? 14 : 30);
     }
-    return Object.assign({}, p, { billed, claims, received, owed, expectedOwed, fees, unexplained, lagPart, status, deps, lastDep, paidThrough, slowStart, next });
+    // the deposit list and "Last deposit" show everything, including deposits after payCut
+    return Object.assign({}, p, { billed, claims, received, owed, expectedOwed, fees, unexplained, lagPart, status, deps: allDeps, lastDep: latest, paidThrough, slowStart, next });
   });
-  const otherBilled = kMonths.reduce((s, mk) => s + otherPaid(kMonth[mk]), 0);
+  const otherBilled = kStart ? spread(k => otherPaid(k), null, kStart, payCut) : 0;
 
   // per month
   const mset = new Set(T.map(t => t.date.slice(0, 7)).concat(kMonths));
@@ -3446,7 +3452,7 @@ function bkBuildModel() {
       opex: g('opex'), cogs: g('cogs'), rebates: g('rebate'), otherIn: g('other-in'), capIn, capOut, operating: credits - debits - (capIn - capOut), endBal,
       budget: md ? (parseFloat(md.expenses) || 0) : null };
   });
-  return { T, payers, otherBilled, byMonth, kMonths, kMonth, kWin, asOf, first, last, billedBetween, planPaid };
+  return { T, payers, otherBilled, byMonth, kMonths, kMonth, kWin, asOf, payCut, kEnd, first, last, billedBetween, planPaid };
 }
 
 // Actual expenses paid from the bank for a month (null when that month's statement isn't in).
@@ -3577,7 +3583,7 @@ function renderBankInner() {
   const opAvg = avg(last3, r => r.operating);
   const kpis = [
     [bk$(lastBal), `in the bank on ${M.asOf ? bkD(M.asOf) : '—'}${loc ? ` · line of credit ${bk$(loc)}` : ''}`, lastBal < 0 ? 'neg' : ''],
-    [bk$(owedAll), `owed by insurers &amp; ODB · ${bk$(lagAll)} normal payment lag, ${bk$(owedAll - lagAll)} beyond it`, owedAll - lagAll > 1000 ? 'warn' : ''],
+    [bk$(owedAll), `owed by insurers &amp; ODB${M.payCut && M.asOf && M.payCut < M.asOf ? ` for claims to ${bkD(M.payCut)}` : ''} · ${bk$(lagAll)} normal payment lag, ${bk$(owedAll - lagAll)} beyond it`, owedAll - lagAll > 1000 ? 'warn' : ''],
     [bk$(gap12), `patient-pay not banked (${owe12 ? Math.round(gap12 / owe12 * 100) : 0}%) · copays and front-store sales minus deposits`, gap12 > 0 ? 'warn' : ''],
     [bkS(opAvg) + '/mo', "cash from operations, last 3 months (after owners' pay, excl. partner money)", opAvg < 0 ? 'neg' : 'pos'],
     [bk$(capNet), 'partner / owner money in, net, last 12 months', ''],
@@ -3615,6 +3621,8 @@ function renderBankInner() {
   }
   const missingK = M.byMonth.filter(r => r.hasBank && !r.hasKroll).map(r => bkM(r.mk));
   if (missingK.length) flags.push(['', `<b>No Kroll Plan Billing Summary for ${missingK.join(', ')}.</b> Billing for those months can't be checked yet.`]);
+  const aheadK = M.byMonth.filter(r => r.hasKroll && !r.hasBank).map(r => bkM(r.mk));
+  if (aheadK.length) flags.push(['', `<b>Kroll report for ${aheadK.join(', ')}, but no TD statement for ${aheadK.length === 1 ? 'it' : 'them'} yet.</b> That billing isn't counted as owed until the statement is uploaded, since the payments for it can't be seen yet.`]);
 
   // payer table
   // a due date already behind the last statement: nothing left to pay, or late
