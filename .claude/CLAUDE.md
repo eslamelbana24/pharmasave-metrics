@@ -16,7 +16,7 @@ The owner's metrics app for an independent pharmacy. Read this before changing a
 
 ## Architecture
 - One file: `index.html`, vanilla JS with no build step. It uses Firebase compat 10.8.0 (Auth + Firestore), Chart.js 4.4.0 and Google Fonts. pdf.js 3.11.174 loads lazily from cdnjs on the Bank page.
-- Pages come from `PAGE_MAP`: Dashboard, Projections (the landing page, `LANDING_PAGE`), EHC, Insights, Weekly Metrics, Monthly Data, Expenses, Health, Bank and Settings. Each page renders into `#page-<id>` through `renderPage()`.
+- Pages come from `PAGE_MAP`: Dashboard (the landing page, `LANDING_PAGE`), Projections, EHC, Insights, Weekly Metrics, Monthly Data, Expenses, Health, Bank and Settings. Each page renders into `#page-<id>` through `renderPage()`.
 - Access: each user has a `users/{email}` doc with a `pages` array. `pageAllowed(p)` checks `p.needs || p.name`, so Health opens for whoever has Bank. `GRANTABLE_PAGES()` leaves out `needs` pages. Bank is owner-only by default and isn't in `ALL_PAGES`.
 - Firestore:
   - `pharmasave` (`FS_COL`) holds months, settings (including the shared `settings.growthModel`), `projectionPlans`, weekly data and targets, and `revokedUsers`.
@@ -24,6 +24,13 @@ The owner's metrics app for an independent pharmacy. Read this before changing a
   - `bank` holds `td-<from>` statements, `kroll-<from>_<to>` reports, and `config.overrides` (manual categories keyed `<statementId>#<index>`). Its security rule allows only users whose `pages` include `'Bank'`; the rule text is in `BK_RULE`.
 - `calcMonthData(m)` is the profit definition used everywhere: total GP (Rx GP + front GP + rebate) minus expenses.
 - The growth engine (`growthRows`, `growthTrend`, `growthReach`, `growthDescribe`) is shared by Dashboard, Projections and Insights. It has three methods ($ net, scripts, %) and a 3/6/12/All window, default 3. It's one shared setting in `settings.growthModel`.
+
+## Dashboard (`renderDashboard`)
+- Three bands by how recent the data is: this week (Weekly Metrics, EHC), one month (Monthly Data, Bank) and the year (the last 12 months, plus the next 12 on the growth trend). Only the month band follows the ‹ › arrows.
+- Profit and projections come from `growthRows()` and `growthTrend()`. The Dashboard only reads the growth setting; it's changed on Projections.
+- The cash cushion and what insurers owe follow the Health page's rules, so the two pages always agree.
+- Bank figures show only when `bkCanSee()` is true. The week band needs Weekly Metrics or EHC access. Links show only for pages the person can open.
+- Light/Dark is one choice shared with Projections (`PJ_THEME_KEY`).
 
 ## Bank & Collections page
 The module sits between `// PAGE: BANK & COLLECTIONS` and `// PAGE: HEALTH`.
@@ -44,7 +51,7 @@ The module sits between `// PAGE: BANK & COLLECTIONS` and `// PAGE: HEALTH`.
 - **Payer figures stop at `payCut`**, the earlier of the last statement day and the end of the last Kroll month. Billing is spread by day for a partial month. A Kroll report uploaded before its TD statement (or the reverse) must not count a month of billing as owed, or deposits as overpaid.
 - **Day counts use calendar dates, never `Date` subtraction.** A DST bug came from exactly that.
 - **Overdraft days** are calendar days that ended below zero, carrying the balance over days with no transactions.
-- `bkExpenseSummary()` feeds the Dashboard's Monthly Expenses tile: TD-paid vs entered.
+- `bkExpenseSummary(upTo)` feeds the note in the Dashboard's month band: TD-paid vs entered.
 
 ## Health page (`renderHealth`)
 - Profit comes from Monthly Data and cash from `bkModel()`, over the last 12 months that have both.

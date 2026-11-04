@@ -21,7 +21,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --navy:#1B3A6B; --teal:#1D9E75; --red:#E05252; --amber:#BA7517;
@@ -375,180 +375,116 @@ select.bk-cat{font-size:.8rem;min-height:40px;padding:0 6px;border:1.5px solid v
 </style>
 <style>
 /* ============================================================
-   NAVY EDITORIAL DASHBOARD (Direction B) — scoped under .dash2
+   DASHBOARD: three bands by how recent the data is. Scoped under
+   .dh, with the same Light/Dark choice as Projections.
    ============================================================ */
-.dash2{
-  --b-navy:#1B3A6B; --b-teal:#1D9E75; --b-red:#E05252; --b-amber:#BA7517;
-  --b-bg:#edeef4; --b-card:#fcfcfe; --b-ink:#16243d; --b-muted:#5d6b85;
-  --b-faint:#93a0b6; --b-line:#e6e8f0; --b-line-strong:#d6deea;
-  --b-radius:18px; --b-radius-sm:13px; --b-pad:32px;
-  --b-navy-soft:#eef2f8; --b-teal-soft:#e7f5ee; --b-red-soft:#fbeaea; --b-amber-soft:#f7eedd;
-  --b-shadow:0 1px 2px rgba(20,40,70,.05), 0 18px 40px -24px rgba(20,40,70,.32);
-  --b-font-ui:'Manrope',system-ui,-apple-system,sans-serif;
-  --b-font-num:'Newsreader',Georgia,'Times New Roman',serif;
-  font-family:var(--b-font-ui); color:var(--b-ink);
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-  padding:clamp(16px,2.4vw,30px) clamp(14px,3vw,30px) 40px; background:var(--b-bg);
-}
-#page-dashboard.page{ padding:0; max-width:1320px; }
-.dash2, .dash2 *{ box-sizing:border-box; }
-.dash2{ overflow:hidden; border-radius:0; }
-.dash2 .num{ font-family:var(--b-font-num); font-weight:500; font-variant-numeric:lining-nums tabular-nums; }
-.dash2 .pos{ color:var(--b-teal); } .dash2 .neg{ color:var(--b-red); }
-.dash2 .warn{ color:var(--b-amber); } .dash2 .navytxt{ color:var(--b-navy); }
-
-/* toolbar */
-.dash2 .toolbar{ display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap; margin-bottom:22px; }
-.dash2 .toolbar-title h1{ margin:0; font-size:clamp(20px,2.4vw,25px); font-weight:800; letter-spacing:-0.02em; color:var(--b-ink); }
-.dash2 .toolbar-title p{ margin:4px 0 0; color:var(--b-muted); font-size:13.5px; }
-.dash2 .toolbar-controls{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.dash2 .monthpick{ display:flex; align-items:center; background:#fff; border:1px solid var(--b-line-strong); border-radius:11px; padding:3px; overflow-x:auto; scrollbar-width:none; max-width:100%; }
-.dash2 .monthpick::-webkit-scrollbar{ display:none; }
-.dash2 .mbtn{ font:inherit; font-size:13px; font-weight:600; color:var(--b-muted); background:none; border:none; cursor:pointer; padding:7px 12px; border-radius:8px; white-space:nowrap; transition:background .15s,color .15s; }
-.dash2 .mbtn:hover{ color:var(--b-ink); }
-.dash2 .mbtn.active{ background:var(--b-navy); color:#fff; }
-.dash2 .seg{ display:inline-flex; background:#fff; border:1px solid var(--b-line-strong); border-radius:11px; padding:3px; }
-.dash2 .seg button{ font:inherit; font-size:12.5px; font-weight:600; color:var(--b-muted); background:none; border:none; cursor:pointer; padding:7px 12px; border-radius:8px; transition:background .15s,color .15s; }
-.dash2 .seg button.active{ background:var(--b-navy); color:#fff; }
-.dash2 .seg .lab{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--b-faint); align-self:center; padding:0 8px 0 4px; }
-
-/* board / zones */
-.dash2 .board{ display:grid; gap:clamp(14px,1.6vw,20px); grid-template-columns:repeat(12,1fr); }
-.dash2 .zone-label{ grid-column:1/-1; display:flex; align-items:center; gap:12px; margin:14px 2px 0; }
-.dash2 .zone-label:first-child{ margin-top:0; }
-.dash2 .zone-label .step{ font-family:var(--b-font-num); font-weight:600; font-size:12px; color:#fff; background:var(--b-navy); width:22px; height:22px; border-radius:7px; display:grid; place-items:center; flex:none; }
-.dash2 .zone-label h2{ margin:0; font-size:12.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--b-muted); }
-.dash2 .zone-label .rule{ flex:1; height:1px; background:var(--b-line); }
-.dash2 .card{ background:var(--b-card); border:1px solid var(--b-line); border-radius:var(--b-radius); box-shadow:var(--b-shadow); margin:0; padding:0; }
-.dash2 .eyebrow{ font-size:11.5px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--b-faint); }
-
-/* hero */
-.dash2 .hero-now{ grid-column:span 7; padding:var(--b-pad); display:flex; flex-direction:column; }
-.dash2 .hero-goal{ grid-column:span 5; padding:var(--b-pad); display:flex; flex-direction:column; background:linear-gradient(160deg,#234a82 0%, var(--b-navy) 70%); color:#fff; border-color:transparent; }
-.dash2 .hero-net{ margin-top:18px; }
-.dash2 .hero-net .lbl{ font-size:14px; font-weight:600; color:var(--b-muted); }
-.dash2 .bignum{ font-family:var(--b-font-num); font-weight:500; line-height:1; font-variant-numeric:lining-nums tabular-nums; }
-.dash2 .hero-net .bignum{ font-size:clamp(44px,6vw,64px); margin:6px 0 8px; }
-.dash2 .hero-net .sub{ font-size:14px; color:var(--b-muted); }
-.dash2 .hero-now-row{ margin-top:auto; padding-top:24px; display:flex; gap:14px; flex-wrap:wrap; }
-.dash2 .hero-now-row > div{ flex:1; min-width:120px; border-top:1px solid var(--b-line); padding-top:14px; }
-.dash2 .mini-label{ display:block; font-size:12px; font-weight:600; color:var(--b-faint); margin-bottom:5px; }
-.dash2 .mini-num{ font-family:var(--b-font-num); font-weight:500; font-size:21px; font-variant-numeric:lining-nums tabular-nums; color:var(--b-ink); }
-.dash2 .pill{ display:inline-flex; align-items:center; gap:6px; font-family:var(--b-font-ui); font-size:13px; font-weight:700; padding:5px 11px; border-radius:999px; }
-.dash2 .pill.amber{ background:var(--b-amber-soft); color:var(--b-amber); }
-.dash2 .pill.teal{ background:var(--b-teal-soft); color:var(--b-teal); }
-.dash2 .pill.red{ background:var(--b-red-soft); color:var(--b-red); }
-.dash2 .pill .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; }
-
-/* goal panel (navy) */
-.dash2 .hero-goal .eyebrow{ color:rgba(255,255,255,.62); }
-.dash2 .hero-goal .mini-label{ color:rgba(255,255,255,.62); }
-.dash2 .goal-top{ display:flex; align-items:stretch; justify-content:space-between; gap:14px; flex:1; }
-.dash2 .goal-value .bignum{ font-size:clamp(34px,4.2vw,42px); margin:6px 0 6px; color:#fbd98a; }
-.dash2 .goal-value .hint{ font-size:12.5px; color:rgba(255,255,255,.55); }
-.dash2 .goal-arrival{ text-align:right; }
-.dash2 .goal-arrival .midnum{ font-family:var(--b-font-num); font-weight:500; font-size:26px; color:#fff; margin:5px 0 4px; }
-.dash2 .goal-arrival .hint{ font-size:11.5px; color:rgba(255,255,255,.55); max-width:160px; margin-left:auto; }
-.dash2 .ring-wrap{ display:flex; align-items:center; gap:18px; margin-top:24px; padding-top:24px; border-top:1px solid rgba(255,255,255,.16); }
-.dash2 .ring{ width:96px; height:96px; flex:none; }
-.dash2 .ring-track{ stroke:rgba(255,255,255,.16); }
-.dash2 .ring-fill{ stroke:#f3b64a; transition:stroke-dashoffset 1s cubic-bezier(.22,.61,.36,1); }
-.dash2 .ring-pct{ font-family:var(--b-font-num); font-weight:600; fill:#fff; }
-.dash2 .ring-meta{ font-size:13px; color:rgba(255,255,255,.7); line-height:1.5; }
-.dash2 .ring-meta b{ color:#fff; font-weight:600; }
-
-/* KPI strip */
-.dash2 .kpi{ grid-column:span 4; padding:22px 24px; display:flex; flex-direction:column; gap:2px; }
-.dash2 .kpi .k-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.dash2 .kpi .k-label{ font-size:12.5px; font-weight:600; color:var(--b-muted); }
-.dash2 .kpi .k-num{ font-family:var(--b-font-num); font-weight:500; font-size:30px; line-height:1.05; margin-top:9px; font-variant-numeric:lining-nums tabular-nums; }
-.dash2 .kpi .k-sub{ font-size:12.5px; color:var(--b-faint); margin-top:6px; }
-.dash2 .k-chip{ font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px; }
-.dash2 .k-chip.up{ background:var(--b-teal-soft); color:var(--b-teal); }
-.dash2 .k-chip.down{ background:var(--b-red-soft); color:var(--b-red); }
-.dash2 .k-chip.flat{ background:var(--b-navy-soft); color:var(--b-navy); }
-
-/* next month */
-.dash2 .next-main{ grid-column:span 7; padding:var(--b-pad); }
-.dash2 .next-side{ grid-column:span 5; padding:var(--b-pad); display:flex; flex-direction:column; }
-.dash2 .next-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
-.dash2 .next-head .eyebrow{ color:var(--b-muted); }
-.dash2 .next-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-.dash2 .proj{ background:#f1f3f9; border-radius:var(--b-radius-sm); padding:18px; }
-.dash2 .proj .p-lbl{ font-size:12.5px; color:var(--b-muted); font-weight:600; }
-.dash2 .proj .p-num{ font-family:var(--b-font-num); font-weight:500; font-size:27px; margin:8px 0 6px; font-variant-numeric:lining-nums tabular-nums; }
-.dash2 .proj .p-sub{ font-size:11.5px; color:var(--b-faint); }
-.dash2 .note{ display:flex; gap:11px; align-items:center; margin-top:18px; padding:14px 16px; border-radius:var(--b-radius-sm); background:var(--b-teal-soft); border-left:3px solid var(--b-teal); font-size:14px; color:#1a6b50; font-style:italic; font-weight:500; }
-.dash2 .target-block{ border-bottom:1px solid var(--b-line); padding:18px 0; }
-.dash2 .target-block:first-of-type{ padding-top:4px; }
-.dash2 .target-block:last-of-type{ border-bottom:none; padding-bottom:4px; }
-.dash2 .target-block .t-lbl{ font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--b-faint); }
-.dash2 .target-block .t-num{ font-family:var(--b-font-num); font-weight:500; font-size:30px; color:var(--b-amber); margin:7px 0 6px; font-variant-numeric:lining-nums tabular-nums; }
-.dash2 .target-block .t-desc{ font-size:12.5px; color:var(--b-muted); line-height:1.5; }
-.dash2 .target-block .t-flag{ font-size:13px; font-weight:700; margin-top:8px; }
-.dash2 .assume-toggle{ margin-top:16px; }
-.dash2 .assume-btn{ font:inherit; font-size:12.5px; font-weight:600; color:var(--b-navy); background:none; border:none; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:6px; }
-.dash2 .assume-btn .chev{ transition:transform .2s; font-size:10px; }
-.dash2 .assume-btn.open .chev{ transform:rotate(90deg); }
-.dash2 .assume-body{ font-size:12px; color:var(--b-faint); line-height:1.7; margin-top:10px; display:none; }
-.dash2 .assume-body.open{ display:block; }
-
-/* trends */
-.dash2 .trend-main{ grid-column:span 8; padding:var(--b-pad); display:flex; flex-direction:column; }
-.dash2 .trend-side{ grid-column:span 4; padding:var(--b-pad); display:flex; flex-direction:column; }
-.dash2 .trend-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
-.dash2 .trend-head h3{ margin:0; font-size:15px; font-weight:700; letter-spacing:-0.01em; color:var(--b-ink); }
-.dash2 .growth-ctl{ grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:14px 18px; }
-.dash2 .growth-ctl .gc-lab{ font-size:12.5px; font-weight:600; color:var(--b-muted); }
-.dash2 .growth-ctl .gc-desc{ margin-left:auto; font-size:13px; color:var(--b-muted); }
-.dash2 .growth-ctl .gc-desc b{ color:var(--b-ink); }
-.dash2 .ttm-card{ grid-column:1/-1; padding:var(--b-pad); }
-.dash2 .ttm-note{ font-size:12.5px; color:var(--b-muted); }
-.dash2 .ttm-scroll{ overflow-x:auto; }
-.dash2 table.ttm{ width:100%; min-width:640px; border-collapse:collapse; font-variant-numeric:tabular-nums; }
-.dash2 table.ttm th{ padding:8px 12px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--b-faint); text-align:right; border-bottom:1px solid var(--b-line-strong); white-space:nowrap; }
-.dash2 table.ttm td{ padding:12px; font-size:14.5px; font-weight:600; color:var(--b-ink); text-align:right; border-bottom:1px solid var(--b-line); white-space:nowrap; }
-.dash2 table.ttm tr:last-child td{ border-bottom:none; }
-.dash2 table.ttm th:first-child,.dash2 table.ttm td:first-child{ text-align:left; }
-.dash2 table.ttm td:first-child span{ display:block; margin-top:2px; font-size:12px; font-weight:500; color:var(--b-muted); }
-.dash2 table.ttm td small{ display:block; font-size:11px; font-weight:500; color:var(--b-faint); }
-.dash2 table.ttm td:last-child{ font-weight:800; }
-.dash2 table.ttm td.pos{ color:var(--b-teal); } .dash2 table.ttm td.neg{ color:var(--b-red); }
-.dash2 .chart-box{ position:relative; flex:1; min-height:300px; }
-.dash2 .chart-box canvas{ position:absolute; inset:0; }
-.dash2 .hidden{ display:none !important; }
-.dash2 .donut-box{ position:relative; height:230px; margin:6px 0 14px; }
-.dash2 .legend{ display:flex; flex-direction:column; gap:9px; margin-top:auto; }
-.dash2 .legend .lrow{ display:flex; align-items:center; gap:10px; font-size:13px; }
-.dash2 .legend .sw{ width:11px; height:11px; border-radius:3px; flex:none; }
-.dash2 .legend .lname{ color:var(--b-muted); flex:1; }
-.dash2 .legend .lval{ font-family:var(--b-font-num); font-weight:500; color:var(--b-ink); font-variant-numeric:lining-nums tabular-nums; }
-.dash2 .legend .lpct{ color:var(--b-faint); font-size:12px; width:42px; text-align:right; }
-
-/* density: compact hides secondary detail */
-.dash2[data-density="compact"] .k-sub,
-.dash2[data-density="compact"] .proj .p-sub,
-.dash2[data-density="compact"] .target-block .t-desc,
-.dash2[data-density="compact"] .assume-toggle,
-.dash2[data-density="compact"] .goal-arrival .hint,
-.dash2[data-density="compact"] .goal-value .hint,
-.dash2[data-density="compact"] .hero-net .sub{ display:none; }
-
-@media (max-width:1080px){
-  .dash2 .hero-now,.dash2 .hero-goal,.dash2 .next-main,.dash2 .next-side,.dash2 .trend-main,.dash2 .trend-side{ grid-column:1/-1; }
-  .dash2 .kpi{ grid-column:span 6; }
-}
-@media (max-width:720px){
-  .dash2{ --b-pad:22px; }
-  .dash2 .kpi{ grid-column:1/-1; }
-  .dash2 .next-grid{ grid-template-columns:1fr; }
-  .dash2 .toolbar{ align-items:stretch; }
-  .dash2 .goal-top{ flex-direction:column; gap:14px; }
-  .dash2 .goal-arrival{ text-align:left; }
-  .dash2 .goal-arrival .hint{ margin-left:0; max-width:none; }
-  .dash2 .hero-now-row > div{ flex:1 1 42%; min-width:0; }
-}
-@media (prefers-reduced-motion: reduce){ .dash2 .ring-fill{ transition:none; } }
+#page-dashboard{max-width:none;padding:0}
+.dh{color-scheme:light;--bg:#eef1f7;--card:#fff;--ink:#16243d;--mut:#4f5d75;--line:#e4e9f2;--line2:#d2dae7;--line3:#aab6ca;--soft:#f3f5fa;--track:rgba(27,58,107,.12);--s1:#2a78d6;--s2:#eb6834;--down:#e34948;--total:#52514e;--proj:#9ec5f4;--amber:#c98500;--on:#1B3A6B;--onink:#fff;--grid:#e7ebf2;--gt:#0b6b47;--rt:#c8433a;--shadow:0 1px 2px rgba(20,40,70,.05),0 12px 28px -20px rgba(20,40,70,.28);background:var(--bg);color:var(--ink);font-family:'Manrope',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:calc(100vh - 104px)}
+.dh[data-theme="dark"]{color-scheme:dark;--bg:#0b1830;--card:#11264a;--ink:#fff;--mut:rgba(255,255,255,.74);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.16);--line3:rgba(255,255,255,.34);--soft:rgba(255,255,255,.05);--track:rgba(255,255,255,.12);--s1:#4a90ea;--s2:#e0642f;--down:#e66767;--total:rgba(255,255,255,.62);--proj:rgba(74,144,234,.42);--amber:#F5A623;--on:#fff;--onink:#0b1830;--grid:rgba(255,255,255,.09);--gt:#3fe0a6;--rt:#ff8a7e;--shadow:none}
+.dh *,.dh *::before,.dh *::after{box-sizing:border-box}
+.dh button{font:inherit;color:inherit}
+.dh-wrap{max-width:1240px;margin:0 auto;padding:22px clamp(16px,2.4vw,28px) 40px;display:flex;flex-direction:column;gap:26px}
+.dh-bar0{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.dh-bar0 h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.dh-sub{font-size:13.5px;color:var(--mut);margin-top:3px}
+.dh-seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line2);border-radius:10px;background:var(--card)}
+.dh-seg button{background:none;border:0;border-radius:7px;padding:0 12px;min-height:38px;font-size:13px;font-weight:700;color:var(--mut);cursor:pointer}
+.dh-seg button.on{background:var(--on);color:var(--onink)}
+.dh .dh-link{display:inline-flex;align-items:center;min-height:40px;background:none;border:0;padding:0;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;text-align:left}
+.dh .dh-link:hover{text-decoration:underline}
+.dh-i{width:17px;height:17px;flex:none;border-radius:50%;display:inline-grid;place-items:center;font-style:normal;font-size:11px;font-weight:800;color:#0b0b0b}
+.dh-i.good{background:#0ca30c;color:#fff}.dh-i.warn{background:#fab219}.dh-i.serious{background:#ec835a}.dh-i.critical{background:#d03b3b;color:#fff}.dh-i.info{background:#5d6a81;color:#fff}
+.dh-strip{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px;min-height:46px;font-size:13px;box-shadow:var(--shadow)}
+.dh-strip>b{font-weight:800}
+.dh-strip button,.dh-strip>span{display:inline-flex;align-items:center;gap:6px;min-height:36px;background:none;border:0;padding:0;font-size:13px;font-weight:600;text-align:left}
+.dh-strip button{cursor:pointer}
+.dh-strip button:hover{text-decoration:underline}
+.dh-band{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-start;border-top:1px solid var(--line2);padding-top:20px}
+.dh-rail{flex:1 1 200px;min-width:0}
+.dh-when{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.dh-rail h2{font-size:19px;line-height:1.25;font-weight:800;letter-spacing:-.015em;margin-top:6px}
+.dh-fr{font-size:12.5px;line-height:1.45;color:var(--mut);margin-top:8px}
+.dh-fr b{color:var(--ink);font-weight:800}
+.dh-step{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:10px;background:var(--card);margin-top:8px}
+.dh-step button{width:36px;min-height:44px;background:none;border:0;font-size:17px;font-weight:700;color:var(--mut);cursor:pointer}
+.dh-step button:disabled{opacity:.3;cursor:default}
+.dh-step b{font-size:13px;font-weight:800;white-space:nowrap}
+.dh-body{flex:999 1 620px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.dh-c{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);min-width:0}
+.dh-none{font-size:13.5px;color:var(--mut);line-height:1.5}
+.dh-ct{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.dh-cs{font-size:12.5px;color:var(--mut);margin-top:3px;line-height:1.45}
+.dh-g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px}
+.dh-g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.dh-wl{font-size:12.5px;font-weight:700;color:var(--mut)}
+.dh-wv{font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.dh-tn{display:block;font-size:12px;color:var(--mut);margin-top:1px;line-height:1.4}
+.dh-tn.up{color:var(--gt);font-weight:700}
+.dh-tn.dn{color:var(--rt);font-weight:700}
+.dh-mb{position:relative;height:58px;margin-top:12px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--line3)}
+.dh-mb>div{position:relative;flex:1 1 0;min-width:0;height:100%}
+.dh-mb>div>i{position:absolute;left:0;right:0;bottom:0;background:var(--s1);border-radius:3px 3px 0 0}
+.dh-mb u{position:absolute;left:0;right:0;border-top:2px solid var(--s2);text-decoration:none;pointer-events:none}
+.dh-mx{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:5px}
+.dh-ring{position:relative;width:96px;height:96px;margin:6px auto 0}
+.dh-ring svg{display:block;width:100%;height:100%}
+.dh-ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:19px;font-weight:800}
+.dh-ringt{text-align:center;font-size:12.5px;color:var(--mut);margin-top:6px;line-height:1.4}
+.dh-ringt b{color:var(--ink);font-weight:800}
+.dh-note .dh-eb{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.dh-note p{font-size:13.5px;line-height:1.55;margin-top:5px;white-space:pre-line}
+.dh-rc{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+.dh-rc th{font-size:11.5px;font-weight:700;color:var(--mut);text-align:right;padding:0 0 6px}
+.dh-rc td{padding:7px 0;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+.dh-rc td:first-child{text-align:left;font-variant-numeric:normal}
+.dh-rc td+td{padding-left:12px}
+.dh-rc .dh-dl{color:var(--mut);font-size:12.5px;width:72px}
+.dh-rc .sum td{font-weight:800}
+.dh-rc .net td{font-weight:800;font-size:16px;border-top:2px solid var(--line3)}
+.dh-rc .net .dh-dl{font-size:12.5px;font-weight:700}
+.dh-ppr{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--soft);border-radius:12px;padding:12px 14px;margin-top:12px}
+.dh-ppr .v{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.dh-ppr svg{flex:none;overflow:visible}
+.dh-mini{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--mut);margin-top:10px}
+.dh-mini b{color:var(--ink);font-weight:800}
+.dh-tdn{font-size:12px;line-height:1.5;color:var(--mut);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.dh-tdn b{color:var(--ink);font-weight:700}
+.dh-wf{display:flex;gap:4px;margin-top:30px}
+.dh-wfc{flex:1 1 0;min-width:0}
+.dh-wfa{position:relative;height:150px;border-radius:4px}
+.dh-wfa:hover{background:var(--soft)}
+.dh-wfa u{position:absolute;left:0;right:0;border-top:1px solid var(--line3);text-decoration:none}
+.dh-wfb{position:absolute;left:50%;transform:translateX(-50%);width:24px;min-height:2px;border-radius:4px}
+.dh-wfb span{position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);font-size:12.5px;font-weight:800;white-space:nowrap}
+.dh-wfn{font-size:11.5px;line-height:1.3;color:var(--mut);text-align:center;margin-top:7px}
+.dh-cashr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dh-cashr .v{font-size:21px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.dh-st{display:flex;align-items:flex-start;gap:6px;font-size:12px;font-weight:700;margin-top:5px;line-height:1.4}
+.dh-lg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut);font-weight:600;margin-top:8px}
+.dh-lg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.dh-ch{position:relative;margin:28px 0 26px 52px;height:230px}
+.dh-gl{position:absolute;left:0;right:0;border-top:1px solid var(--grid)}
+.dh-gl span{position:absolute;left:-52px;top:-8px;width:46px;text-align:right;font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dh-gl.zero{border-top-color:var(--line3)}
+.dh-cols{position:absolute;inset:0;display:flex}
+.dh-col{position:relative;flex:1 1 0;min-width:0;border-radius:3px}
+.dh-col:hover{background:var(--soft)}
+.dh-bar{position:absolute;left:50%;transform:translateX(-50%);width:min(72%,24px)}
+.dh-xl span{position:absolute;top:100%;margin-top:7px;transform:translateX(-50%);font-size:11px;color:var(--mut);white-space:nowrap}
+.dh-tgt{position:absolute;left:0;right:0;border-top:2px solid var(--s2);pointer-events:none}
+.dh-tgt span{position:absolute;left:0;bottom:3px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.dh-now{position:absolute;top:0;bottom:0;border-left:1px solid var(--line3);pointer-events:none}
+.dh-vl{position:absolute;font-size:12.5px;font-weight:800;white-space:nowrap;pointer-events:none}
+.dh-gls{font-size:13px;color:var(--mut);margin-top:12px;padding-top:12px;border-top:1px solid var(--line);line-height:1.45}
+.dh-gls b{color:var(--ink);font-weight:800}
+.dh-tt{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+.dh-tt th{font-size:11.5px;font-weight:700;color:var(--mut);text-align:right;padding:0 0 6px;line-height:1.3}
+.dh-tt td{padding:8px 0;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+.dh-tt td:first-child{text-align:left;font-variant-numeric:normal}
+.dh-tt td+td{padding-left:10px}
+.dh-tt small{display:block;font-size:11px;font-weight:500;color:var(--mut)}
+.dh-tt .net td{font-weight:800;border-top:2px solid var(--line3)}
+@media(max-width:560px){.dh-ch{height:190px}.dh-xl span:nth-child(even){display:none}}
 /* ── PROJECTIONS (Claude Design: 'Projections v4.html') ────────────
    Every rule is scoped under .pj so the design's class names cannot leak
    into, or inherit from, the rest of the app. Theme tokens live on .pj. */
@@ -915,9 +851,9 @@ const ALL_PAGES   = ['Dashboard','Projections','EHC','Insights','Weekly Metrics'
 // 'Forecast' was retired in Oct 2026 and replaced by Projections. Stored
 // permission docs may still list it; nothing reads that name any more.
 
-// Projections is where the app opens for anyone allowed to see it; everyone
+// The Dashboard is where the app opens for anyone allowed to see it; everyone
 // else starts on their first permitted page (EHC-only staff land on EHC).
-const LANDING_PAGE = 'projections';
+const LANDING_PAGE = 'dashboard';
 
 
 // Days remaining on the EHC mission at which the hero switches into its
@@ -1113,8 +1049,7 @@ function calcMonthData(m) {
 // ================================================================
 
 // Effective Rx GP & Rebate rates (per $1 of Rx Sales) shown in the Settings
-// rate-basis preview; keep in step with dashRatesUpTo, which the dashboard's
-// targets use. (The Projections page measures its own 3-month rates.) Honors
+// rate-basis preview. (The Projections page measures its own 3-month rates.) Honors
 // the rateBasis setting:
 //   'avg'    → derive from a trailing window of REAL month data (fee+markup,
 //              actual rebate $). Most accurate when you enter real numbers.
@@ -1330,7 +1265,7 @@ function lsSlope(pts) {
   return sxx ? sxy / sxx : 0;
 }
 
-// The trend as of rows[idx] (the dashboard's selected month, or the latest).
+// The trend as of rows[idx].
 // Time runs on calendar months (r.t), not row positions, so a month that was
 // never entered stretches the line instead of compressing it.
 // T.gp / exp / net / rx / cnt (k) give month k after idx (k = 0 is idx itself).
@@ -1977,575 +1912,399 @@ function pjBind(page) {
 // ================================================================
 // PAGE: DASHBOARD
 // ================================================================
-function renderDashboard(animate){
-  const el = document.getElementById('page-dashboard');
-  const rows = growthRows();             // de-duplicated, sorted: the same months every page projects from
-  const sorted = rows.map(r => r.m);
+// The overview of the whole app, in three bands by how recent the data is: this
+// week (Weekly Metrics, EHC), one closed month (Monthly Data, Bank), and the year
+// (the last 12 months and the next 12 on the shared growth trend). Only the month
+// band follows the ‹ › arrows. Profit comes from growthRows(), so it always
+// matches Projections. Bank figures show only for people with Bank access: the
+// Firestore rule blocks that data for everyone else.
+let dashSelKey = null;   // the month the month band shows; null follows the latest
 
-  if(!sorted.length){
-    el.innerHTML = `<div class="dash2"><div class="card" style="padding:40px;text-align:center">
-      <div class="eyebrow" style="margin-bottom:10px">No data yet</div>
-      <p style="color:var(--b-muted);font-size:15px;margin:0">Go to <strong>Monthly Data</strong> to add your first month.</p></div></div>`;
-    return;
-  }
-
-  if(dashSel===null || dashSel<0 || dashSel>sorted.length-1) dashSel = sorted.length-1;
-  const sel = dashSel;
-  const c = dashCompute(sorted, sel, rows);
-  const m = c.m, d = c.d;
-  const profitable = c.isProfit;
-  const rx = parseFloat(m.rxSales)||0;
-  const fSign=n=>(n<0?'-$':'+$')+Math.abs(Math.round(n)).toLocaleString('en-CA');
-  const fPct=n=>(n>=0?'+':'')+(n*100).toFixed(1)+'%';
-  const shortM=key=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(key.split('-')[1])-1];
-
-  // standing pill
-  const near = !profitable && c.needMore!==null && c.needMore <= rx*0.30;
-  const standingPill = profitable
-    ? `<span class="pill teal"><span class="dot"></span>Profitable</span>`
-    : near ? `<span class="pill amber"><span class="dot"></span>Near break-even</span>`
-    : `<span class="pill red"><span class="dot"></span>Below break-even</span>`;
-
-  // growth tile: the same trend every projection on this page uses, so it never
-  // shows one growth number and forecasts with another
-  const T = c.trend, gd = c.gdesc, gm = growthModel();
-  const gHead = gd.head + (gd.unit ? ' ' + gd.unit : '');
-  let chip = `<span class="k-chip flat">—</span>`, growthAvgStr='—', growthSub=gd.detail || 'First month of data', growthCls='';
-  if(T.ok){
-    const accel=T.trend==='accelerating', slow=T.trend==='decelerating';
-    chip = `<span class="k-chip ${accel?'up':slow?'down':'flat'}">${accel?'↗ Accelerating':slow?'↘ Slowing':'→ Stable'}</span>`;
-    growthAvgStr = gd.head;
-    growthCls = (T.method==='rx' ? T.sCnt : T.method==='pct' ? T.g : T.perMonth) >= 0 ? 'pos' : 'neg';
-    growthSub = (gd.unit ? gd.unit[0].toUpperCase() + gd.unit.slice(1) + ' · ' : '') + gd.detail;
-  }
-
-  // break-even KPI
-  const beKpiNum = profitable ? 'Profitable' : (c.beMonths!==null ? c.beMonths+' mo.' : 'N/A');
-  const beKpiSub = profitable ? 'Net profit is positive' : (c.beMonths!==null ? 'At ' + gHead : (T.ok ? "Trend doesn't reach break-even" : T.reason));
-
-  // ── Goal panel: break-even forecast until profitable, then $1M valuation ──
-  const ringPctVal = c.isProfit ? c.pct : c.bePct;
-  let goalHtml;
-  if(c.isProfit){
-    const arrivalStr = c.value>=1000000 ? '🎉' : (c.arrival1M || '—');
-    const blockedMsg = {
-      nodata: T.reason || 'Not enough history to project',
-      growth: "Net profit isn't rising on this trend",
-      outrun: 'Expenses are outgrowing gross profit — not reachable on this trend',
-      faraway:'More than 10 years out at this pace',
-    }[c.m1Blocked] || 'Not enough data to project';
-    const arrivalSub = c.value>=1000000 ? "You're there!"
-      : c.arrival1M ? 'At ' + gHead + ' (' + gd.win + ' trend)'
-      : blockedMsg;
-    goalHtml = `
-      <div class="goal-top">
-        <div class="goal-value">
-          <div class="eyebrow">Road to $1M valuation</div>
-          <div class="bignum num" id="dashValue">${fmt(c.value)}</div>
-          <div class="hint">Monthly net profit × 12 × ${c.vm} multiple</div>
-        </div>
-        <div class="goal-arrival">
-          <div class="mini-label">Est. arrival</div>
-          <div class="midnum">${arrivalStr}</div>
-          <div class="hint">${arrivalSub}</div>
-        </div>
-      </div>
-      <div class="ring-wrap">
-        <svg class="ring" viewBox="0 0 120 120">
-          <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="11"></circle>
-          <circle class="ring-fill" id="dashRing" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
-          <text class="ring-pct" id="dashRingPct" x="60" y="66" text-anchor="middle" font-size="22">0%</text>
-        </svg>
-        <div class="ring-meta">Pharmacy value of <b>${fmt(c.value)}</b><br>toward the <b>$1M</b> goal.<br>${fmt(Math.max(0,1000000-c.value))} to go.</div>
-      </div>`;
-  } else {
-    const beBig = c.beMonths!==null ? c.beMonths+(c.beMonths===1?' mo':' mo') : '—';
-    goalHtml = `
-      <div class="goal-top">
-        <div class="goal-value">
-          <div class="eyebrow">Road to break-even</div>
-          <div class="bignum num" id="dashValue">${beBig}</div>
-          <div class="hint">Months until net profit turns positive</div>
-        </div>
-        <div class="goal-arrival">
-          <div class="mini-label">Est. break-even</div>
-          <div class="midnum">${c.beDate || '—'}</div>
-          <div class="hint">${c.beMonths!==null ? 'At ' + gHead + ' (' + gd.win + ' trend)' : (T.ok ? "Trend doesn't reach break-even" : T.reason)}</div>
-        </div>
-      </div>
-      <div class="ring-wrap">
-        <svg class="ring" viewBox="0 0 120 120">
-          <circle class="ring-track" cx="60" cy="60" r="52" fill="none" stroke-width="11"></circle>
-          <circle class="ring-fill" id="dashRing" cx="60" cy="60" r="52" fill="none" stroke-width="11" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
-          <text class="ring-pct" id="dashRingPct" x="60" y="66" text-anchor="middle" font-size="22">0%</text>
-        </svg>
-        <div class="ring-meta">GP of <b>${fmt(c.d.totalGP)}</b> vs <b>${fmt(c.expenses)}</b> needed/mo.<br>Currently <b>${fSign(c.monthlyNet)}</b>/mo.<br>${fmt(c.beGpGap)} more GP/mo to break even.</div>
-      </div>`;
-  }
-
-  // targets
-  const beAbove = c.needMore!==null && c.needMore<=0;
-  const beFlag = c.beRx===null ? '' : (beAbove
-      ? `<div class="t-flag pos">✓ Already above break-even Rx level</div>`
-      : `<div class="t-flag warn">You need ${fmt(c.needMore)} more in Rx sales</div>`);
-  // The sales target is priced off the TRAILING margin, but the valuation is the
-  // month's own realized net. A high-sales/low-margin month (one specialty script
-  // at a flat fee) can clear the sales bar without producing the profit, so never
-  // celebrate on sales alone — require the actual valuation to be there too.
-  const mAbove = c.awayMillion!==null && c.awayMillion<=0;
-  const mFlag = c.valRx===null ? '' : (mAbove
-      ? (c.value >= 1000000
-          ? `<div class="t-flag pos">🎉 Already at $1M valuation Rx level</div>`
-          : `<div class="t-flag warn">Rx sales are at the target, but this month's margin puts the valuation at ${fmt(c.value)} — the gap is margin, not volume</div>`)
-      : `<div class="t-flag warn">You are ${fmt(Math.abs(c.awayMillion))} away in monthly Rx sales</div>`);
-  const rateSrc = c.rates.source==='avg' ? c.rates.window+'-mo real avg' : 'manual';
-  const assumptions = `Assumes front-store GP of ${fmt(c.frontGP)}/month (this month) · Rx GP ${(c.rates.rxGPRate*100).toFixed(1)}% · Rebate ${(c.rates.rebRate*100).toFixed(1)}% (${rateSrc}) · Expenses ${fmt(c.expenses)}/month · Valuation = monthly net profit × 12 × ${c.vm}. Both targets are priced at this month's expenses${T.ok && gd.expRising ? `; the arrival estimate follows the growth trend, where expenses rise ${gd.exp}, so the sales required drift upward as you approach them` : ''}.`;
-
-  // momentum
-  let momentum;
-  if(profitable) momentum='Profitable and compounding — keep expenses flat and the valuation curve takes care of itself.';
-  else if(near) momentum='Close to break-even — one strong month can flip it.';
-  else if(T.ok && T.net(1) > T.net(0)) momentum='Climbing at '+gHead+' — break-even is roughly '+(c.beMonths||'—')+' months out at this pace.';
-  else momentum='Focus on Rx volume growth to close the gap.';
-
-  // unlocked targets?
-  const canTargets = c.combined>0 && (settings.rxGPMethod==='pct' || c.rates.source==='avg');
-
-  // month chips
-  const chips = sorted.map((mm,i)=>`<button class="mbtn${i===sel?' active':''}" data-idx="${i}" title="${monthKeyToLabel(mm.monthKey)}">${shortM(mm.monthKey)}</button>`).join('');
-
-  const projGPcls = c.projGP>=0?'pos':'neg';
-  const projNetCls = c.projNet>=0?'pos':'neg';
-  const netCls = c.monthlyNet>=0?'pos':'neg';
-
-  el.innerHTML = `
-  <div class="dash2" data-density="${dashDensity}">
-    <div class="toolbar">
-      <div class="toolbar-title">
-        <h1>Dashboard</h1>
-        <p>Pharmacy financials &amp; progress to a $1M valuation</p>
-      </div>
-      <div class="toolbar-controls">
-        <div class="monthpick" id="dashMonthpick">${chips}</div>
-        <div class="seg" id="dashDensitySeg">
-          <span class="lab">View</span>
-          <button data-density="detailed" class="${dashDensity==='detailed'?'active':''}">Detailed</button>
-          <button data-density="compact" class="${dashDensity==='compact'?'active':''}">Compact</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="board">
-      <!-- ZONE 1 -->
-      <div class="zone-label"><span class="step">1</span><h2>Where I am now</h2><span class="rule"></span></div>
-
-      <section class="hero-now card">
-        <div class="eyebrow">This month · ${monthKeyToLabel(m.monthKey)}</div>
-        <div class="hero-net">
-          <div class="lbl">Net Profit</div>
-          <div class="bignum num ${netCls}" id="dashNet">${fSign(c.monthlyNet)}</div>
-          <div class="sub">${profitable ? 'Gross Profit minus Expenses — in the black' : 'Gross Profit minus Expenses ('+fmt(d.totalGP)+' − '+fmt(c.expenses)+')'}</div>
-        </div>
-        <div class="hero-now-row">
-          <div><span class="mini-label">Rx Sales</span><span class="mini-num">${fmt(rx)}</span></div>
-          <div><span class="mini-label">Gross Profit</span><span class="mini-num">${fmt(d.totalGP)}</span></div>
-          <div><span class="mini-label">Standing</span>${standingPill}</div>
-        </div>
-      </section>
-
-      <section class="hero-goal card">${goalHtml}</section>
-
-      <section class="kpi card">
-        <div class="k-top"><span class="k-label">Monthly Expenses</span></div>
-        <div class="k-num num navytxt">${fmt(c.expenses)}</div>
-        <div class="k-sub">${(parseFloat(m.expenses)||0) > 0 ? 'Recorded for '+monthKeyToLabel(m.monthKey) : (settings.expenseMethod==='lump'?'Lump sum total':'Itemized operating total')}</div>
-        ${(s => !s ? '' : `<div class="k-sub" title="Expenses paid from the TD account (Bank page), owners' pay included. A month can be above or below what's entered, depending on when pay is drawn and on costs paid from other accounts.">From TD, ${bkM(s.last.mk)}: <b>${fmt(s.last.td)}</b> of ${fmt(s.last.entered)} entered</div>${s.m3 ? `<div class="k-sub" title="Paid from TD of the total entered, over the last 3 and 12 months that have a statement">3 mo: ${fmt(s.m3.td)} of ${fmt(s.m3.entered)}${s.m12 ? ` · 12 mo: ${fmt(s.m12.td)} of ${fmt(s.m12.entered)}` : ''}</div>` : ''}`)(bkExpenseSummary())}
-      </section>
-      <section class="kpi card">
-        <div class="k-top"><span class="k-label">Months to Break-even</span></div>
-        <div class="k-num num ${profitable?'pos':'navytxt'}">${beKpiNum}</div>
-        <div class="k-sub">${beKpiSub}</div>
-      </section>
-      <section class="kpi card">
-        <div class="k-top"><span class="k-label">Growth · ${gd.win} trend</span>${chip}</div>
-        <div class="k-num num ${growthCls}">${growthAvgStr}</div>
-        <div class="k-sub">${growthSub}</div>
-      </section>
-
-      <!-- ZONE 2 -->
-      <div class="zone-label"><span class="step">2</span><h2>Where I'm headed</h2><span class="rule"></span></div>
-
-      <section class="card growth-ctl">
-        <span class="gc-lab">Project with</span>
-        <div class="seg" id="dashGrowthMethod">${GROWTH_METHODS.map(x=>`<button data-gm-method="${x.id}" class="${gm.method===x.id?'active':''}">${x.label}</button>`).join('')}</div>
-        <span class="gc-lab">over the last</span>
-        <div class="seg" id="dashGrowthWindow">${GROWTH_WINDOWS.map(n=>`<button data-gm-window="${n}" class="${gm.window===n?'active':''}">${n?n+' mo':'All'}</button>`).join('')}</div>
-        <span class="gc-desc">${T.ok ? `<b>${gHead}</b> · ${gd.span}` : gd.detail}</span>
-      </section>
-
-      <section class="next-main card">
-        <div class="next-head">
-          <span class="eyebrow">Next month Rx sales target</span>
-          <span class="pill teal"><span class="dot"></span>Projection</span>
-        </div>
-        <div class="next-grid">
-          <div class="proj">
-            <div class="p-lbl">Rx Sales Target</div>
-            <div class="p-num num navytxt">${fmt(c.targetRx)}</div>
-            <div class="p-sub">${T.ok ? `Last: ${fmt(rx)} ${c.targetRx>=rx?'+':'−'} ${fmt(Math.abs(c.targetRx-rx))} on trend` : gd.detail}</div>
-          </div>
-          <div class="proj">
-            <div class="p-lbl">Projected Total GP</div>
-            <div class="p-num num ${projGPcls}">${fmt(c.projGP)}</div>
-            <div class="p-sub">Gross profit on the ${gd.win} trend</div>
-          </div>
-          <div class="proj">
-            <div class="p-lbl">Projected Net Profit</div>
-            <div class="p-num num ${projNetCls}">${fSign(c.projNet)}</div>
-            <div class="p-sub">After ${fmt(c.expNext)} expenses</div>
-          </div>
-        </div>
-        <div class="note"><span>${momentum}</span></div>
-      </section>
-
-      <section class="next-side card">
-        <div class="eyebrow" style="margin-bottom:6px">Rx sales targets</div>
-        ${canTargets ? `
-        <div class="target-block">
-          <div class="t-lbl">Rx sales to break even</div>
-          <div class="t-num num">${fmt(Math.max(0, c.beRx))}</div>
-          <div class="t-desc">GP at this level covers all ${fmt(c.expenses)} in monthly expenses.</div>
-          ${beFlag}
-        </div>
-        <div class="target-block">
-          <div class="t-lbl">Rx sales for $1M valuation</div>
-          <div class="t-num num">${fmt(Math.max(0, c.valRx))}</div>
-          <div class="t-desc">Generates the net profit needed for a $1M pharmacy value.</div>
-          ${mFlag}
-        </div>
-        <div class="assume-toggle">
-          <button class="assume-btn" id="dashAssumeBtn"><span class="chev">▶</span>Show assumptions</button>
-          <div class="assume-body" id="dashAssumeBody">${assumptions}</div>
-        </div>` : `
-        <div class="target-block" style="border:none">
-          <div class="t-desc" style="color:var(--b-amber);font-weight:600">To unlock these targets, set the Rx GP method to <strong>% of Rx Sales</strong>, or turn on <strong>Auto rate basis (trailing average of real data)</strong> in Settings.</div>
-        </div>`}
-      </section>
-
-      <section class="card ttm-card">
-        <div class="trend-head"><h3>12-month view</h3><span class="ttm-note">${T.ok ? `Next 12 months projected at ${gHead} (${gd.win} trend)` : gd.detail}</span></div>
-        <div class="ttm-scroll"><table class="ttm">
-          <thead><tr><th></th><th>Rx count</th><th>Rx sales</th><th>Gross profit</th><th>Expenses</th><th>Net profit</th></tr></thead>
-          <tbody>${[c.ttm.past, c.ttm.next].map(r => `<tr>
-            <td><b>${r.title}</b><span>${r.span}</span></td>
-            <td>${r.cnt === null ? '—' : Math.round(r.cnt).toLocaleString('en-CA') + (r.cntNote ? `<small>${r.cntNote}</small>` : '')}</td>
-            <td>${r.ok ? fmt(r.rx) : '—'}</td><td>${r.ok ? fmt(r.gp) : '—'}</td><td>${r.ok ? fmt(r.exp) : '—'}</td>
-            <td class="${r.ok ? (r.net >= 0 ? 'pos' : 'neg') : ''}">${r.ok ? fSign(r.net) : '—'}</td></tr>`).join('')}</tbody>
-        </table></div>
-      </section>
-
-      <!-- ZONE 3 -->
-      <div class="zone-label"><span class="step">3</span><h2>Trends over time</h2><span class="rule"></span></div>
-
-      <section class="trend-main card">
-        <div class="trend-head">
-          <h3 id="dashTrendTitle">${dashTrendView==='streams'?'Gross profit by stream':'Monthly profit &amp; loss'}</h3>
-          <div class="seg" id="dashTrendSeg">
-            <button data-view="streams" class="${dashTrendView==='streams'?'active':''}">By stream</button>
-            <button data-view="perf" class="${dashTrendView==='perf'?'active':''}">Monthly P&amp;L</button>
-          </div>
-        </div>
-        <div class="chart-box">
-          <canvas id="dashStreams" class="${dashTrendView==='streams'?'':'hidden'}"></canvas>
-          <canvas id="dashPerf" class="${dashTrendView==='perf'?'':'hidden'}"></canvas>
-        </div>
-      </section>
-
-      <section class="trend-side card">
-        <div class="trend-head"><h3>GP breakdown · ${monthKeyToLabel(m.monthKey)}</h3></div>
-        <div class="donut-box"><canvas id="dashDonut"></canvas></div>
-        <div class="legend" id="dashLegend"></div>
-      </section>
-
-      <section class="trend-main card" style="grid-column:1/-1">
-        <div class="trend-head"><h3>Rx Count — monthly</h3></div>
-        <div class="chart-box" style="min-height:260px"><canvas id="dashRxCount"></canvas></div>
-      </section>
-    </div>
-  </div>`;
-
-  // charts
-  dashCharts(sorted, sel);
-
-  // ring (valuation % when profitable, else progress toward break-even GP)
-  const circ = 2*Math.PI*52;
-  const ring = document.getElementById('dashRing');
-  ring.style.strokeDasharray = circ;
-  ring.style.strokeDashoffset = circ;
-  requestAnimationFrame(()=>{ ring.style.strokeDashoffset = circ*(1-ringPctVal/100); });
-  document.getElementById('dashRingPct').textContent = Math.round(ringPctVal)+'%';
-
-  // animated counters
-  if(animate && _dashPrev){
-    dashAnimateNum(document.getElementById('dashNet'), _dashPrev.net, c.monthlyNet, fSign);
-    // only animate the valuation figure when both states are the $1M valuation (a number)
-    if(c.isProfit && _dashPrev.isProfit) dashAnimateNum(document.getElementById('dashValue'), _dashPrev.value, c.value, fmt);
-  }
-  _dashPrev = { net:c.monthlyNet, value:c.value, isProfit:c.isProfit };
-
-  // events
-  document.getElementById('dashMonthpick').addEventListener('click', e=>{
-    const b=e.target.closest('.mbtn'); if(!b) return;
-    dashSel = parseInt(b.dataset.idx); renderDashboard(true);
-  });
-  // One shared setting: Projections and Insights follow whatever is chosen here.
-  document.getElementById('dashGrowthMethod').addEventListener('click', e=>{
-    const b=e.target.closest('[data-gm-method]'); if(!b) return;
-    setGrowthModel({ method: b.dataset.gmMethod }); renderDashboard();
-  });
-  document.getElementById('dashGrowthWindow').addEventListener('click', e=>{
-    const b=e.target.closest('[data-gm-window]'); if(!b) return;
-    setGrowthModel({ window: Number(b.dataset.gmWindow) }); renderDashboard();
-  });
-  document.getElementById('dashDensitySeg').addEventListener('click', e=>{
-    const b=e.target.closest('button'); if(!b) return;
-    dashDensity = b.dataset.density;
-    const wrap=document.querySelector('.dash2'); wrap.setAttribute('data-density', dashDensity);
-    document.querySelectorAll('#dashDensitySeg button').forEach(x=>x.classList.toggle('active',x===b));
-    setTimeout(()=>{ ['streams','perf','donut'].forEach(k=>charts[k]&&charts[k].resize()); },60);
-  });
-  document.getElementById('dashTrendSeg').addEventListener('click', e=>{
-    const b=e.target.closest('button'); if(!b) return;
-    dashTrendView = b.dataset.view;
-    document.querySelectorAll('#dashTrendSeg button').forEach(x=>x.classList.toggle('active',x===b));
-    document.getElementById('dashStreams').classList.toggle('hidden', dashTrendView!=='streams');
-    document.getElementById('dashPerf').classList.toggle('hidden', dashTrendView!=='perf');
-    document.getElementById('dashTrendTitle').innerHTML = dashTrendView==='streams'?'Gross profit by stream':'Monthly profit &amp; loss';
-    setTimeout(()=>{ charts.streams&&charts.streams.resize(); charts.perf&&charts.perf.resize(); },40);
-  });
-  const ab=document.getElementById('dashAssumeBtn');
-  if(ab) ab.addEventListener('click', function(){
-    this.classList.toggle('open');
-    const body=document.getElementById('dashAssumeBody'); body.classList.toggle('open');
-    this.childNodes[1].textContent = body.classList.contains('open')?' Hide assumptions':' Show assumptions';
-  });
-}
-
-// ---- Navy Editorial dashboard state & helpers ----
-let dashSel = null;
-let dashDensity = 'detailed';
-let dashTrendView = 'streams';
-let _dashPrev = null;
-const DASH_C = { navy:'#1B3A6B', teal:'#1D9E75', amber:'#BA7517', red:'#E05252', ink:'#16243d', muted:'#5d6b85', faint:'#93a0b6', line:'#e6e8f0' };
-function _wa(hex,a){ const h=hex.replace('#',''); return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; }
-
-function dashAnimateNum(el, from, to, fmtFn){
-  if(!el) return; const dur=600, t0=performance.now(); const ease=t=>1-Math.pow(1-t,3);
-  function step(now){ let p=Math.min(1,(now-t0)/dur); el.textContent=fmtFn(from+(to-from)*ease(p)); if(p<1) requestAnimationFrame(step); else el.textContent=fmtFn(to); }
-  requestAnimationFrame(step);
-}
-
-function dashRatesUpTo(sorted, idx){
-  const win = parseInt(settings.avgWindow)||6;
-  const slice = sorted.slice(Math.max(0, idx-win+1), idx+1);
-  let sumRx=0,sumGP=0,sumReb=0;
-  slice.forEach(mm=>{
-    const r=parseFloat(mm.rxSales)||0;
-    const fm=(parseFloat(mm.rxGP_fees)||0)+(parseFloat(mm.rxGP_markup)||0);
-    const gp=fm>0?fm:r*((mm.rxGP_pct!==undefined?parseFloat(mm.rxGP_pct):settings.rxGPPct)||0)/100;
-    let reb=parseFloat(mm.rebate); if(!(reb>0)) reb=r*(settings.rebatePct||0)/100;
-    sumRx+=r; sumGP+=gp; sumReb+=reb;
-  });
-  if(settings.rateBasis==='avg' && sumRx>0)
-    return { rxGPRate:sumGP/sumRx, rebRate:sumReb/sumRx, source:'avg', window:slice.length };
-  return { rxGPRate:(settings.rxGPPct||0)/100, rebRate:settings.rebateMethod==='pct'?(settings.rebatePct||0)/100:0, source:'manual', window:0 };
-}
-
-// 'YYYY-MM' n months later, and the short "Oct '26" form the 12-month view uses.
+// 'YYYY-MM' n months later, and the short "Oct '26" form.
 function dashNextKey(monthKey, n){
   const [y,mo]=monthKey.split('-').map(Number), t=(mo-1)+n;
   return (y+Math.floor(t/12)) + '-' + String(((t%12)+12)%12+1).padStart(2,'0');
 }
 function dashShort(monthKey){
   const [y,mo]=monthKey.split('-').map(Number);
-  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo-1] + " '" + String(y).slice(2);
+  return PJ_MN[mo-1] + " '" + String(y).slice(2);
 }
+const dashMonthName = key => monthKeyToFull(key).split(' ')[0];
+const dashCan = name => !!userRecord && userRecord.pages.includes(name);
+const dashGoOk = page => { const e = PAGE_MAP.find(p => p.id === page); return !!e && pageAllowed(e); };
+const dashLink = (page, text, tab) => dashGoOk(page) ? `<button type="button" class="dh-link" data-dh-go="${page}"${tab ? ` data-dh-tab="${tab}"` : ''}>${text} ›</button>` : '';
+const dashTip = (...parts) => esc(parts.join('|'));   // read back by the page's mousemove handler
+const dashSt = (st, text) => `<span class="dh-st"><i class="dh-i ${st}">${HL_ST[st][0]}</i><span>${HL_ST[st][1]}: ${text}</span></span>`;
 
-function dashAddMonths(monthKey, n){
-  const [y,mo]=monthKey.split('-').map(Number); const t=(mo-1)+n; const yy=y+Math.floor(t/12); const mm=((t%12)+12)%12;
-  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mm]+' '+yy;
-}
-
-function dashCompute(sorted, idx, rows){
-  rows = rows || growthRows();
-  const m = sorted[idx];
-  const d = calcMonthData(m);
-  // Use the SELECTED MONTH's own expenses, so every figure on this panel agrees
-  // with the Net Profit shown beside it. calcTotalExpenses() is a single current
-  // setting, so using it made the ring read "GP X vs Y needed" while the net was
-  // computed from a different Y. Fall back to the setting only if the month has none.
-  const monthExp = parseFloat(m.expenses) || 0;
-  const expenses = monthExp > 0 ? monthExp : calcTotalExpenses();
-  const vmRaw = parseFloat(settings.valuationMultiple);
-  const vm = (isFinite(vmRaw) && vmRaw > 0) ? vmRaw : 3;
-  const target = 1000000;
-  const rates = dashRatesUpTo(sorted, idx);
-  const combined = rates.rxGPRate + rates.rebRate;
-  // The margin is only trustworthy when it was measured (avg basis) or when GP is
-  // genuinely entered as a % of Rx sales. Under fee+markup with a manual basis,
-  // `combined` is just settings.rxGPPct — a number the Settings page itself calls
-  // "not measured". The Rx-sales targets already hide behind this; so must the ETA.
-  // Every forward-looking figure below comes from the shared growth trend
-  // (GROWTH TRENDS), measured over the chosen window ending at THIS month.
-  const T = growthTrend(rows, idx), gdesc = growthDescribe(T);
-
-  // Valuation is based on NET profit run-rate: monthly net profit × 12 × multiple.
-  // Until the pharmacy is profitable, the panel shows a break-even forecast instead.
-  // Derive net from the SAME `expenses` every other figure here uses. Reading it
-  // from d.netProfit instead would use m.expenses directly, which is 0 for a month
-  // with a blank expense field — that made a loss-making month report a huge
-  // valuation and flip the panel to the $1M model.
-  const monthlyNet = d.totalGP - expenses;
-  const isProfit = monthlyNet >= 0;
-  const value = Math.max(0, monthlyNet) * 12 * vm;
-  const pct = Math.min(100, Math.max(0, value/target*100));
-
-  const rx = parseFloat(m.rxSales)||0;
-  const targetRx = T.ok ? Math.max(0, T.rx(1)) : rx;
-  const frontGP = d.frontGP;
-
-  // Months to $1M valuation (only shown once profitable): the first month the
-  // trend's net profit reaches $1M / multiple / 12. Expenses move with the trend
-  // too, so this is a moving goalpost, not a fixed line.
-  const reqNet1M = target/(12*vm);
-  let m1=null, m1Blocked=null;   // m1Blocked explains WHY there is no date
-  if(isProfit){
-    if(value>=target) m1=0;
-    else if(!T.ok) m1Blocked='nodata';
-    else {
-      m1 = growthReach(T, reqNet1M, 120);
-      // Still climbing at the 10-year horizon: just far. Otherwise it turned down:
-      // under % that is expenses compounding faster than gross profit.
-      if(m1===null) m1Blocked = T.net(120) > T.net(119) ? 'faraway' : (T.method==='pct' && T.ge > T.g) ? 'outrun' : 'growth';
-    }
+function dashBank() {
+  if (!bkCanSee()) return null;
+  if (!bankData.loaded) {
+    loadBank().then(() => { if (currentPage === 'dashboard') renderDashboard(); });
+    return { state: 'loading' };
   }
-  const arrival1M = (m1===null||m1===0) ? null : dashAddMonths(m.monthKey, m1);
-  // Next month straight from the trend: gross profit, expenses and net all move
-  // together, so the three tiles always add up.
-  const projGP = T.gp(1), expNext = T.exp(1), projNet = projGP - expNext;
-
-  const beRx = combined>0 ? (expenses - frontGP)/combined : null;
-  const needMore = beRx!==null ? beRx-rx : null;
-  // Rx sales required for a $1M valuation AT TODAY'S COSTS (the ETA above lets
-  // this target drift upward as expenses grow).
-  const valRx = combined>0 ? (reqNet1M + expenses - frontGP)/combined : null;
-  const awayMillion = valRx!==null ? valRx-rx : null;
-
-  // Months to break-even: the first month the trend's net profit turns positive.
-  let beMonths=null;
-  if(monthlyNet>=0) beMonths=0;
-  else if(T.ok) beMonths = growthReach(T, 0, 120);
-  // Break-even forecast detail: progress = current GP vs the GP needed to cover expenses.
-  const beDate = (beMonths && beMonths>0) ? dashAddMonths(m.monthKey, beMonths) : null;
-  const bePct  = expenses>0 ? Math.min(100, Math.max(0, d.totalGP/expenses*100)) : 0;
-  const beGpGap = Math.max(0, expenses - d.totalGP);
-
-  // 12-month view: the last 12 actual months ending here, and the next 12 on
-  // the trend (the same sums as the Projections page's total row).
-  const past = rows.slice(0, idx+1).filter(r => r.t > rows[idx].t - 12), sumOf = (a,k) => a.reduce((s,r)=>s+r[k],0);
-  const withCnt = past.filter(r => r.cnt > 0).length;
-  const pastSpan = rows[idx].t - past[0].t + 1;   // calendar months covered (a skipped month still counts)
-  const ttmPast = { title: pastSpan >= 12 ? 'Last 12 months' : 'Last ' + pastSpan + ' month' + (pastSpan===1?'':'s'),
-    span: dashShort(past[0].key) + ' – ' + dashShort(rows[idx].key) + ' · actual',
-    ok: true, rx: sumOf(past,'rx'), gp: sumOf(past,'gp'), exp: sumOf(past,'exp'), net: sumOf(past,'net'),
-    cnt: withCnt ? sumOf(past,'cnt') : null, cntNote: withCnt && withCnt < past.length ? withCnt + ' of ' + past.length + ' mo' : '' };
-  let n12 = { cnt:0, rx:0, gp:0, exp:0 };
-  for(let k=1;k<=12;k++){ n12.cnt += Math.max(0,T.cnt(k)); n12.rx += Math.max(0,T.rx(k)); n12.gp += T.gp(k); n12.exp += T.exp(k); }
-  const hasCnt = rows.slice(0, idx+1).some(r => r.cnt > 0);
-  const ttmNext = { title: 'Next 12 months', span: dashShort(dashNextKey(rows[idx].key, 1)) + ' – ' + dashShort(dashNextKey(rows[idx].key, 12)) + ' · projected',
-    ok: T.ok, rx: n12.rx, gp: n12.gp, exp: n12.exp, net: n12.gp - n12.exp, cnt: T.ok && hasCnt ? n12.cnt : null, cntNote: '' };
-
-  return { m, d, expenses, vm, value, pct, isProfit, monthlyNet, m1, m1Blocked, arrival1M, targetRx, projGP, projNet, expNext, beRx, needMore, valRx, awayMillion, beMonths, beDate, bePct, beGpGap, rates, combined, frontGP, trend: T, gdesc, ttm: { past: ttmPast, next: ttmNext } };
+  if (bankData.error) return { state: 'error' };
+  if (!bankData.statements.length) return { state: 'empty' };
+  return { state: 'ok', M: bkModel(), md: new Set(months.map(m => m.monthKey)) };
 }
 
-function dashCharts(sorted, sel){
-  ['streams','perf','donut','rxcount'].forEach(k=>destroyChart(k));
-  const C=DASH_C;
-  Chart.defaults.font.family = 'Manrope, system-ui, sans-serif';
-  Chart.defaults.font.size = 12;
-  Chart.defaults.color = C.muted;
-  const labels = sorted.map(m=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m.monthKey.split('-')[1])-1]);
-  const A = sorted.map(m=>calcMonthData(m));
-  // Same expense base and multiple as the goal panel, so the chart's reference
-  // lines cannot disagree with the targets shown beside them.
-  const selExp = parseFloat((sorted[sel]||{}).expenses) || 0;
-  const exp = selExp > 0 ? selExp : calcTotalExpenses();
-  const vmRawC = parseFloat(settings.valuationMultiple);
-  const vm = (isFinite(vmRawC) && vmRawC > 0) ? vmRawC : 3;
-  const targetMonthlyGP = (1000000/vm)/12 + exp;
+// The same cushion as the Health page: two weeks of outgoings, measured over the
+// last 3 months that have both a statement and Monthly Data.
+function dashCushion(M, md, upTo, bal) {
+  const L3 = M.byMonth.filter(r => r.hasBank && md.has(r.mk) && r.mk <= upTo).slice(-3);
+  if (!L3.length) return null;
+  const outDay = L3.reduce((s, r) => s + r.opex + r.cogs, 0) / L3.reduce((s, r) => s + bkDim(r.mk), 0);
+  if (!(outDay > 0)) return null;
+  const lasts = bal / outDay, target = Math.round(outDay * 14 / 1000) * 1000;
+  return { outDay, lasts, target, gap: target - bal, st: bal < 0 ? 'critical' : lasts < 10 ? 'serious' : lasts < 14 ? 'warn' : 'good' };
+}
 
-  // streams line
-  charts.streams = new Chart(document.getElementById('dashStreams'), {
-    type:'line',
-    data:{ labels, datasets:[
-      { label:'Total GP', data:A.map(a=>a.totalGP), borderColor:C.navy, backgroundColor:_wa(C.navy,.08), borderWidth:2.5, fill:true, tension:.35, pointRadius:sorted.map((_,i)=>i===sel?6:3), pointBackgroundColor:C.navy, pointBorderColor:'#fff', pointBorderWidth:2, order:1 },
-      { label:'Rx GP', data:A.map(a=>a.rxGP), borderColor:C.teal, borderWidth:2, fill:false, tension:.35, pointRadius:3, pointBackgroundColor:C.teal, pointBorderColor:'#fff', pointBorderWidth:1.5 },
-      { label:'Rebates', data:A.map(a=>a.rebate), borderColor:C.amber, borderWidth:2, fill:false, tension:.35, pointRadius:3, pointBackgroundColor:C.amber, pointBorderColor:'#fff', pointBorderWidth:1.5 },
-      { label:'Front store GP', data:A.map(a=>a.frontGP), borderColor:C.muted, borderWidth:1.5, borderDash:[2,2], fill:false, tension:.35, pointRadius:0 },
-      { label:'Break-even', data:A.map(()=>exp), borderColor:C.red, borderWidth:1.5, borderDash:[6,5], fill:false, pointRadius:0 },
-      { label:'$1M target GP', data:A.map(()=>targetMonthlyGP), borderColor:_wa(C.navy,.5), borderWidth:1.5, borderDash:[2,3], fill:false, pointRadius:0 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-      plugins:{ legend:{position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:9,boxHeight:9,padding:14,font:{size:11.5,weight:'600'}}},
-        tooltip:{backgroundColor:C.navy,padding:11,cornerRadius:9,titleFont:{weight:'700'},bodyFont:{size:12},callbacks:{label:x=>' '+x.dataset.label+': '+fmt(x.parsed.y)}} },
-      scales:{ x:{grid:{display:false},ticks:{font:{size:11.5}}}, y:{grid:{color:C.line},border:{display:false},ticks:{callback:v=>'$'+(v/1000)+'k',font:{size:11}}} } }
-  });
+// How many closed months aren't in Monthly Data yet, oldest first.
+function dashMissing(rows) {
+  const closed = dashNextKey(currentMonthKey(), -1), base = rows[rows.length - 1];
+  const [y, mo] = closed.split('-').map(Number), n = (y * 12 + mo - 1) - base.t;
+  return n > 0 ? { n, first: dashNextKey(base.key, 1), last: closed } : null;
+}
 
-  // monthly P&L bar
-  charts.perf = new Chart(document.getElementById('dashPerf'), {
-    type:'bar',
-    data:{ labels, datasets:[
-      { label:'Gross Profit', data:A.map(a=>a.totalGP), backgroundColor:sorted.map((_,i)=>i===sel?C.navy:_wa(C.navy,.4)), borderRadius:5, categoryPercentage:.66, barPercentage:.9 },
-      { label:'Net Profit', data:A.map(a=>a.netProfit), backgroundColor:A.map((a,i)=> i===sel ? (a.netProfit>=0?C.teal:C.red) : (a.netProfit>=0?_wa(C.teal,.45):_wa(C.red,.45))), borderRadius:5, categoryPercentage:.66, barPercentage:.9 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:9,boxHeight:9,padding:14,font:{size:11.5,weight:'600'}}},
-        tooltip:{backgroundColor:C.navy,padding:11,cornerRadius:9,callbacks:{label:x=>' '+x.dataset.label+': '+((x.parsed.y<0?'-$':'+$')+Math.abs(Math.round(x.parsed.y)).toLocaleString('en-CA'))}} },
-      scales:{ x:{grid:{display:false},ticks:{font:{size:11.5}}}, y:{grid:{color:C.line},border:{display:false},ticks:{callback:v=>'$'+(v/1000)+'k',font:{size:11}}} } }
-  });
+// ── Needs a look ─────────────────────────────────────────────────────
+function dashNeeds(rows, bank) {
+  const items = [];   // [status, text, page, bank tab]
+  if (bank && bank.state === 'ok') {
+    const M = bank.M;
+    if (M.T.length) {
+      const bal = M.T[M.T.length - 1].bal, c = dashCushion(M, bank.md, '9999-99', bal);
+      if (bal < 0) items.push(['critical', `The bank balance is ${bk$(bal)}`, 'health']);
+      else if (c && c.st !== 'good') items.push([c.st, c.gap > 0 ? `Cash cushion ${bk$(c.gap)} short` : 'Cash cushion under two weeks', 'health']);
+    }
+    const short = M.payers.filter(p => p.status === 'short');
+    if (short.length === 1) items.push(['warn', `${esc(short[0].name)} paid ${bk$(short[0].unexplained)} less than expected`, 'bank', 'insurers']);
+    else if (short.length > 1) items.push(['warn', `${short.length} insurers paid ${bk$(short.reduce((s, p) => s + p.unexplained, 0))} less than expected`, 'bank', 'insurers']);
+    const closed = dashNextKey(currentMonthKey(), -1);
+    if (M.asOf && M.asOf < `${closed}-${String(bkDim(closed) - 3).padStart(2, '0')}`) items.push(['info', `Bank statements stop at ${bkDs(M.asOf)}`, 'bank', 'files']);
+  }
+  const miss = dashMissing(rows);
+  if (miss) items.push(['info', miss.n === 1 ? `${dashMonthName(miss.last)} isn't entered yet` : `${dashMonthName(miss.first)} to ${dashMonthName(miss.last)} aren't entered yet`, 'monthly']);
+  if (dashCan('Weekly Metrics')) {
+    const t = new Date(), today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+    const wk = bkAdd(getMondayISO(today), -7);   // the last full week, from the local date
+    if (!weeklyEntries.some(w => w.weekStart >= wk)) items.push(['info', `Week of ${bkDs(wk)} isn't logged yet`, 'weekly']);
+  }
+  if (!items.length) return `<div class="dh-strip"><span><i class="dh-i good">✓</i>Nothing needs a look right now</span></div>`;
+  const rank = { critical: 0, serious: 1, warn: 2, info: 3 };
+  return `<div class="dh-strip"><b>Needs a look</b>${items.sort((a, b) => rank[a[0]] - rank[b[0]]).map(([st, text, page, tab]) => {
+    const inner = `<i class="dh-i ${st}">${HL_ST[st][0]}</i>${text}`;
+    return dashGoOk(page) ? `<button type="button" data-dh-go="${page}"${tab ? ` data-dh-tab="${tab}"` : ''}>${inner}</button>` : `<span>${inner}</span>`;
+  }).join('')}</div>`;
+}
 
-  // donut
-  const a = A[sel];
-  const data=[a.rxGP, a.rebate, a.frontGP];
-  const colors=[C.navy, C.teal, C.amber];
-  const names=['Rx Gross Profit','Rebates','Front Store GP'];
-  charts.donut = new Chart(document.getElementById('dashDonut'), {
-    type:'doughnut',
-    data:{ labels:names, datasets:[{ data, backgroundColor:colors, borderColor:'#fcfcfe', borderWidth:3, hoverOffset:6 }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:'64%',
-      plugins:{ legend:{display:false}, tooltip:{backgroundColor:C.navy,padding:10,cornerRadius:9,callbacks:{label:x=>' '+x.label+': '+fmt(x.parsed)}} } }
-  });
-  const total=data.reduce((x,y)=>x+y,0)||1;
-  const lg=document.getElementById('dashLegend'); lg.innerHTML='';
-  names.forEach((n,idx)=>{
-    const row=document.createElement('div'); row.className='lrow';
-    row.innerHTML=`<span class="sw" style="background:${colors[idx]}"></span><span class="lname">${n}</span><span class="lval">${fmt(data[idx])}</span><span class="lpct">${(data[idx]/total*100).toFixed(0)}%</span>`;
-    lg.appendChild(row);
-  });
+// ── This week ────────────────────────────────────────────────────────
+function dashWeekBand() {
+  if (!dashCan('Weekly Metrics') && !dashCan('EHC')) return '';
+  const sorted = [...weeklyEntries].sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+  const last12 = sorted.slice(-12), latest = sorted[sorted.length - 1];
+  const n = v => Math.round(v).toLocaleString('en-CA');
+  const cards = !latest ? '' : [['transfers', 'Transfers'], ['blisterPacks', 'Blister packs'], ['rxCount', 'Prescriptions']].map(([key, label]) => {
+    const vals = last12.map(w => Number(w[key]) || 0), last = vals[vals.length - 1];
+    const target = parseFloat(getTargetForWeek(key, latest.weekStart)) || 0, d = last - target, top = Math.max(...vals, target, 1) * 1.12;
+    const note = target <= 0 ? 'No target set' : d === 0 ? `On the target of ${n(target)}` : `${n(Math.abs(d))} ${d > 0 ? 'above' : 'below'} the target of ${n(target)}`;
+    const bars = vals.map((v, i) => `<div data-tip="${dashTip('Week of ' + bkDs(last12[i].weekStart), label + ': ' + n(v))}"><i style="height:${(Math.max(0, v) / top * 100).toFixed(1)}%;opacity:${i === vals.length - 1 ? 1 : .6}"></i></div>`).join('');
+    return `<div class="dh-c">
+      <div class="dh-wl">${label}</div>
+      <div class="dh-wv">${n(last)}</div>
+      <span class="dh-tn ${target > 0 ? (d >= 0 ? 'up' : 'dn') : ''}">${note}</span>
+      <div class="dh-mb" role="img" aria-label="${label} for the last ${vals.length} weeks, latest ${n(last)}${target > 0 ? ', target ' + n(target) + ' a week' : ''}">${bars}${target > 0 ? `<u style="bottom:${(target / top * 100).toFixed(1)}%"></u>` : ''}</div>
+      <div class="dh-mx"><span>${bkDs(last12[0].weekStart)}</span><span>${bkDs(latest.weekStart)}</span></div>
+    </div>`;
+  }).join('');
 
-  // Rx Count — monthly (full-width line)
-  const rxc = sorted.map(m => Number(m.rxCount) || 0);
-  charts.rxcount = new Chart(document.getElementById('dashRxCount'), {
-    type:'line',
-    data:{ labels, datasets:[
-      { label:'Rx Count', data:rxc, borderColor:C.navy, backgroundColor:_wa(C.navy,.08), borderWidth:2.5, fill:true, tension:.35,
-        pointRadius:sorted.map((_,i)=>i===sel?6:3), pointBackgroundColor:C.navy, pointBorderColor:'#fff', pointBorderWidth:2 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-      plugins:{ legend:{display:false},
-        tooltip:{backgroundColor:C.navy,padding:11,cornerRadius:9,titleFont:{weight:'700'},bodyFont:{size:12},callbacks:{label:x=>' Rx Count: '+Math.round(x.parsed.y).toLocaleString('en-CA')}} },
-      scales:{ x:{grid:{display:false},ticks:{font:{size:11.5}}}, y:{grid:{color:C.line},border:{display:false},beginAtZero:true,ticks:{precision:0,font:{size:11}}} } }
+  let ehc = '';
+  if (dashCan('EHC')) {
+    const atBP = allTimeBP(), goal = parseFloat(settings.bpAbsoluteTarget) || 0, pct = goal > 0 ? Math.min(100, Math.max(0, atBP / goal * 100)) : 0;
+    const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), end = settings.ehcMissionEndDate || '';
+    const daysLeft = end ? Math.ceil((new Date(end + 'T00:00:00') - today) / 864e5) : null;   // same count as the EHC page
+    const days = daysLeft === null ? '' : daysLeft <= 0 ? 'Mission complete' : `${n(daysLeft)} day${daysLeft === 1 ? '' : 's'} left`;
+    const C = 2 * Math.PI * 40;
+    ehc = `<div class="dh-c">
+      <div class="dh-wl">EHC mission</div>
+      <div class="dh-ring">
+        <svg viewBox="0 0 96 96" role="img" aria-label="${goal > 0 ? `${n(atBP)} of ${n(goal)} patients` : 'No goal set'}">
+          <circle cx="48" cy="48" r="40" fill="none" stroke="var(--track)" stroke-width="10"/>
+          ${pct > 0 ? `<circle cx="48" cy="48" r="40" fill="none" stroke="var(--amber)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C * (1 - pct / 100)).toFixed(2)}" transform="rotate(-90 48 48)"/>` : ''}
+        </svg>
+        <b>${goal > 0 ? Math.round(pct) + '%' : '—'}</b>
+      </div>
+      <p class="dh-ringt">${goal > 0 ? `<b>${n(atBP)}</b> of ${n(goal)} patients` : `<b>${n(atBP)}</b> patients, no goal set`}${days ? `<br>${days}` : ''}</p>
+    </div>`;
+  }
+  const note = latest && (latest.weeklyNote || '').trim();
+  return `<section class="dh-band">
+    <div class="dh-rail">
+      <p class="dh-when">This week</p>
+      <h2>Are we winning patients?</h2>
+      <p class="dh-fr">${latest ? `Week of ${bkDs(latest.weekStart)}, against your weekly targets. Bars show the last ${last12.length} week${last12.length === 1 ? '' : 's'}; the line is the target.` : 'No weeks logged yet.'}</p>
+      ${latest ? '' : dashLink('weekly', 'Open Weekly Metrics')}
+    </div>
+    <div class="dh-body">
+      <div class="dh-g4">${cards}${ehc}</div>
+      ${note ? `<div class="dh-c dh-note"><p class="dh-eb">What drove results this week</p><p>${esc(note)}</p></div>` : ''}
+    </div>
+  </section>`;
+}
+
+// ── The month ────────────────────────────────────────────────────────
+function dashSelIndex(rows) {
+  const i = dashSelKey ? rows.findIndex(r => r.key === dashSelKey) : -1;
+  return i >= 0 ? i : rows.length - 1;
+}
+
+function dashMonthBand(rows, bank) {
+  const i = dashSelIndex(rows), r = rows[i], prev = i > 0 ? rows[i - 1] : null, isLast = i === rows.length - 1;
+  const d = calcMonthData(r.m), pd = prev ? calcMonthData(prev.m) : null;
+  // A month skipped in Monthly Data would otherwise read as "vs Aug" with no year.
+  const prevLabel = !prev ? '' : r.t - prev.t === 1 ? bkMon(prev.key) : bkM(prev.key);
+  const tr = (label, val, a, b, cls) => `<tr${cls ? ` class="${cls}"` : ''}><td>${label}</td><td>${val}</td>${prev ? `<td class="dh-dl">${bkS(Math.round(a) - Math.round(b))}</td>` : ''}</tr>`;
+  const table = `<table class="dh-rc">
+    <thead><tr><th></th><th>${dashMonthName(r.key)}</th>${prev ? `<th>vs ${prevLabel}</th>` : ''}</tr></thead>
+    <tbody>
+      ${tr('Profit on prescriptions', bk$(d.rxGP), d.rxGP, pd && pd.rxGP)}
+      ${tr('Rebates', bk$(d.rebate), d.rebate, pd && pd.rebate)}
+      ${tr('Front store', bk$(d.frontGP), d.frontGP, pd && pd.frontGP)}
+      ${tr('Gross profit', bk$(r.gp), r.gp, prev && prev.gp, 'sum')}
+      ${tr('Expenses', '−' + bk$(r.exp), r.exp, prev && prev.exp)}
+      ${tr('Net profit', bkS(r.net), r.net, prev && prev.net, 'net')}
+    </tbody>
+  </table>`;
+
+  // Gross profit per prescription, the same figure as Insights.
+  let perRx = '';
+  if (r.cnt > 0) {
+    const money2 = v => '$' + v.toFixed(2), g = Math.round(r.gp / r.cnt * 100) / 100;
+    const hist = rows.slice(0, i + 1).filter(x => x.cnt > 0).slice(-12), vals = hist.map(x => x.gp / x.cnt);
+    const lo = Math.min(...vals), hi = Math.max(...vals), mid = vals.reduce((s, v) => s + v, 0) / vals.length;
+    // A range of at least $1 top to bottom, so a steady figure reads as a flat line.
+    const half = Math.max(0.5, (hi - lo) * 0.6), W = 114, H = 28;
+    const xy = vals.map((v, k) => [3 + (vals.length > 1 ? k / (vals.length - 1) : 1) * W, 3 + (1 - (v - (mid - half)) / (2 * half)) * H]);
+    const delta = prev && prev.cnt > 0 ? g - Math.round(prev.gp / prev.cnt * 100) / 100 : null;
+    const parts = [];
+    if (delta !== null) parts.push(`${Math.abs(delta) < 0.005 ? 'Same as' : (delta < 0 ? '−$' : '+$') + Math.abs(delta).toFixed(2) + ' vs'} ${prevLabel}`);
+    if (vals.length >= 3) parts.push((hi - lo) / mid < 0.05 ? `steady at about ${money2(mid)} for ${vals.length} months` : `${money2(lo)} to ${money2(hi)} over ${vals.length} months`);
+    perRx = `<div class="dh-ppr" data-tip="${dashTip('Gross profit per prescription', 'Gross profit divided by prescriptions, including rebates and the front store', 'Lowest ' + money2(lo) + ', highest ' + money2(hi))}">
+      <div>
+        <div class="dh-wl">Gross profit per prescription</div>
+        <div class="v">${money2(g)}</div>
+        ${parts.length ? `<span class="dh-tn">${parts.join(', ')}</span>` : ''}
+      </div>
+      ${vals.length >= 2 ? `<svg width="120" height="34" viewBox="0 0 120 34" role="img" aria-label="Gross profit per prescription over ${vals.length} months">
+        <polyline points="${xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="4" fill="var(--s1)" stroke="var(--card)" stroke-width="2"/>
+      </svg>` : ''}
+    </div>`;
+  }
+  const mini = [];
+  if (r.cnt > 0) mini.push(`<span><b>${r.cnt.toLocaleString('en-CA')}</b> prescriptions</span>`, `<span><b>$${(r.rx / r.cnt).toFixed(2)}</b> average Rx</span>`);
+  const td = bank && bank.state === 'ok' ? bkExpenseSummary(r.key) : null;
+  const tdNote = td && td.last.mk === r.key ? `<p class="dh-tdn" title="Expenses paid from the TD account (Bank page), owners' pay included. A month can be above or below what's entered, depending on when pay is drawn and on costs paid from other accounts.">Paid from TD: <b>${bk$(td.last.td)}</b> of ${bk$(td.last.entered)} entered${td.m3 ? ` · last 3 months ${bk$(td.m3.td)} of ${bk$(td.m3.entered)}` : ''}${td.m12 ? ` · last 12 ${bk$(td.m12.td)} of ${bk$(td.m12.entered)}` : ''}</p>` : '';
+  const addUp = `<div class="dh-c">
+    <h3 class="dh-ct">How the month added up</h3>
+    ${table}${perRx}
+    ${mini.length ? `<div class="dh-mini">${mini.join('')}</div>` : ''}
+    ${tdNote}
+  </div>`;
+
+  const miss = isLast ? dashMissing(rows) : null;
+  const fresh = [];
+  if (miss) fresh.push(`${dashMonthName(miss.first)} isn't entered yet.`);
+  if (bank && bank.state === 'ok' && bank.M.asOf) fresh.push(`Bank to ${bkDs(bank.M.asOf)}${bank.M.kEnd ? `, Kroll to ${bkDs(bank.M.kEnd)}` : ''}.`);
+  const when = !isLast ? 'Earlier month' : r.key >= currentMonthKey() ? 'Latest month' : 'Last closed month';
+  return `<section class="dh-band">
+    <div class="dh-rail">
+      <p class="dh-when">${when}</p>
+      <div class="dh-step"><button type="button" data-dh-month="prev" aria-label="Previous month"${i === 0 ? ' disabled' : ''}>‹</button><b>${monthKeyToFull(r.key)}</b><button type="button" data-dh-month="next" aria-label="Next month"${isLast ? ' disabled' : ''}>›</button></div>
+      <h2>${bank ? 'Did we make money, and is it in the bank?' : 'Did we make money?'}</h2>
+      ${fresh.length ? `<p class="dh-fr">${fresh.join(' ')}</p>` : ''}
+    </div>
+    <div class="dh-body"><div class="dh-g2">${addUp}${bank ? dashCashCard(r, isLast, bank) : ''}</div></div>
+  </section>`;
+}
+
+// From this month's profit to what the bank balance did, and where the cash stands.
+function dashCashCard(r, isLast, bank) {
+  const title = `<h3 class="dh-ct">From profit to the bank</h3>`;
+  if (bank.state === 'loading') return `<div class="dh-c">${title}<p class="dh-none" style="margin-top:8px">Loading bank data…</p></div>`;
+  if (bank.state === 'error') return `<div class="dh-c">${title}<p class="dh-none" style="margin-top:8px">Bank data couldn't load. ${dashLink('bank', 'Open the Bank page')}</p></div>`;
+  if (bank.state === 'empty') return `<div class="dh-c">${title}<p class="dh-none" style="margin-top:8px">Upload a TD statement to see cash here. ${dashLink('bank', 'Open the Bank page')}</p></div>`;
+  const M = bank.M, br = M.byMonth.find(x => x.mk === r.key && x.hasBank);
+  if (!br) return `<div class="dh-c">${title}<p class="dh-none" style="margin-top:8px">There's no full TD statement for ${monthKeyToFull(r.key)} yet. ${dashLink('bank', 'Open the Bank page', 'files')}</p></div>`;
+
+  const op = br.operating, partner = br.capIn - br.capOut, change = op + partner, net = r.net;
+  const f = br.ts[0], open = f.bal - (f.kind === 'credit' ? f.amount : -f.amount);
+  const steps = [
+    { name: 'Net profit', from: 0, to: net, total: true, tip: 'From Monthly Data' },
+    { name: 'Stock, insurers and other differences', from: net, to: op, tip: 'Everything that makes cash differ from profit this month' },
+    { name: op < 0 ? 'Cash the store lost' : 'Cash the store made', from: 0, to: op, total: true, tip: "All money in minus all money out through TD, including owners' pay. Partner money isn't counted." },
+  ];
+  if (Math.abs(partner) >= 1) steps.push({ name: 'Partner money', from: op, to: change, tip: `${bk$(br.capIn)} put in, ${bk$(br.capOut)} taken out` });
+  steps.push({ name: 'Change in the bank', from: 0, to: change, total: true, tip: `${bk$(open)} to ${bk$(br.endBal)}` });
+  const all = steps.flatMap(s => [s.from, s.to]), hi = Math.max(0, ...all), lo = Math.min(0, ...all), span = (hi - lo) || 1, y = v => (hi - v) / span * 100;
+  const cols = steps.map(s => {
+    const a = y(Math.max(s.from, s.to)), b = y(Math.min(s.from, s.to)), v = s.to - s.from;
+    return `<div class="dh-wfc">
+      <div class="dh-wfa" data-tip="${dashTip(s.name, bkS(v), s.tip)}"><u style="top:${y(0).toFixed(2)}%"></u><div class="dh-wfb" style="top:${a.toFixed(2)}%;height:${(b - a).toFixed(2)}%;background:var(${s.total ? '--total' : v >= 0 ? '--s1' : '--down'})"><span>${bkS(v)}</span></div></div>
+      <div class="dh-wfn">${s.name}</div>
+    </div>`;
+  }).join('');
+  const label = steps.map(s => `${s.name} ${bkS(s.to - s.from)}`).join(', ');
+
+  const balDate = M.asOf && M.asOf.slice(0, 7) === r.key ? M.asOf : `${r.key}-${String(bkDim(r.key)).padStart(2, '0')}`;
+  const c = dashCushion(M, bank.md, r.key, br.endBal);
+  const cushion = !c ? '' : c.st === 'critical' ? dashSt('critical', 'overdrawn') : dashSt(c.st, c.gap > 0 ? `${bk$(c.gap)} short of the cushion` : `${bk$(-c.gap)} above the cushion`);
+  const lasts = c && br.endBal > 0 ? `<span class="dh-tn" title="At about ${bk$(c.outDay)} a day of outgoings. The cushion is two weeks: ${bk$(c.target)}.">About ${Math.round(c.lasts)} days of bills</span>` : '';
+  const tiles = [`<div><div class="dh-wl">In the bank, ${bkDs(balDate)}</div><div class="v">${bk$(br.endBal)}</div>${lasts}${cushion}</div>`];
+  // What insurers owe is only worked out up to the latest statement, so an earlier month doesn't show it.
+  const P = M.payers.filter(p => p.status !== 'none');
+  if (isLast && P.length) {
+    const owed = P.reduce((s, p) => s + p.owed, 0), lag = P.reduce((s, p) => s + p.lagPart, 0), late = owed - lag;
+    const st = late < 1000 ? 'good' : late < 5000 ? 'warn' : 'serious';   // the Health page's rule
+    tiles.push(`<div><div class="dh-wl">Insurers still owe you, ${bkDs(M.payCut)}</div><div class="v">${bk$(owed)}</div><span class="dh-tn">${bk$(lag)} not due yet</span>${dashSt(st, late >= 0.5 ? `${bk$(late)} past due` : 'nothing past due')}</div>`);
+  }
+  return `<div class="dh-c">
+    ${title}
+    <p class="dh-cs">Why ${dashMonthName(r.key)}'s profit isn't the same as what the bank balance did.</p>
+    <div class="dh-wf" role="img" aria-label="${esc(label)}">${cols}</div>
+    <div class="dh-cashr">${tiles.join('')}</div>
+    ${dashLink('health', 'See 12 months on the Health page')}
+  </div>`;
+}
+
+// ── The year ─────────────────────────────────────────────────────────
+function dashYearBand(rows) {
+  const L = rows.length - 1, base = rows[L], T = growthTrend(rows, L), gd = growthDescribe(T);
+  const span = Math.min(12, base.t - rows[0].t + 1), byT = new Map(rows.map(r => [r.t, r]));
+  const slots = [];
+  for (let k = 1 - span; k <= (T.ok ? 12 : 0); k++) {
+    const key = dashNextKey(base.key, k), r = byT.get(base.t + k);
+    slots.push(k <= 0 ? { key, v: r ? r.net : null, r } : { key, v: T.net(k), future: true });
+  }
+  const goal = Array.from({ length: 10 }, (_, n) => (n + 1) * 1e4).find(g => g > base.net) || null;   // Projections' goals, above today
+  const vals = slots.filter(s => s.v !== null).map(s => s.v);
+  const yr = hlNice(Math.min(...vals), Math.max(...vals, goal || 0)), y = v => (1 - (v - yr.lo) / (yr.hi - yr.lo)) * 100;
+  const grid = yr.ticks.map(t => `<div class="dh-gl${t === 0 ? ' zero' : ''}" style="top:${y(t).toFixed(2)}%"><span>${bkAxis(t)}</span></div>`).join('');
+  const bars = slots.map(s => {
+    const name = monthKeyToLabel(s.key);
+    if (s.v === null) return `<div class="dh-col" data-tip="${dashTip(name, 'Not in Monthly Data')}"></div>`;
+    const a = y(Math.max(s.v, 0)), b = y(Math.min(s.v, 0));
+    const tip = s.future ? dashTip(name, bkS(s.v) + ' if the trend holds') : dashTip(name, bkS(s.v), `Gross profit ${bk$(s.r.gp)}, expenses ${bk$(s.r.exp)}`);
+    return `<div class="dh-col" data-tip="${tip}"><div class="dh-bar" style="top:${a.toFixed(2)}%;height:${(b - a).toFixed(2)}%;background:var(${s.future ? '--proj' : s.v >= 0 ? '--s1' : '--down'});border-radius:${s.v >= 0 ? '3px 3px 0 0' : '0 0 3px 3px'}"></div></div>`;
+  }).join('');
+  const n = slots.length, cut = span / n * 100, lastFut = slots[n - 1];
+  const xl = slots.map((s, i) => i % 3 ? '' : `<span style="left:${((i + .5) / n * 100).toFixed(2)}%">${i === 0 || s.key.endsWith('-01') ? dashShort(s.key) : bkMon(s.key)}</span>`).join('');
+  const lastLabel = `<span class="dh-vl" style="right:calc(${(100 - cut).toFixed(2)}% + 4px);top:calc(${y(Math.max(base.net, 0)).toFixed(2)}% - 20px)">${bkS(base.net)}</span>`;
+  const futLabel = T.ok ? `<span class="dh-vl" style="right:0;top:calc(${y(Math.max(lastFut.v, 0)).toFixed(2)}% - 20px)">${bkS(lastFut.v)}</span>` : '';
+
+  let goalLine = '';
+  if (goal) {
+    const tag = `$${goal / 1000}K a month`, pct = Math.max(0, Math.min(100, Math.round(base.net / goal * 100)));
+    const k = T.ok ? growthReach(T, goal, 120) : null;
+    goalLine = `<div class="dh-gls">Next goal, ${tag}: <b>${k ? monthKeyToFull(dashNextKey(base.key, k)) : 'not reached'}</b> on the trend, ${pct}% there today</div>`;
+  }
+
+  // The last 12 actual months and the next 12 on the trend: the same sums as the Projections page's total row.
+  const past = rows.filter(r => r.t > base.t - 12), sum = k => past.reduce((s, r) => s + r[k], 0), withCnt = past.filter(r => r.cnt > 0).length;
+  const nx = { cnt: 0, rx: 0, gp: 0, exp: 0 };
+  if (T.ok) for (let k = 1; k <= 12; k++) { nx.cnt += Math.max(0, T.cnt(k)); nx.rx += Math.max(0, T.rx(k)); nx.gp += T.gp(k); nx.exp += T.exp(k); }
+  const cell = v => (T.ok ? v : '—');
+  const row = (label, a, b, cls) => `<tr${cls ? ` class="${cls}"` : ''}><td>${label}</td><td>${a}</td><td>${cell(b)}</td></tr>`;
+  const count = v => Math.round(v).toLocaleString('en-CA');
+  const table = `<table class="dh-tt">
+    <thead><tr><th></th><th>${span >= 12 ? 'Last 12 months' : `Last ${span} month${span === 1 ? '' : 's'}`}<br>${dashShort(past[0].key)} to ${dashShort(base.key)}</th><th>Next 12, on trend<br>${dashShort(dashNextKey(base.key, 1))} to ${dashShort(dashNextKey(base.key, 12))}</th></tr></thead>
+    <tbody>
+      ${row('Prescriptions', withCnt ? count(sum('cnt')) + (withCnt < past.length ? `<small>${withCnt} of ${past.length} months</small>` : '') : '—', withCnt ? count(nx.cnt) : '—')}
+      ${row('Rx sales', bk$(sum('rx')), bk$(nx.rx))}
+      ${row('Gross profit', bk$(sum('gp')), bk$(nx.gp))}
+      ${row('Expenses', bk$(sum('exp')), bk$(nx.exp))}
+      ${row('Net profit', bkS(sum('net')), bkS(nx.gp - nx.exp), 'net')}
+    </tbody>
+  </table>`;
+
+  const trend = T.ok ? `On the trend: <b>${gd.head}</b>${gd.unit ? ' ' + gd.unit : ''}, measured over ${gd.span}. It's a projection from recent months, not a promise.` : esc(gd.detail);
+  return `<section class="dh-band">
+    <div class="dh-rail">
+      <p class="dh-when">The year</p>
+      <h2>Where is this going?</h2>
+      <p class="dh-fr">${trend}</p>
+      ${dashLink('projections', 'Adjust on Projections')}
+    </div>
+    <div class="dh-body">
+      <div class="dh-c">
+        <h3 class="dh-ct">Net profit by month</h3>
+        ${T.ok ? `<div class="dh-lg"><span><i style="background:var(--s1)"></i>Actual</span><span><i style="background:var(--proj)"></i>If the trend holds</span></div>` : ''}
+        <div class="dh-ch" role="img" aria-label="Net profit by month: ${bkS(base.net)} in ${monthKeyToFull(base.key)}${T.ok ? `, and ${bkS(lastFut.v)} in ${monthKeyToFull(lastFut.key)} if the trend holds` : ''}">
+          ${grid}
+          <div class="dh-cols">${bars}</div>
+          ${goal ? `<div class="dh-tgt" style="top:${y(goal).toFixed(2)}%"><span>Next goal, $${goal / 1000}K a month</span></div>` : ''}
+          ${T.ok ? `<div class="dh-now" style="left:${cut.toFixed(2)}%"></div>` : ''}
+          ${lastLabel}${futLabel}
+          <div class="dh-xl">${xl}</div>
+        </div>
+        ${goalLine}
+      </div>
+      <div class="dh-c">
+        <h3 class="dh-ct">Last 12 months and next 12</h3>
+        ${table}
+      </div>
+    </div>
+  </section>`;
+}
+
+// ── The page ─────────────────────────────────────────────────────────
+function dashBind(el) {
+  if (el._dhBound) return;
+  el._dhBound = true;
+  el.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-dh-theme],[data-dh-month],[data-dh-go]');
+    if (!b) return;
+    if (b.dataset.dhTheme) {   // one Light/Dark choice, shared with Projections
+      const root = el.querySelector('.dh');
+      root.dataset.theme = b.dataset.dhTheme;
+      try { localStorage.setItem(PJ_THEME_KEY, b.dataset.dhTheme); } catch (_) {}
+      root.querySelectorAll('[data-dh-theme]').forEach(x => x.classList.toggle('on', x === b));
+    } else if (b.dataset.dhMonth) {
+      const rows = growthRows(), j = dashSelIndex(rows) + (b.dataset.dhMonth === 'prev' ? -1 : 1), dir = b.dataset.dhMonth;
+      if (!rows[j]) return;
+      dashSelKey = j === rows.length - 1 ? null : rows[j].key;
+      renderDashboard();
+      const again = el.querySelector(`[data-dh-month="${dir}"]`);
+      if (again && !again.disabled) again.focus();
+    } else {
+      if (b.dataset.dhTab) _bkUi.tab = b.dataset.dhTab;
+      navigate(b.dataset.dhGo);
+      window.scrollTo(0, 0);
+    }
   });
+  el.addEventListener('mousemove', e => {
+    const t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { hlTipHide(); return; }
+    const [head, ...rest] = t.dataset.tip.split('|'), p = el.getBoundingClientRect();
+    hlTipShow(el, e.clientX - p.left, e.clientY - p.top, `<div class="t">${esc(head)}</div>${rest.map(x => `<div class="n">${esc(x)}</div>`).join('')}`);
+  });
+  el.addEventListener('mouseleave', hlTipHide);
+}
+
+function renderDashboard() {
+  const el = document.getElementById('page-dashboard');
+  if (!el) return;
+  hlTipHide();
+  dashBind(el);
+  const rows = growthRows(), theme = pjTheme();
+  const head = `<div class="dh-bar0">
+    <div><h1>Dashboard</h1><p class="dh-sub">This week, last month and the year ahead</p></div>
+    <div class="dh-seg" role="group" aria-label="Color theme"><button type="button" data-dh-theme="light" class="${theme === 'light' ? 'on' : ''}">Light</button><button type="button" data-dh-theme="dark" class="${theme === 'dark' ? 'on' : ''}">Dark</button></div>
+  </div>`;
+  if (!rows.length) {
+    el.innerHTML = `<div class="dh" data-theme="${theme}"><main class="dh-wrap">${head}<div class="dh-c dh-none">No data yet. Add your first month in Monthly Data. ${dashLink('monthly', 'Open Monthly Data')}</div></main></div>`;
+    return;
+  }
+  const bank = dashBank();
+  el.innerHTML = `<div class="dh" data-theme="${theme}"><main class="dh-wrap">${head}${dashNeeds(rows, bank)}${dashWeekBand()}${dashMonthBand(rows, bank)}${dashYearBand(rows)}</main></div>`;
 }
 
 // ================================================================
@@ -3534,12 +3293,12 @@ function bkActualExpenses(monthKey) {
   return row && row.hasBank ? row.opex : null;
 }
 // For the Dashboard: expenses paid from TD next to what Monthly Data has, for the
-// latest month with a statement and the last 3 / 12 such months. TD includes
-// owners' pay, which is drawn in lumps, so a single month can be above or below.
-function bkExpenseSummary() {
+// latest month with a statement up to `upTo` and the last 3 / 12 such months. TD
+// includes owners' pay, which is drawn in lumps, so a single month can be above or below.
+function bkExpenseSummary(upTo) {
   if (!bankData.loaded || bankData.error || !bankData.statements.length) return null;
   const td = new Map(bkModel().byMonth.filter(r => r.hasBank).map(r => [r.mk, r.opex]));
-  const rows = months.filter(m => td.has(m.monthKey)).map(m => ({ mk: m.monthKey, td: td.get(m.monthKey), entered: parseFloat(m.expenses) || 0 }));
+  const rows = months.filter(m => td.has(m.monthKey) && m.monthKey <= upTo).map(m => ({ mk: m.monthKey, td: td.get(m.monthKey), entered: parseFloat(m.expenses) || 0 }));
   if (!rows.length) return null;
   const tot = rs => rs.reduce((a, r) => ({ td: a.td + r.td, entered: a.entered + r.entered }), { td: 0, entered: 0 });
   return { last: rows[rows.length - 1], m3: rows.length >= 3 ? tot(rows.slice(-3)) : null, m12: rows.length >= 12 ? tot(rows.slice(-12)) : null };
