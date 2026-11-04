@@ -252,25 +252,97 @@ input:focus{border-color:var(--navy)}
 .bk-head h2{font-size:1.25rem;font-weight:800;color:var(--navy);margin:0}.bk-head p{color:var(--light);font-size:.85rem;margin:2px 0 14px}
 .bk-drop{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border:2px dashed var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:#fff;transition:border-color .15s,background .15s}
 .bk-drop.over{border-color:var(--navy);background:#eef2f8}.bk-drop b{display:block;color:var(--navy)}.bk-drop span{font-size:.8rem;color:var(--light)}
+.bk-choose{min-height:44px}
 .bk-uploads{display:flex;flex-direction:column;gap:6px;margin:-4px 0 16px}
 .bk-up{font-size:.82rem;padding:7px 12px;border-radius:8px;background:#f5f7fb;display:flex;gap:8px;align-items:baseline}.bk-up span{font-weight:800}
 .bk-up.ok{background:#e7f5ee}.bk-up.ok span{color:var(--teal)}.bk-up.err{background:#fbeaea}.bk-up.err span{color:var(--red)}
-.bk-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
-.bk-kpi{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px 16px}.bk-kpi b{display:block;font-size:1.35rem;font-weight:800;color:var(--navy)}
-.bk-kpi span{font-size:.76rem;color:var(--light);font-weight:400}.bk-kpi.neg b{color:var(--red)}.bk-kpi.pos b{color:var(--teal)}.bk-kpi.warn b{color:var(--amber)}
-.bk-flag{border-left:4px solid var(--amber);background:#fdf8ef;padding:9px 13px;margin:8px 0;border-radius:0 8px 8px 0;font-size:.86rem}.bk-flag.red{border-color:var(--red);background:#fdf1f0}
 .bk-chip{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#eef2f8;color:var(--navy);white-space:nowrap}
-.bk-chip.ok{background:#e7f5ee;color:var(--teal)}.bk-chip.red{background:#fbeaea;color:var(--red)}.bk-chip.amber{background:#f7eedd;color:var(--amber)}
+.bk-chip.ok{background:#e7f5ee;color:#0f6b4f}.bk-chip.red{background:#fbeaea;color:#a62c2c}.bk-chip.amber{background:#f7eedd;color:#74480a}
 .bk-sub{font-size:.74rem;color:var(--light);white-space:normal}.bk-note{font-size:.78rem;color:var(--light);margin:8px 0 0}
-.bk-tbl td,.bk-tbl th{padding:8px 10px}.bk-tbl td:first-child{white-space:normal;min-width:150px}.bk-tbl td.neg{color:var(--red)}.bk-tbl td.pos{color:var(--teal)}
-.bk-det{margin-top:12px}.bk-det summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:.88rem}
-.bk-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.bk-filters select,.bk-filters input{padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;width:auto}
-select.bk-cat{font-size:.8rem;padding:4px 6px;border:1px solid var(--border);border-radius:6px;max-width:220px}
-.bk-catbtn{font:inherit;font-size:.8rem;background:#f5f7fb;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--text);white-space:nowrap}
-.bk-catbtn:hover{border-color:var(--navy)}.bk-catbtn.ov{border-color:var(--navy);font-weight:700}.bk-catbtn.need{background:#fdf8ef;border-color:var(--amber);color:var(--amber);font-weight:700}
-.bk-file{display:flex;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.85rem}.bk-file span:first-child{flex:1}
+.bk-tbl{font-variant-numeric:tabular-nums}.bk-tbl td,.bk-tbl th{padding:8px 10px}.bk-tbl td:first-child{white-space:normal;min-width:150px}.bk-tbl .r{text-align:right}.bk-tbl .neg{color:#b83232}.bk-tbl .pos{color:#12795a;font-weight:600}
+.bk-det{margin-top:12px}.bk-det summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:.88rem;min-height:44px;display:flex;align-items:center;gap:7px}
+.bk-det summary::before{content:'';width:0;height:0;border-left:6px solid var(--navy);border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .12s}.bk-det[open] summary::before{transform:rotate(90deg)}
+select.bk-cat{font-size:.8rem;min-height:40px;padding:0 6px;border:1.5px solid var(--navy);border-radius:6px;max-width:230px;background:#fff;color:var(--text)}
+.bk-catbtn{font:inherit;font-size:.8rem;min-height:40px;background:#f5f7fb;border:1px solid var(--border);border-radius:6px;padding:0 9px;cursor:pointer;color:var(--text);white-space:nowrap}
+.bk-catbtn:hover{border-color:var(--navy)}.bk-catbtn.ov{border-color:var(--navy);font-weight:700}.bk-catbtn.need{background:#fdf8ef;border-color:#8a5a10;color:#74480a;font-weight:700}
+.bk-file{display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--border);font-size:.85rem}.bk-file span:first-child{flex:1}
 .bk-rule pre{background:#f5f7fb;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.8rem;overflow-x:auto;white-space:pre}
 .bk-list{margin:6px 0 0 18px;font-size:.88rem;line-height:1.6}
+/* Bank page layout */
+.bk-headrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.bk-headrow p{margin-bottom:0}
+.bk-go{font:inherit;font-size:.85rem;font-weight:600;color:#fff;background:var(--navy);border:0;border-radius:8px;padding:0 18px;min-height:44px;cursor:pointer}.bk-go:hover{opacity:.88}
+.bk-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:18px;padding:2px}.bk-tabs::-webkit-scrollbar{height:0}
+.bk-tab{font:inherit;font-size:.88rem;font-weight:500;color:var(--text);background:#fff;border:0;border-radius:8px;padding:0 16px;min-height:44px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:7px;flex:0 0 auto;box-shadow:0 1px 3px rgba(27,58,107,.1)}
+.bk-tab:hover{background:#f7f9fc}.bk-tab.on{background:var(--navy);color:#fff;font-weight:700}
+.bk-badge{font-size:.72rem;font-weight:700;color:#74480a;background:#f7eedd;border-radius:10px;padding:1px 7px}
+.bk-pane .card{margin-bottom:20px;min-width:0}
+.bk-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:0 20px;align-items:start}.bk-2.narrow{grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr))}
+.bk-cardhead{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-bottom:10px}.bk-cardhead .card-title{margin-bottom:0}
+.bk-cardhead h3{font-size:1.05rem;font-weight:800;color:var(--navy);margin:0 0 2px}
+.bk-btn{font:inherit;font-size:.78rem;font-weight:600;color:var(--text);background:var(--border);border:0;border-radius:8px;padding:0 12px;min-height:44px;cursor:pointer;white-space:nowrap}.bk-btn:hover{opacity:.8}
+.bk-link{font:inherit;font-size:.84rem;font-weight:600;color:var(--navy);background:none;border:0;padding:0;min-height:44px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.bk-link.small{font-size:.78rem;font-weight:400;color:var(--text);padding:0 4px}
+.bk-q{font:inherit;flex:none;width:44px;height:44px;margin:-12px;padding:0;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.bk-q span{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--light);color:var(--light);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}.bk-q:hover span{border-color:var(--navy);color:var(--navy)}
+.bk-why{font-size:.82rem;color:#3d4d66;margin:6px 0 10px;line-height:1.45}.bk-why[hidden]{display:none}
+.bk-lead{font-size:.92rem;margin-bottom:14px}
+.bk-dl{display:grid;grid-template-columns:minmax(90px,auto) minmax(0,1fr);gap:6px 14px;padding:12px 14px;background:#f7f9fc;border-radius:8px;font-size:.84rem;color:var(--text)}.bk-dl dt{font-weight:700}
+/* Summary */
+.bk-baltop{display:flex;justify-content:space-between;gap:20px 32px;flex-wrap:wrap}.bk-baltop .card-title{margin-bottom:12px}
+.bk-hero{font-size:48px;font-weight:800;color:var(--navy);line-height:1.1;letter-spacing:-.02em}.bk-hero.neg{color:#b83232}
+.bk-herosub{font-size:.88rem;color:var(--light);margin-top:4px}
+.bk-trendbox{flex:0 1 460px;min-width:min(260px,100%)}.bk-trendlab{font-size:.84rem;font-weight:600;color:var(--light);display:flex;align-items:center;gap:8px}
+.bk-trendline{font-size:1.1rem;font-weight:700;margin:2px 0}.bk-trendbox .bk-sub{font-size:.86rem}.bk-trendbox .bk-why{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.bk-legend{display:flex;gap:6px 18px;flex-wrap:wrap;margin-top:18px;font-size:.78rem;color:var(--light);align-items:center}.bk-legend span{display:flex;align-items:center;gap:6px}
+.bk-legend .sw{width:12px;height:12px;border-radius:3px;display:block}.bk-legend .sw.up{background:#2a78d6}.bk-legend .sw.down{background:#eb6834}
+.bk-legend .dash{width:20px;height:0;border-top:2px dashed var(--text);display:block}.bk-legend .dot{width:8px;height:8px;border-radius:50%;background:var(--navy);display:block}
+.bk-plot{position:relative;height:200px;margin-top:30px}.bk-plot.tall{height:230px}
+.bk-gl{position:absolute;left:0;right:0;border-top:1px solid #e9edf3}.bk-gl.zero{border-color:#a9b5c4}.bk-gl span{position:absolute;left:0;bottom:1px;font-size:11px;color:var(--light);font-variant-numeric:tabular-nums}
+.bk-cols{position:absolute;top:0;bottom:0;left:52px;right:0;display:flex}
+.bk-col{font:inherit;position:relative;flex:1 1 0;min-width:0;height:100%;padding:0;border:0;background:transparent;cursor:pointer}.bk-col:hover,.bk-col:focus-visible{background:#f4f6fa}
+.bk-col i{display:block;position:absolute}
+.bk-conn{left:50%;width:100%;height:1px;background:#a9b5c4}
+.bk-bar{left:50%;transform:translateX(-50%);width:min(24px,64%);min-height:3px;border-radius:4px}.bk-bar.up{background:#2a78d6}.bk-bar.down{background:#eb6834}
+.bk-vbar{left:50%;transform:translateX(-50%);bottom:0;width:min(24px,64%);border-radius:4px 4px 0 0;background:#2a78d6}.bk-col.dim .bk-vbar{background:#b9d3f2}
+.bk-dir{position:absolute;left:50%;transform:translateX(-50%);fill:var(--light)}.bk-dir.dn{transform:translateX(-50%) rotate(180deg)}
+.bk-lab{position:absolute;left:4px;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap}.bk-col.r .bk-lab{left:auto;right:4px}
+.bk-lab.val{font-size:11px;left:50%;transform:translateX(-50%)}.bk-col.l .bk-lab.val{left:2px;transform:none}.bk-col.r .bk-lab.val{left:auto;right:2px;transform:none}
+.bk-tip{display:none;position:absolute;z-index:5;left:50%;transform:translateX(-50%);width:190px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 14px rgba(27,58,107,.18);padding:8px 10px;text-align:left;font-size:12px;line-height:1.5;color:var(--text);pointer-events:none}
+.bk-tip>*{display:block}.bk-tip .b{font-weight:600}.bk-tip .m{color:var(--light)}.bk-col.l .bk-tip{left:0;transform:none}.bk-col.r .bk-tip{left:auto;right:0;transform:none}
+.bk-col:hover .bk-tip,.bk-col:focus .bk-tip{display:block}
+.bk-trend{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.bk-trend line{stroke:var(--text);stroke-width:2;stroke-dasharray:6 5;vector-effect:non-scaling-stroke}
+.bk-avg{position:absolute;left:0;right:0;border-top:2px dashed var(--text);pointer-events:none}
+.bk-xaxis{display:flex;margin:6px 0 0 52px}.bk-xaxis>div{flex:1 1 0;min-width:0;text-align:center;font-size:11px;color:var(--light);line-height:1.25}.bk-xaxis .yr{min-height:14px}
+.bk-xaxis i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--navy);margin-top:2px}
+.bk-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px;margin-bottom:20px}
+.bk-tile{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;min-width:0}.bk-tile>b{display:block;font-size:1.35rem;font-weight:800;color:var(--navy);margin-top:6px}.bk-tile small{display:block;font-size:.78rem;color:var(--light);margin-top:2px}
+.bk-tile.t-neg>b{color:#b83232}.bk-tile.t-pos>b{color:#12795a}.bk-tile.t-warn>b{color:#8a5a10}
+.bk-tilehead{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;font-size:.84rem;font-weight:600}.bk-tile .bk-why{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--border)}
+.bk-alert{padding:8px 0;border-top:1px solid var(--border)}.bk-alert:first-of-type{border-top:0}
+.bk-alertrow{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap}.bk-alertrow svg{flex:none}.bk-alertrow .txt{flex:1 1 180px;font-size:.9rem;font-weight:600}.bk-alertrow .bk-link{font-size:.8rem;font-weight:400;padding:0 8px}
+.bk-alert .bk-why{margin:4px 0 6px 28px}
+.bk-vs td,.bk-vs th{padding:7px 10px}.bk-vs td:first-child{white-space:normal;min-width:0}.bk-vs .sub td:first-child{padding-left:22px}
+/* Insurers, months */
+.bk-ins td{padding:2px 13px;height:44px}.bk-ins th{padding:11px 13px}.bk-rowbtn{font:inherit;color:var(--text);background:none;border:0;padding:0;min-height:44px;cursor:pointer;display:flex;align-items:center;gap:7px;text-align:left}
+.bk-chev{flex:none;color:var(--light);transition:transform .12s}.bk-rowbtn[aria-expanded="true"] .bk-chev{transform:rotate(90deg)}
+.bk-howrow td{background:#f7f9fc;font-size:.84rem;white-space:normal;padding:8px 13px 12px 30px;height:auto}.bk-howrow[hidden]{display:none}
+.bk-seg{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}.bk-seg button{font:inherit;font-size:.84rem;font-weight:500;color:#3d4d66;background:transparent;border:0;border-radius:8px;padding:0 14px;min-height:44px;cursor:pointer;white-space:nowrap}.bk-seg button:hover{background:#f4f6fa}.bk-seg button.on{font-weight:700;color:var(--navy);background:#e4eaf4}
+.bk-tight{font-size:.78rem}.bk-tight td,.bk-tight th{padding:9px 6px}
+/* Transactions */
+.bk-txgrid{display:flex;flex-wrap:wrap;gap:0 20px;align-items:flex-start}.bk-kinds{flex:1 1 280px;min-width:0;padding:14px}.bk-txmain{flex:999 1 560px;min-width:0}
+.bk-kindsel{display:none;font-size:.84rem;font-weight:600}.bk-kindsel select{font:inherit;display:block;width:100%;margin-top:4px;min-height:44px;padding:0 10px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text)}
+.bk-kind{font:inherit;width:100%;min-height:44px;padding:0 10px;margin-bottom:2px;border:0;border-radius:8px;background:transparent;color:var(--text);font-size:.88rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left}
+.bk-kind span:last-child{font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}.bk-kind:hover{background:#f4f6fa}.bk-kind.need{color:#74480a;background:#f7eedd;font-weight:700}.bk-kind.on,.bk-kind.on:hover{color:#fff;background:var(--navy);font-weight:700}
+.bk-dirs{display:flex;flex-wrap:wrap;gap:4px;padding:3px;background:var(--bg);border-radius:9px}.bk-dirs button{font:inherit;flex:1 1 auto;min-height:44px;padding:0 14px;border:0;border-radius:7px;background:transparent;color:#3d4d66;font-size:.84rem;font-weight:500;cursor:pointer;white-space:nowrap}.bk-dirs button.on{background:#fff;color:var(--navy);font-weight:700}
+.bk-kindlist .bk-dirs{margin:10px 0 8px}.bk-kindnote{display:block;margin:8px 10px 2px}
+.bk-find{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:flex-end;padding:14px 22px 16px}.bk-find label{font-size:.78rem;color:var(--light);display:flex;flex-direction:column;gap:2px;flex:0 1 170px}.bk-find label.grow{flex:1 1 240px}
+.bk-find input,.bk-find select{font:inherit;font-size:.88rem;min-height:44px;width:100%;padding:0 10px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text)}
+.bk-both{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:12px}.bk-both>span{font-size:.84rem;font-weight:600}.bk-both .bk-dirs button{flex:0 0 auto}
+.bk-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:12px 18px;margin-top:16px}.bk-stats span{display:block;font-size:.78rem;color:var(--light)}.bk-stats b{display:block;font-size:1.15rem;font-weight:800}.bk-stats small{display:block;font-size:.76rem;color:var(--light)}
+.bk-showgraph{margin-bottom:14px}
+.bk-txtbl td{padding:2px 13px;height:44px}.bk-txtbl th{padding:11px 13px}.bk-txtbl td:first-child{min-width:0;white-space:nowrap}
+.bk-more{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media(max-width:720px){.bk-kindsel{display:block}.bk-kindlist{display:none}.bk-kinds{flex-basis:100%}.bk-plot.tall{height:190px}.bk-plot{height:170px}.bk-col .bk-lab:not(.val){display:none}.bk-col:not(.foc) .bk-lab.val{display:none}.bk-xaxis>div{font-size:10px}}
+@media(max-width:520px){.bk-pane .card{padding:16px}.bk-vs{font-size:.78rem}.bk-vs td,.bk-vs th{padding:7px 5px}.bk-vs .sub td:first-child{padding-left:12px}.bk-find{padding:14px 16px}.bk-ins td{padding:2px 8px}}
 /* Health page: chart tokens are the validated data-viz palette */
 .hl{--hl-s1:#2a78d6;--hl-s2:#eb6834;--hl-s3:#1baf7a;--hl-up:#2a78d6;--hl-down:#e34948;--hl-total:#52514e;--hl-grid:#e7ebf2;--hl-axis:#c3cad6;--hl-muted:#8a96a8;--hl-surface:#fff;--hl-tint:rgba(208,59,59,.07);--hl-wash:rgba(27,58,107,.05)}
 .hl-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
@@ -3077,7 +3149,7 @@ function saveExpenses() {
 const FS_BANK = 'bank';
 const BK_PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 let bankData = { loaded: false, loading: null, error: null, statements: [], kroll: [], overrides: {}, ver: 0 };
-let _bkUi = { month: 'all', cat: 'all', q: '', uploads: [], busy: false };
+let _bkUi = { tab: 'summary', month: 'all', cat: 'all', dir: 'out', flow: null, q: '', limit: 15, graphHidden: false, graphTable: false, balTable: false, monthView: 'cash', uploads: [], busy: false };
 
 // Payers, how they pay, and which Kroll plans they cover. ODB and TELUS
 // schedules are the published ones; for the rest, lagDays (claim → deposit)
@@ -3110,33 +3182,33 @@ const BK_IGNORE_PLANS = ['Grand Total', 'Cash', 'Ontario Narcotic Monitoring Pro
 const BK_CATS = Object.assign(
   Object.fromEntries(BK_PAYERS.map(p => ['payer:' + p.id, { label: p.name, group: 'payer' }])),
   {
-    'cards':             { label: 'Card sales (Global Payments)', group: 'customer' },
+    'cards':             { label: 'Card sales', group: 'customer' },
     'patient-etransfer': { label: 'Patient e-transfers',          group: 'customer' },
-    'cash-deposit':      { label: 'Cash deposit',                 group: 'customer' },
-    'cheque-deposit':    { label: 'Cheque deposit (source unknown)', group: 'other-in' },
+    'cash-deposit':      { label: 'Cash deposits',                 group: 'customer' },
+    'cheque-deposit':    { label: 'Cheque, not matched yet', group: 'other-in' },
     'rebates':           { label: 'Pharmasave rebates',           group: 'rebate' },
     'other-in':          { label: 'Other income',                 group: 'other-in' },
-    'capital-in':        { label: 'Partner / owner money in',     group: 'capital' },
-    'unknown-in':        { label: 'Unrecognised deposit',         group: 'other-in' },
+    'capital-in':        { label: 'Partner money put in',     group: 'capital' },
+    'unknown-in':        { label: 'Deposit not recognized',         group: 'other-in' },
     'cogs':              { label: 'McKesson (drugs)',             group: 'cogs' },
-    'rent':              { label: 'Rent / cheques',               group: 'opex' },
-    'payroll':           { label: 'Payroll (e-transfers)',        group: 'opex' },
-    'payroll-tax':       { label: 'Payroll remittances (CRA)',    group: 'opex' },
-    'owner-pay':         { label: "Owners' pay (to partner account)", group: 'opex' },
+    'rent':              { label: 'Rent and cheques',               group: 'opex' },
+    'payroll':           { label: 'Salaries',        group: 'opex' },
+    'payroll-tax':       { label: 'Payroll taxes (CRA)',    group: 'opex' },
+    'owner-pay':         { label: "Owners' pay", group: 'opex' },
     'bills':             { label: 'Bills paid by e-transfer',     group: 'opex' },
     'etfr-expense':      { label: 'Expenses paid by e-transfer',  group: 'opex' },
-    'etfr-other':        { label: 'Other e-transfers out',        group: 'opex' },
+    'etfr-other':        { label: 'E-transfers with no note',        group: 'opex' },
     'credit-card':       { label: 'Credit card payments',         group: 'opex' },
-    'phone':             { label: 'Phone & internet',             group: 'opex' },
+    'phone':             { label: 'Phone and internet',             group: 'opex' },
     'pharmasave-fees':   { label: 'Pharmasave fees',              group: 'opex' },
     'insurance':         { label: 'Insurance',                    group: 'opex' },
-    'lease':             { label: 'Equipment lease (RCAP)',       group: 'opex' },
+    'lease':             { label: 'Equipment lease',       group: 'opex' },
     'card-fees':         { label: 'Card processing fees',         group: 'opex' },
-    'bank-fees':         { label: 'Bank fees & interest',         group: 'opex' },
+    'bank-fees':         { label: 'Bank fees and interest',         group: 'opex' },
     'cash-out':          { label: 'Cash withdrawals',             group: 'opex' },
     'purchases':         { label: 'Other purchases',              group: 'opex' },
-    'unknown-out':       { label: 'Unrecognised payment',         group: 'opex' },
-    'capital-out':       { label: 'Partner / owner money out',    group: 'capital' },
+    'unknown-out':       { label: 'Payment not recognized',         group: 'opex' },
+    'capital-out':       { label: 'Partner money taken out',    group: 'capital' },
   });
 const BK_ESI_RX = /^(ESI\b|Express Scripts)/i;
 
@@ -3518,7 +3590,7 @@ async function bkSetCat(key, cat) {
     if (clear) delete bankData.overrides[key]; else bankData.overrides[key] = cat;
   } catch (e) {
     if (clear && e.code === 'not-found') delete bankData.overrides[key];
-    else { alert('Could not save the category: ' + (e.code || e.message)); }
+    else { alert('Could not save the kind: ' + (e.code || e.message)); }
   }
   renderBank();
 }
@@ -3543,18 +3615,14 @@ function renderBank() {
 function renderBankInner() {
   const el = document.getElementById('page-bank');
   if (!el) return;
+  bkWire(el);
   if (!bkCanSee()) { el.innerHTML = '<div class="card">You don\'t have access to this page.</div>'; return; }
   if (!bankData.loaded) {
     el.innerHTML = '<div class="card" style="text-align:center;color:var(--light)">Loading bank data…</div>';
     loadBank().then(() => { if (currentPage === 'bank') renderBank(); });
     return;
   }
-  const up = `
-    <div class="bk-drop" id="bkDrop">
-      <div><b>Drop TD statements and Kroll Plan Billing Summary PDFs here</b><span>Several at once is fine. They're read in this browser; only the numbers are saved. Re-uploading a file replaces it.</span></div>
-      <label class="btn btn-primary btn-sm">Choose PDFs<input type="file" accept="application/pdf" multiple style="display:none" id="bkFile"></label>
-    </div>
-    ${_bkUi.uploads.length ? `<div class="bk-uploads">${_bkUi.uploads.map(u => `<div class="bk-up ${u.state}"><span>${u.state === 'ok' ? '✓' : u.state === 'err' ? '✕' : '…'}</span><b>${esc(u.name)}</b> ${esc(u.msg || 'Reading…')}</div>`).join('')}</div>` : ''}`;
+  const up = bkUploadHtml();
   if (bankData.error) {
     el.innerHTML = `<div class="bk">${up}<div class="card bk-rule"><div class="card-title">One-time setup: lock the bank data to the Bank page</div>
       <p>Firestore refused to read the bank data (<code>${esc(bankData.error)}</code>). Bank data lives in its own <code>bank</code> collection, and the database denies it by default. Add this block in <b>Firebase console → Firestore → Rules</b>, inside <code>match /databases/{database}/documents { … }</code>, beside your other <code>match</code> blocks, then press <b>Publish</b>:</p>
@@ -3563,78 +3631,268 @@ function renderBankInner() {
     bkBindUpload(); return;
   }
   if (!bankData.statements.length && !bankData.kroll.length) {
-    el.innerHTML = `<div class="bk">${up}<div class="card"><div class="card-title">Bank &amp; Collections</div>
+    el.innerHTML = `<div class="bk">${up}<div class="card"><div class="card-title">Bank</div>
       <p>Upload your TD business-account statements and the Kroll <b>Plan Billing Summary</b> for the same months. The page then:</p>
       <ul class="bk-list"><li>matches every insurer and ODB deposit against what Kroll billed, using each payer's own payment schedule</li>
       <li>shows what's still owed and whether any of it is overdue</li><li>shows the patient-pay not banked: copays and front-store sales minus deposits</li>
-      <li>shows actual expenses next to your budget, drug purchases, and partner money in and out</li></ul></div></div>`;
+      <li>shows your balance month by month, expenses next to Monthly Data, drug purchases, and partner money in and out</li></ul></div></div>`;
     bkBindUpload(); return;
   }
 
-  const M = bkModel(), P = M.payers.filter(p => p.status !== 'none');
-  const last3 = M.byMonth.filter(r => r.hasBank).slice(-3);
-  const avg = (rows, f) => rows.length ? rows.reduce((s, r) => s + f(r), 0) / rows.length : 0;
-  const owedAll = P.reduce((s, p) => s + p.owed, 0), lagAll = P.reduce((s, p) => s + p.lagPart, 0);
-  // only months the statements cover, so a Kroll report uploaded ahead of its statement can't shift the window
-  const banked12 = M.byMonth.filter(r => r.hasBank).slice(-12);
-  const gapRows = banked12.filter(r => r.gap !== null), gap12 = gapRows.reduce((s, r) => s + r.gap, 0), owe12 = gapRows.reduce((s, r) => s + r.owedByCustomers, 0);
-  const capNet = banked12.reduce((s, r) => s + r.capIn - r.capOut, 0);
-  const lastBal = M.T.length ? M.T[M.T.length - 1].bal : null, loc = M.last && M.last.locLimit;
-  const opAvg = avg(last3, r => r.operating);
-  const kpis = [
-    [bk$(lastBal), `in the bank on ${M.asOf ? bkD(M.asOf) : '—'}${loc ? ` · line of credit ${bk$(loc)}` : ''}`, lastBal < 0 ? 'neg' : ''],
-    [bk$(owedAll), `owed by insurers &amp; ODB${M.payCut && M.asOf && M.payCut < M.asOf ? ` for claims to ${bkD(M.payCut)}` : ''} · ${bk$(lagAll)} normal payment lag, ${bk$(owedAll - lagAll)} beyond it`, owedAll - lagAll > 1000 ? 'warn' : ''],
-    [bk$(gap12), `patient-pay not banked (${owe12 ? Math.round(gap12 / owe12 * 100) : 0}%) · copays and front-store sales minus deposits`, gap12 > 0 ? 'warn' : ''],
-    [bkS(opAvg) + '/mo', "cash from operations, last 3 months (after owners' pay, excl. partner money)", opAvg < 0 ? 'neg' : 'pos'],
-    [bk$(capNet), 'partner / owner money in, net, last 12 months', ''],
-  ];
+  const M = bkModel();
+  const panes = { summary: bkPaneSummary, insurers: bkPaneInsurers, months: bkPaneMonths, transactions: bkPaneTx, partner: bkPanePartner, files: bkPaneFiles };
+  if (!panes[_bkUi.tab]) _bkUi.tab = 'summary';
+  const shortN = M.payers.filter(p => p.status === 'short').length, needsN = M.T.filter(bkNeedsKind).length;
+  const tabs = [['summary', 'Summary'], ['insurers', 'Insurers', shortN], ['months', 'Months'], ['transactions', 'Transactions', needsN], ['partner', 'Partner money'], ['files', 'Statements']];
+  el.innerHTML = `<div class="bk">
+    <div class="bk-head bk-headrow">
+      <div><h2>Bank</h2><p>${M.asOf ? `TD account to ${bkD(M.asOf)}` : 'No TD statements yet'} · ${M.kMonths.length ? `Kroll reports to ${bkM(M.kMonths[M.kMonths.length - 1])}` : 'no Kroll reports yet'}</p></div>
+      <button type="button" class="bk-go" data-act="tab" data-v="files">Add statements</button>
+    </div>
+    <div class="bk-tabs" role="navigation" aria-label="Bank sections">${tabs.map(([id, label, n]) => `<button type="button" class="bk-tab${_bkUi.tab === id ? ' on' : ''}" data-act="tab" data-v="${id}"${_bkUi.tab === id ? ' aria-current="page"' : ''}>${label}${n ? `<span class="bk-badge">${n}</span>` : ''}</button>`).join('')}</div>
+    <div class="bk-pane">${panes[_bkUi.tab](M, up)}</div>
+  </div>`;
+  bkBindUpload();
+}
 
-  // flags
-  const flags = [];
-  const cheques = M.T.filter(t => t.cat === 'cheque-deposit');
-  const chequeNote = name => cheques.length ? ` ${cheques.length === 1 ? 'One cheque deposit' : `${cheques.length} cheque deposits`} (${cheques.map(t => `${bkC(t.amount)} on ${bkD(t.date)}`).join(', ')}) ${cheques.length === 1 ? "isn't" : "aren't"} assigned to any payer; if ${cheques.length === 1 ? 'it came' : 'any came'} from ${esc(name)}, file ${cheques.length === 1 ? 'it' : 'them'} under ${esc(name)} in the transaction list and this shrinks.` : '';
-  P.forEach(p => {
-    if (p.status === 'short') flags.push(['red', `<b>${esc(p.name)}: ${bk$(p.unexplained)} more billed than paid</b> after allowing for the normal lag (${bk$(p.lagPart)}).${chequeNote(p.name)} Check the payer's statements/EOBs for rejections, reversals or unpaid cheques.`]);
-    if (p.status === 'over') flags.push(['', `<b>${esc(p.name)}: ${bk$(-p.unexplained)} more paid than billed</b> in these months. Usually timing (a payment covering claims before the first Kroll month loaded) or Kroll's report differing from the payer's.`]);
-    if (p.slowStart && p.billed > 500) flags.push(['', `<b>${esc(p.name)}: no direct deposits from ${bkM(p.slowStart.from)} until ${p.slowStart.firstDep ? bkD(p.slowStart.firstDep) : 'now'}.</b> Payments before then came by cheque or not at all. Match them against the payer's statements.`]);
+// ── Small building blocks ────────────────────────────────────────────
+const bkNeedsKind = t => /unknown|cheque-deposit/.test(t.cat);
+const bkQ = (key, label) => `<button type="button" class="bk-q" data-why="${key}" aria-expanded="false" aria-label="${label || 'What does this mean?'}"><span>?</span></button>`;
+const bkWhy = (key, html) => `<div class="bk-why" id="bkw-${key}" hidden>${html}</div>`;
+const bkHelpBtn = (key, label) => `<button type="button" class="bk-link" data-why="${key}" aria-expanded="false">${label}</button>`;
+const bkMon = mk => bkM(mk).split(" '")[0];
+const bkYr = mk => "'" + mk.slice(2, 4);
+const bkDs = iso => bkD(iso).replace(/, \d{4}/, '');   // Oct 14, without the year
+function bkFit(ys) {
+  const n = ys.length, mx = (n - 1) / 2, my = ys.reduce((s, y) => s + y, 0) / n;
+  let a = 0, b = 0;
+  ys.forEach((y, i) => { a += (i - mx) * (y - my); b += (i - mx) * (i - mx); });
+  const slope = b ? a / b : 0;
+  return { slope, at: i => my + slope * (i - mx) };
+}
+function bkNiceStep(x) {
+  const p = Math.pow(10, Math.floor(Math.log10(Math.max(x, 1))));
+  for (const m of [1, 2, 2.5, 5, 10]) if (x <= m * p) return m * p;
+  return 10 * p;
+}
+const bkAxis = v => { const a = Math.abs(v), n = v < 0 ? '−' : ''; return a >= 1e6 ? n + '$' + (a / 1e6) + 'M' : a >= 1e4 ? n + '$' + (a / 1e3) + 'K' : n + '$' + a.toLocaleString('en-CA'); };
+const bkCompact = v => { const a = Math.abs(v), n = v < 0 ? '−' : ''; return a >= 1e6 ? n + '$' + (a / 1e6).toFixed(2) + 'M' : a >= 1e4 ? n + '$' + Math.round(a / 1e3) + 'K' : n + '$' + Math.round(a).toLocaleString('en-CA'); };
+const bkPerMonth = v => bk$(Math.abs(Math.round(v / 10) * 10));
+const bkTrendWord = v => Math.abs(v) < 100 ? 'about flat' : (v < 0 ? 'down about ' : 'up about ') + bkPerMonth(v) + ' a month';
+// A table: `align` has one letter per column, l or r. A row is an array of cells,
+// or { tot: true, cells } for a total row.
+function bkTable(head, rows, align, cls) {
+  const a = i => (align[i] === 'r' ? ' class="r"' : '');
+  return `<div class="tbl-wrap"><table class="data-tbl bk-tbl ${cls || ''}"><thead><tr>${head.map((h, i) => `<th${a(i)}>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => {
+    const cells = Array.isArray(r) ? r : r.cells;
+    return `<tr${r.tot ? ' class="tot-row"' : r.cls ? ` class="${r.cls}"` : ''}>${cells.map((c, i) => `<td${a(i)}>${c}</td>`).join('')}</tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+// Grid lines for a chart whose positions are percentages of its height.
+const bkGrid = (lines) => lines.map(l => `<div class="bk-gl${l.zero ? ' zero' : ''}" style="bottom:${l.y.toFixed(2)}%"><span>${l.label}</span></div>`).join('');
+const bkEdge = (i, n) => (i < 2 ? ' l' : i > n - 3 ? ' r' : '');
+const bkXAxis = mks => `<div class="bk-xaxis">${mks.map((mk, i) => `<div><div>${bkMon(mk.mk || mk)}</div><div class="yr">${i === 0 || (mk.mk || mk).endsWith('-01') ? bkYr(mk.mk || mk) : ''}</div>${mk.dot ? '<i aria-hidden="true"></i>' : ''}</div>`).join('')}</div>`;
+
+// What the store itself took in and paid out in a month, with partner money kept apart.
+// In minus out is the model's `operating`, so this always agrees with it.
+function bkMonthFlows(r) {
+  let credits = 0, debits = 0;
+  r.ts.forEach(t => { if (t.kind === 'credit') credits += t.amount; else debits += t.amount; });
+  return { in: credits - r.capIn, out: debits - r.capOut, left: r.operating, partner: r.capIn - r.capOut };
+}
+// Opening and closing balance for the last 12 months with transactions. The opening is
+// worked back from the month's first line, so a missing statement can't shift it.
+function bkBalanceSeries(M) {
+  return M.byMonth.filter(r => r.ts.length).slice(-12).map(r => {
+    const f = r.ts[0];
+    return { mk: r.mk, open: Math.round((f.bal - (f.kind === 'credit' ? f.amount : -f.amount)) * 100) / 100, close: r.endBal, partner: r.capIn - r.capOut, partial: r.partial };
   });
-  const unk = M.T.filter(t => t.cat === 'unknown-in' || t.cat === 'unknown-out' || t.cat === 'cheque-deposit');
-  if (unk.length) flags.push(['', `<b>${unk.length} transaction${unk.length > 1 ? 's' : ''} need a category</b> (unrecognised or cheque deposits, ${bk$(unk.reduce((s, t) => s + t.amount, 0))}). Set them in the transaction list below. A cheque from an insurer should be filed under that insurer.`]);
+}
+
+// ── Summary ──────────────────────────────────────────────────────────
+function bkBalanceCard(M, S) {
+  if (!S.length) return `<div class="card"><div class="card-title">Bank balance, month by month</div><p class="bk-note">Upload a TD statement to see your balance here.</p></div>`;
+  const lastBal = M.T[M.T.length - 1].bal, loc = M.last && M.last.locLimit, n = S.length;
+  const hasTrend = n >= 3;
+  // The store's own trend: month-end balances with partner money taken back out.
+  let cum = 0;
+  const storeOnly = S.map(s => { cum += s.partner; return s.close - cum; });
+  const fitAll = hasTrend ? bkFit(S.map(s => s.close)) : null, fitStore = hasTrend ? bkFit(storeOnly) : null;
+  const partnerSum = cum;
+  const levels = S.flatMap(s => [s.open, s.close]).concat(hasTrend ? [fitStore.at(0), fitStore.at(n - 1)] : []);
+  let lo = Math.min(...levels), hi = Math.max(...levels);
+  if (hi - lo < 100) { hi += 50; lo -= 50; }
+  const step = bkNiceStep((hi - lo) / 3);
+  const yMin = Math.floor((lo - step * 0.2) / step) * step, yMax = Math.ceil((hi + step * 0.35) / step) * step;
+  const y = v => (v - yMin) / (yMax - yMin) * 100;
+  const lines = [];
+  for (let v = yMin; v <= yMax + 0.01; v += step) lines.push({ y: y(v), label: bkAxis(v), zero: v === 0 });
+  const cols = S.map((s, i) => {
+    const up = s.close >= s.open, bot = y(Math.min(s.open, s.close)), top = y(Math.max(s.open, s.close)), diff = s.close - s.open;
+    const change = (up ? 'Up ' : 'Down ') + bk$(Math.abs(diff));
+    const partial = s.partial ? `<span>Only to ${bkDs(M.asOf)} so far</span>` : '';
+    const partnerNote = Math.abs(s.partner) >= 1 ? `<span class="m">${s.partner > 0 ? `Includes ${bk$(s.partner)} of partner money` : `Includes ${bk$(-s.partner)} taken out by partners`}</span>` : '';
+    const label = i === 0 ? bk$(s.open) : i === n - 1 ? bk$(s.close) : '';
+    return `<button type="button" class="bk-col${bkEdge(i, n)}" aria-label="${bkM(s.mk)}: opened at ${bk$(s.open)}, closed at ${bk$(s.close)}, ${change.toLowerCase()}">
+      ${i < n - 1 ? `<i class="bk-conn" style="bottom:${y(s.close).toFixed(2)}%"></i>` : ''}
+      <i class="bk-bar ${up ? 'up' : 'down'}" style="bottom:${bot.toFixed(2)}%;height:${(top - bot).toFixed(2)}%"></i>
+      <svg class="bk-dir${up ? '' : ' dn'}" style="bottom:calc(${top.toFixed(2)}% + 4px)" width="9" height="7" viewBox="0 0 9 7" aria-hidden="true"><path d="M4.5 0 9 7H0z"/></svg>
+      ${label ? `<span class="bk-lab" style="bottom:calc(${top.toFixed(2)}% + 14px)">${label}</span>` : ''}
+      <span class="bk-tip" style="bottom:min(calc(${top.toFixed(2)}% + 16px),calc(100% - 70px))"><b>${bkM(s.mk)}</b><span>Opened at ${bk$(s.open)}</span><span>Closed at ${bk$(s.close)}</span><span class="b">${change}</span>${partial}${partnerNote}</span>
+    </button>`;
+  }).join('');
+  const x1 = (0.5 / n * 100).toFixed(3), x2 = ((n - 0.5) / n * 100).toFixed(3);
+  const trendSvg = hasTrend ? `<svg class="bk-trend" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="${x1}" y1="${(100 - y(fitStore.at(0))).toFixed(2)}" x2="${x2}" y2="${(100 - y(fitStore.at(n - 1))).toFixed(2)}"/></svg>` : '';
+  const trendLine = !hasTrend ? 'Not enough months yet' : Math.abs(fitStore.slope) < 100 ? 'Staying about flat' : (fitStore.slope < 0 ? 'Going down about ' : 'Going up about ') + bkPerMonth(fitStore.slope) + ' a month';
+  const trendSub = !hasTrend ? 'The trend appears once there are 3 months of statements.'
+    : Math.abs(partnerSum) >= 1 ? `Not counting partner money. Partners ${partnerSum > 0 ? 'added' : 'took out'} ${bk$(Math.abs(partnerSum))} in these ${n} months, so the balance itself is ${bkTrendWord(fitAll.slope)}.`
+    : `No partner money in these ${n} months.`;
+  const numbers = _bkUi.balTable ? bkTable(['Month', 'Opened at', 'Closed at', 'Change', 'Partner money'],
+    S.slice().reverse().map(s => [`<b>${bkM(s.mk)}</b>${s.partial ? `<div class="bk-sub">to ${bkDs(M.asOf)}</div>` : ''}`, bk$(s.open), bk$(s.close), bkS(s.close - s.open), Math.abs(s.partner) >= 1 ? bkS(s.partner) : '']), 'lrrrr') : '';
+  return `<div class="card bk-balance">
+    <div class="bk-baltop">
+      <div>
+        <div class="card-title">Bank balance, month by month</div>
+        <div class="bk-hero${lastBal < 0 ? ' neg' : ''}">${bk$(lastBal)}</div>
+        <div class="bk-herosub">in the bank on ${bkD(M.asOf)}${loc ? ` · line of credit ${bk$(loc)}` : ''}</div>
+      </div>
+      <div class="bk-trendbox">
+        <div class="bk-trendlab">The store's trend ${bkQ('trend', 'What does the trend mean?')}</div>
+        <div class="bk-trendline">${trendLine}</div>
+        <div class="bk-sub">${trendSub}</div>
+        ${bkWhy('trend', "The dashed line shows which way the balance would have gone without partner money: a straight line through your month-end balances, with partner money taken out. It shows which way things have been going. It isn't a prediction.")}
+      </div>
+    </div>
+    <div class="bk-legend">
+      <span><i class="sw up"></i>Balance went up</span><span><i class="sw down"></i>Balance went down</span>
+      ${hasTrend ? `<span><i class="dash"></i>Store's trend, without partner money</span>` : ''}
+      ${S.some(s => Math.abs(s.partner) >= 1) ? `<span><i class="dot"></i>Partner money that month</span>` : ''}
+    </div>
+    <div class="bk-plot tall">${bkGrid(lines)}<div class="bk-cols">${cols}${trendSvg}</div></div>
+    ${bkXAxis(S.map(s => ({ mk: s.mk, dot: Math.abs(s.partner) >= 1 })))}
+    <button type="button" class="bk-link" data-act="baltable" aria-expanded="${!!_bkUi.balTable}">${_bkUi.balTable ? 'Hide the numbers' : 'Show the numbers'}</button>
+    ${numbers}
+  </div>`;
+}
+
+function bkAlerts(M, P, last3) {
+  const A = [];
+  const insurers = { label: 'See insurers', tab: 'insurers' };
+  const cheques = M.T.filter(t => t.cat === 'cheque-deposit');
+  const chequeNote = name => cheques.length ? ` ${cheques.length === 1 ? 'One unmatched cheque' : `${cheques.length} unmatched cheques`} (${cheques.map(t => `${bkC(t.amount)} on ${bkD(t.date)}`).join(', ')}) ${cheques.length === 1 ? "isn't" : "aren't"} filed under any insurer. If ${cheques.length === 1 ? 'it came' : 'any came'} from ${esc(name)}, file ${cheques.length === 1 ? 'it' : 'them'} under ${esc(name)} in Transactions and this shrinks.` : '';
+  P.forEach(p => {
+    if (p.status === 'short') A.push({ id: 'short-' + p.id, red: true, text: `${esc(p.name)} paid ${bk$(p.unexplained)} less than expected.`, why: `That's after allowing for its normal schedule (${bk$(p.lagPart)} not due yet).${chequeNote(p.name)} Check its statements for rejected claims, reversals or unpaid cheques.`, act: insurers });
+    if (p.status === 'over') A.push({ id: 'over-' + p.id, text: `${esc(p.name)} has paid ${bk$(-p.unexplained)} more than expected so far.`, why: "Usually timing: a payment for claims before the first Kroll month loaded, or Kroll's report differing from the insurer's.", act: insurers });
+    if (p.slowStart && p.billed > 500) A.push({ id: 'slow-' + p.id, text: `${esc(p.name)}: no direct deposits from ${bkM(p.slowStart.from)} until ${p.slowStart.firstDep ? bkD(p.slowStart.firstDep) : 'now'}.`, why: "Payments before then came by cheque or not at all. Match them against the insurer's statements.", act: insurers });
+  });
+  const unk = M.T.filter(bkNeedsKind);
+  if (unk.length) A.push({ id: 'needs', text: `${unk.length} transaction${unk.length > 1 ? 's need' : ' needs'} a kind.`, why: `Unrecognized lines or unmatched cheques, ${bk$(unk.reduce((s, t) => s + t.amount, 0))} in all. A cheque from an insurer should be filed under that insurer, which also shrinks what it owes you.`, act: { label: 'Sort them', tab: 'transactions', cat: 'needs' } });
   if (last3.length && last3.every(r => r.gap !== null) && last3.reduce((s, r) => s + r.gap, 0) > 0.08 * last3.reduce((s, r) => s + r.owedByCustomers, 0))
-    flags.push(['', `<b>Patient-pay gap ${bk$(last3.reduce((s, r) => s + r.gap, 0))} over the last 3 months.</b> That's Kroll's Cash line plus front-store sales, minus what reached the bank.`]);
+    A.push({ id: 'gap', text: `Patient payments not banked: ${bk$(last3.reduce((s, r) => s + r.gap, 0))} over the last 3 months.`, why: "That's Kroll's Cash line plus front-store sales, minus what reached the bank.", act: { label: 'See months', tab: 'months', view: 'patient' } });
   const etf = M.T.filter(t => t.cat === 'etfr-other'), etfBig = etf.filter(t => t.amount >= 1000);
-  if (etfBig.length) flags.push(['', `<b>${bk$(etf.reduce((s, t) => s + t.amount, 0))} of e-transfers out with no memo</b> counted as expenses, including ${etfBig.map(t => `${bk$(t.amount)} on ${bkD(t.date)}`).join(', ')}. If any were owners' pay, file them as Owners' pay; if any paid back partner money, file them as Partner / owner money out so they leave Actual expenses.`]);
+  if (etfBig.length) A.push({ id: 'nonote', text: `${bk$(etf.reduce((s, t) => s + t.amount, 0))} sent by e-transfer with no note.`, why: `It's counted as an expense, including ${etfBig.map(t => `${bk$(t.amount)} on ${bkD(t.date)}`).join(', ')}. If any was owners' pay, change its kind to Owners' pay. If any paid back partner money, change it to Partner money taken out so it leaves expenses.`, act: { label: 'See it', tab: 'transactions', cat: 'etfr-other' } });
   // Overdraft: calendar days that ended below zero. A day with no transactions
   // (weekends, holidays) keeps the previous close, and overdraft interest runs on it too.
   const close = new Map(); M.T.forEach(t => close.set(t.date, t.bal));   // date order, so the last write is TD's end-of-day balance
   const od = []; let eod = null;
   if (M.T.length) for (let d = M.T[0].date; d <= M.asOf; d = bkAdd(d, 1)) { if (close.has(d)) eod = close.get(d); if (eod !== null && eod < 0) od.push([d, eod]); }
-  if (od.length) { const lo = od.reduce((a, x) => x[1] < a[1] ? x : a); flags.push(['', `<b>Overdrawn at the end of ${od.length} day${od.length > 1 ? 's' : ''}</b> (weekends and holidays included) between ${bkD(od[0][0])} and ${bkD(od[od.length - 1][0])}; lowest ${bk$(lo[1])} on ${bkD(lo[0])}.`]); }
+  if (od.length) { const low = od.reduce((a, x) => x[1] < a[1] ? x : a); A.push({ id: 'od', text: `The account ended below $0 on ${od.length} day${od.length > 1 ? 's' : ''}.`, why: `Between ${bkD(od[0][0])} and ${bkD(od[od.length - 1][0])}, lowest ${bk$(low[1])} on ${bkD(low[0])}. Weekends and holidays count too, because overdraft interest runs on those days.`, act: { label: 'See that month', tab: 'transactions', cat: 'all', month: low[0].slice(0, 7) } }); }
   const noRemit = M.byMonth.filter((r, i) => {
     const nxt = M.byMonth[i + 1];
     return r.ts.filter(t => t.cat === 'payroll').reduce((s, t) => s + t.amount, 0) > 1000 && nxt && nxt.hasBank && ![r, nxt].some(x => x.ts.some(t => t.cat === 'payroll-tax'));
   });
-  if (noRemit.length) flags.push(['', `<b>Payroll with no CRA remittance (EMPTX) that month or the next: ${noRemit.map(r => bkM(r.mk)).join(', ')}</b> (${bk$(noRemit.reduce((s, r) => s + r.ts.filter(t => t.cat === 'payroll').reduce((a, t) => a + t.amount, 0), 0))} of pay). Confirm source deductions were remitted from somewhere.`]);
+  if (noRemit.length) A.push({ id: 'cra', text: `Salaries with no CRA payment: ${noRemit.map(r => bkM(r.mk)).join(', ')}.`, why: `${bk$(noRemit.reduce((s, r) => s + r.ts.filter(t => t.cat === 'payroll').reduce((a, t) => a + t.amount, 0), 0))} of pay with no CRA remittance (EMPTX) that month or the next. Confirm source deductions were remitted from somewhere.`, act: { label: 'See salaries', tab: 'transactions', cat: 'payroll' } });
   for (let i = 1; i < bankData.statements.length; i++) {
     const a = bankData.statements[i - 1], b = bankData.statements[i];
-    if (Math.abs((a.closing || 0) - (b.opening || 0)) > 0.005 || bkAdd(a.to, 3) < b.from) flags.push(['red', `<b>Statement gap:</b> ${bkD(a.to)} closes at ${bk$(a.closing)} but the next statement (${bkD(b.from)}) opens at ${bk$(b.opening)}. A statement may be missing.`]);
+    if (Math.abs((a.closing || 0) - (b.opening || 0)) > 0.005 || bkAdd(a.to, 3) < b.from) A.push({ id: 'gapst-' + i, red: true, text: `A statement may be missing around ${bkD(a.to)}.`, why: `${bkD(a.to)} closes at ${bk$(a.closing)} but the next statement (${bkD(b.from)}) opens at ${bk$(b.opening)}.`, act: { label: 'See statements', tab: 'files' } });
   }
   const missingK = M.byMonth.filter(r => r.hasBank && !r.hasKroll).map(r => bkM(r.mk));
-  if (missingK.length) flags.push(['', `<b>No Kroll Plan Billing Summary for ${missingK.join(', ')}.</b> Billing for those months can't be checked yet.`]);
+  if (missingK.length) A.push({ id: 'nok', text: `No Kroll report for ${missingK.join(', ')}.`, why: "Billing for those months can't be checked yet.", act: { label: 'See statements', tab: 'files' } });
   const aheadK = M.byMonth.filter(r => r.hasKroll && !r.hasBank).map(r => bkM(r.mk));
-  if (aheadK.length) flags.push(['', `<b>Kroll report for ${aheadK.join(', ')}, but no TD statement for ${aheadK.length === 1 ? 'it' : 'them'} yet.</b> That billing isn't counted as owed until the statement is uploaded, since the payments for it can't be seen yet.`]);
+  if (aheadK.length) A.push({ id: 'ahead', text: `Kroll report for ${aheadK.join(', ')}, but no full TD statement for ${aheadK.length === 1 ? 'it' : 'them'} yet.`, why: "That billing isn't counted as owed until the statement is uploaded, since the payments for it can't be seen yet.", act: { label: 'See statements', tab: 'files' } });
+  return A.filter(a => a.red).concat(A.filter(a => !a.red));
+}
 
-  // payer table
+function bkPaneSummary(M) {
+  const P = M.payers.filter(p => p.status !== 'none');
+  const banked = M.byMonth.filter(r => r.hasBank), last3 = banked.slice(-3), banked12 = banked.slice(-12);
+  // Same totals as the Health page, so the two pages always agree.
+  const owedAll = P.reduce((s, p) => s + p.owed, 0), lagAll = P.reduce((s, p) => s + p.lagPart, 0), beyond = owedAll - lagAll;
+  const gapRows = banked12.filter(r => r.gap !== null), gap12 = gapRows.reduce((s, r) => s + r.gap, 0), owe12 = gapRows.reduce((s, r) => s + r.owedByCustomers, 0);
+  const capNet = banked12.reduce((s, r) => s + r.capIn - r.capOut, 0);
+  const opAvg = last3.length ? last3.reduce((s, r) => s + r.operating, 0) / last3.length : 0;
+  const nMonths = banked12.length, nLabel = nMonths === 1 ? 'last month' : `last ${nMonths} months`;
+  const tiles = [
+    ['owed', 'Insurers still owe you', bk$(owedAll), `${bk$(lagAll)} not due yet · ${beyond >= 0 ? `${bk$(beyond)} past due` : `${bk$(-beyond)} paid early or extra`}`, beyond > 1000 ? 'warn' : '',
+      `What you billed through Kroll, minus what insurers and ODB have deposited. "Not due yet" follows each insurer's payment schedule. "Past due" should have arrived by now.`],
+    ['made', 'Cash the store made or lost', last3.length ? bkS(opAvg) + ' a month' : '—', `average of the last ${last3.length || 3} months`, opAvg < 0 ? 'neg' : 'pos',
+      "All money in minus all money out, including owners' pay. Partner money isn't counted, so this shows what the store itself did."],
+    ['nb', 'Patient payments not banked', bk$(gap12), `${gap12 < 0 ? '−' : ''}${owe12 ? Math.abs(Math.round(gap12 / owe12 * 100)) : 0}% of copays and store sales, ${nLabel}`, gap12 > 0 ? 'warn' : '',
+      'Copays and front-store sales, minus the card, cash and e-transfer deposits that reached the bank.'],
+    ['partner', 'Partner money put in', bk$(capNet), `put in minus taken out, ${nLabel}`, '',
+      "Money the partners put in, minus what they took back. It isn't store income."],
+  ];
+  const alerts = bkAlerts(M, P, last3);
+  // This month vs last: only months the statements fully cover, so a part-month isn't compared to a whole one.
+  let vs = `<p class="bk-note">This appears once two full months of statements are in.</p>`, vsTitle = 'This month vs last month';
+  if (banked.length >= 2) {
+    const prev = banked[banked.length - 2], cur = banked[banked.length - 1];
+    const FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    vsTitle = `${FULL[Number(cur.mk.slice(5)) - 1]} vs ${FULL[Number(prev.mk.slice(5)) - 1]}`;
+    const num = (r, f) => { const fl = bkMonthFlows(r); return f(r, fl); };
+    const row = (label, f, bold) => {
+      const a = num(prev, f), b = num(cur, f), c = Math.round(b) - Math.round(a);
+      return { cls: bold ? 'tot-row' : 'sub', cells: [label, bk$(a), bk$(b), bkS(c)] };
+    };
+    const staff = r => r.ts.filter(t => t.cat === 'payroll' || t.cat === 'payroll-tax').reduce((s, t) => s + (t.kind === 'debit' ? t.amount : -t.amount), 0);
+    vs = bkTable(['', bkMon(prev.mk), bkMon(cur.mk), 'Change'], [
+      row('Money in', (r, fl) => fl.in, true),
+      row('Insurers and ODB paid you', r => r.receivedPlans),
+      row('Patients paid you', r => r.banked),
+      row('Rebates and other', (r, fl) => fl.in - r.receivedPlans - r.banked),
+      row('Money out', (r, fl) => fl.out, true),
+      row('McKesson (drugs)', r => r.cogs),
+      row('Salaries and payroll taxes', staff),
+      row("Rent, owners' pay and other bills", (r, fl) => fl.out - r.cogs - staff(r)),
+      row('Left over', (r, fl) => fl.left, true),
+      row('Partner money', (r, fl) => fl.partner),
+      row('Balance at month end', r => r.endBal, true),
+    ], 'lrrr', 'bk-vs') + bkHelpBtn('vs', 'What do these mean?') + bkWhy('vs', 'Left over is money in minus money out, not counting partner money. Add partner money and you get the change in your bank balance.');
+  }
+  return `${bkBalanceCard(M, bkBalanceSeries(M))}
+    <div class="bk-tiles">${tiles.map(([id, label, value, sub, cls, why]) => `<div class="bk-tile${cls ? ' t-' + cls : ''}">
+      <div class="bk-tilehead"><span>${label}</span>${bkQ('tile-' + id)}</div>
+      <b>${value}</b><small>${sub}</small>${bkWhy('tile-' + id, why)}</div>`).join('')}</div>
+    <div class="bk-2">
+      <div class="card"><div class="card-title">Needs your attention</div>
+        ${alerts.length ? alerts.map(a => `<div class="bk-alert">
+          <div class="bk-alertrow">
+            ${a.red
+              ? '<svg width="18" height="18" viewBox="0 0 18 18" role="img" aria-label="Serious"><path d="M9 2.2 16.5 15.5H1.5z" fill="none" stroke="#b83232" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 7.2v4M9 13.2v.2" fill="none" stroke="#b83232" stroke-width="1.8" stroke-linecap="round"/></svg>'
+              : '<svg width="18" height="18" viewBox="0 0 18 18" role="img" aria-label="Worth checking"><circle cx="9" cy="9" r="7" fill="none" stroke="#8a5a10" stroke-width="1.8"/><path d="M9 5.2v4.4M9 12.4v.2" fill="none" stroke="#8a5a10" stroke-width="1.8" stroke-linecap="round"/></svg>'}
+            <span class="txt">${a.text}</span>
+            ${bkHelpBtn('alert-' + a.id, 'Why?')}
+            <button type="button" class="bk-btn" data-act="go" data-tab="${a.act.tab}"${a.act.cat ? ` data-cat="${a.act.cat}"` : ''}${a.act.month ? ` data-month="${a.act.month}"` : ''}${a.act.view ? ` data-view="${a.act.view}"` : ''}>${a.act.label}</button>
+          </div>${bkWhy('alert-' + a.id, a.why)}</div>`).join('') : '<p class="bk-note">Nothing needs a look right now.</p>'}
+      </div>
+      <div class="card"><div class="card-title">${vsTitle}</div>${vs}</div>
+    </div>`;
+}
+
+// ── Insurers ─────────────────────────────────────────────────────────
+function bkPaneInsurers(M) {
+  const P = M.payers.filter(p => p.status !== 'none');
+  const chevron = '<svg class="bk-chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // a due date already behind the last statement: nothing left to pay, or late
   const nextCell = p => !p.next ? '—' : p.next >= M.asOf ? bkD(p.next) : p.owed < 25 ? '<span class="bk-sub">Nothing owed</span>' : `${bkD(p.next)} <span class="bk-chip red">late</span>`;
-  const stChip = p => p.status === 'ok' ? '<span class="bk-chip ok">On track</span>' : p.status === 'short' ? `<span class="bk-chip red">${bk$(p.unexplained)} unpaid</span>` : `<span class="bk-chip amber">${bk$(-p.unexplained)} extra</span>`;
-  const payerRows = P.map(p => `<tr>
-      <td><b>${esc(p.name)}</b><div class="bk-sub">${esc(p.how)}</div></td>
-      <td>${bk$(p.billed)}</td><td>${bk$(p.received)}</td><td>${bk$(p.owed)}</td><td>${bk$(p.lagPart)}</td><td>${stChip(p)}</td>
-      <td>${p.lastDep ? `${bkD(p.lastDep.date)}<div class="bk-sub">${bk$(p.lastDep.amount)}</div>` : '—'}</td>
-      <td>${nextCell(p)}</td></tr>`).join('');
-  const otherRow = M.otherBilled > 0.5 ? `<tr><td><b>Other plans</b><div class="bk-sub">Billed to plans with no deposit pattern yet (e.g. STI SmartCard, out-of-province)</div></td><td>${bk$(M.otherBilled)}</td><td>—</td><td>${bk$(M.otherBilled)}</td><td>—</td><td><span class="bk-chip amber">Check</span></td><td>—</td><td>—</td></tr>` : '';
-
+  const chip = p => p.status === 'ok' ? '<span class="bk-chip ok">On track</span>' : p.status === 'short' ? `<span class="bk-chip red">Short by ${bk$(p.unexplained)}</span>` : `<span class="bk-chip amber">Ahead by ${bk$(-p.unexplained)}</span>`;
+  const nameCell = (id, name) => `<button type="button" class="bk-rowbtn" data-why="how-${id}" aria-expanded="false">${chevron}<b>${esc(name)}</b></button>`;
+  const rows = P.map(p => `<tr>
+      <td>${nameCell(p.id, p.name)}</td><td class="r">${bk$(p.billed)}</td><td class="r">${bk$(p.received)}</td><td class="r"><b>${bk$(p.owed)}</b></td><td class="r">${bk$(p.lagPart)}</td><td>${chip(p)}</td>
+      <td>${p.lastDep ? `${bkD(p.lastDep.date)}<div class="bk-sub">${bk$(p.lastDep.amount)}</div>` : '—'}</td><td>${nextCell(p)}</td></tr>
+      <tr class="bk-howrow" id="bkw-how-${p.id}" hidden><td colspan="8">${esc(p.how)}</td></tr>`).join('');
+  const other = M.otherBilled > 0.5 ? `<tr><td>${nameCell('other', 'Other plans')}</td><td class="r">${bk$(M.otherBilled)}</td><td class="r">—</td><td class="r"><b>${bk$(M.otherBilled)}</b></td><td class="r">—</td><td><span class="bk-chip amber">Check</span></td><td>—</td><td>—</td></tr>
+      <tr class="bk-howrow" id="bkw-how-other" hidden><td colspan="8">Billed to plans with no deposit pattern yet, such as STI SmartCard or out-of-province plans.</td></tr>` : '';
   // ODB payment by payment
   const odb = M.payers.find(p => p.id === 'odb');
   let cum = 0;
@@ -3646,92 +3904,295 @@ function renderBankInner() {
     const exact = M.kWin.find(k => k.from === a && k.to === b);
     const billed = exact ? M.planPaid(exact, odb.plans) : M.billedBetween(odb.plans, a, b);
     cum += t.amount - billed;
-    return `<tr><td>${bkD(t.date)}</td><td>${bkD(a).replace(/, \d{4}/, '')} – ${bkD(b)}</td><td>${bk$(billed)}${exact ? ' <span class="bk-chip ok">exact</span>' : ''}</td><td>${bk$(t.amount)}</td><td>${bkS(t.amount - billed)}</td><td>${bkS(cum)}</td></tr>`;
-  }).join('');
+    return [`<b>${bkD(t.date)}</b>`, `${bkDs(a)} – ${bkD(b)}`, `${bk$(billed)}${exact ? ' <span class="bk-chip ok">exact</span>' : ''}`, bk$(t.amount), bkS(t.amount - billed), bkS(cum)];
+  }).reverse();
+  return `<div class="card">
+    <div class="bk-cardhead"><div class="card-title">What you billed vs what insurers paid</div>${bkHelpBtn('ins', 'What do these columns mean?')}</div>
+    ${bkWhy('ins', `<dl class="bk-dl">
+      <dt>Billed</dt><dd>What Kroll says you billed this insurer, by claim date.</dd>
+      <dt>Paid</dt><dd>Deposits from this insurer in the TD account.</dd>
+      <dt>Still owed</dt><dd>Billed minus paid.</dd>
+      <dt>Not due yet</dt><dd>The part this insurer's schedule says shouldn't have arrived by your last statement. For TELUS it also includes the $0.10 a claim it keeps.</dd>
+      <dt>Status</dt><dd>On track: what's owed is what the schedule expects. Short: more is owed than the schedule explains. Ahead: they've paid more than the schedule expected by now, usually timing.</dd>
+      <dt>How exact?</dt><dd>Within a few hundred dollars, because a month's billing is spread evenly by day. Upload a Kroll report for a payer's exact claim dates to check one payment to the cent.</dd>
+    </dl>`)}
+    <div class="tbl-wrap"><table class="data-tbl bk-tbl bk-ins"><thead><tr><th>Insurer</th><th class="r">Billed</th><th class="r">Paid</th><th class="r">Still owed</th><th class="r">Not due yet</th><th>Status</th><th>Last deposit</th><th>Next deposit</th></tr></thead><tbody>${rows}${other}</tbody></table></div>
+    ${odbRows.length ? `<details class="bk-det"><summary>ODB, payment by payment</summary>${bkTable(['Paid on', 'Claims covered', 'Billed', 'Deposited', 'Difference', 'Running'], odbRows, 'llrrrr')}<p class="bk-note">ODB sends no remittance for online claims, so Kroll's total for the claim dates <i>is</i> the check. Run the Plan Billing Summary for the 23rd to the 8th, or the 9th to the 22nd, and upload it to mark a payment "exact".</p></details>` : ''}
+  </div>`;
+}
 
-  // months
-  const monthRows = M.byMonth.map(r => `<tr>
-      <td><b>${bkM(r.mk)}</b>${!r.hasBank ? ' <span class="bk-sub">no statement</span>' : r.partial ? `<div class="bk-sub">to ${bkD(M.asOf).replace(/, \d{4}/, '')}</div>` : ''}</td>
-      <td>${bk$(r.billedPlans)}</td><td>${r.hasBank ? bk$(r.receivedPlans) : '—'}</td>
-      <td>${bk$(r.owedByCustomers)}${r.partial && r.owedByCustomers !== null ? `<div class="bk-sub">sales to ${bkD(r.settledTo).replace(/, \d{4}/, '')}</div>` : ''}</td><td>${r.hasBank ? bk$(r.banked) : '—'}</td><td>${r.gap === null ? '—' : bkS(r.gap)}</td>
-      <td>${r.hasBank ? bk$(r.opex) : '—'}</td><td>${bk$(r.budget)}</td><td>${r.hasBank && r.budget !== null ? bkS(r.budget - r.opex) : '—'}</td>
-      <td>${r.hasBank ? bk$(r.cogs) : '—'}</td><td>${r.hasBank ? bk$(r.rebates) : '—'}</td><td>${r.hasBank ? (r.otherIn ? bk$(r.otherIn) : '') : '—'}</td><td>${r.hasBank ? bkS(r.capIn - r.capOut) : '—'}</td>
-      <td>${r.hasBank ? bkS(r.operating) : '—'}</td><td class="${r.endBal < 0 ? 'neg' : ''}">${bk$(r.endBal)}</td></tr>`).join('');
-  const cashDeps = M.T.filter(t => t.cat === 'cash-deposit');
+// ── Months ───────────────────────────────────────────────────────────
+function bkPaneMonths(M) {
+  const views = [['cash', 'Money in and out'], ['insurers', 'Insurers'], ['patient', 'Patient payments'], ['expenses', 'Expenses and rebates'], ['spending', 'Spending by kind']];
+  const view = views.some(v => v[0] === _bkUi.monthView) ? _bkUi.monthView : 'cash';
+  const rows = M.byMonth, full = rows.filter(r => r.hasBank);
+  const name = r => `<b>${bkM(r.mk)}</b>${!r.ts.length ? ' <span class="bk-sub">no statement</span>' : !r.hasBank ? `<div class="bk-sub">partial, to ${bkDs(M.asOf)}</div>` : r.partial ? `<div class="bk-sub">to ${bkDs(M.asOf)}</div>` : ''}`;
+  const dash = (r, f) => r.hasBank ? f(r) : '—';
+  const total = f => full.reduce((s, r) => s + (f(r) || 0), 0);
+  const fl = r => bkMonthFlows(r);
+  let help = '', table = '';
+  if (view === 'cash') {
+    help = 'Money in is everything deposited except partner money. Money out is everything paid except partner money. Left over is in minus out. Add partner money to get the change in the balance.';
+    table = bkTable(['Month', 'Money in', 'Money out', 'Left over', 'Partner money', 'Balance at month end'], rows.map(r => [name(r), dash(r, x => bk$(fl(x).in)), dash(r, x => bk$(fl(x).out)), dash(r, x => bkS(fl(x).left)), dash(r, x => bkS(fl(x).partner)), `<span class="${r.endBal < 0 ? 'neg' : ''}">${bk$(r.endBal)}</span>`])
+      .concat([{ tot: true, cells: ['Full months', bk$(total(x => fl(x).in)), bk$(total(x => fl(x).out)), bkS(total(x => fl(x).left)), bkS(total(x => fl(x).partner)), ''] }]), 'lrrrrr');
+  } else if (view === 'insurers') {
+    help = "Billed goes by claim date. Deposited is what arrived that month, mostly for earlier claims (ODB pays up to six weeks later), so the two won't match month to month. The Insurers tab does the matching.";
+    table = bkTable(['Month', 'Billed', 'Deposited', 'Difference'], rows.map(r => [name(r), bk$(r.billedPlans), dash(r, x => bk$(x.receivedPlans)), r.hasBank && r.billedPlans !== null ? bkS(r.receivedPlans - r.billedPlans) : '—']), 'lrrr');
+  } else if (view === 'patient') {
+    const dep = M.T.filter(t => t.cat === 'cash-deposit');
+    help = `Expected is Kroll's Cash line (copays and cash prescriptions) plus front-store sales from Monthly Data. In a month the statements end partway through, it counts only the days that could have settled. Banked is card sales, patient e-transfers and cash deposits (${dep.length} cash deposit${dep.length === 1 ? '' : 's'} in all, ${bk$(dep.reduce((s, t) => s + t.amount, 0))}).`;
+    const gapR = full.filter(r => r.gap !== null);
+    table = bkTable(['Month', 'Expected', 'Banked', 'Not banked'], rows.map(r => [name(r), `${bk$(r.owedByCustomers)}${r.partial && r.owedByCustomers !== null ? `<div class="bk-sub">sales to ${bkDs(r.settledTo)}</div>` : ''}`, dash(r, x => bk$(x.banked)), r.gap === null ? '—' : bk$(r.gap)])
+      .concat(gapR.length ? [{ tot: true, cells: ['Full months', bk$(gapR.reduce((s, r) => s + r.owedByCustomers, 0)), bk$(gapR.reduce((s, r) => s + r.banked, 0)), bk$(gapR.reduce((s, r) => s + r.gap, 0))] }] : []), 'lrrr');
+  } else if (view === 'expenses') {
+    help = "Paid from TD is expenses that left this account, including owners' pay. Entered in Monthly Data is the full cost, including anything paid from other accounts. McKesson and rebates are shown on their own. Other money in is cheques not matched yet and other income.";
+    table = bkTable(['Month', 'Paid from TD', 'Entered in Monthly Data', 'Difference', 'McKesson (drugs)', 'Rebates', 'Other money in'], rows.map(r => [name(r), dash(r, x => bk$(x.opex)), bk$(r.budget), r.hasBank && r.budget !== null ? bkS(r.budget - r.opex) : '—', dash(r, x => bk$(x.cogs)), dash(r, x => bk$(x.rebates)), dash(r, x => x.otherIn ? bk$(x.otherIn) : '')]), 'lrrrrrr');
+  } else {
+    help = 'Everything paid out, by kind and month, for the last 12 months of statements. To see one kind as a graph, go to Transactions and click it.';
+    const ex12 = full.slice(-12);
+    const cats = Object.keys(BK_CATS).filter(c => BK_CATS[c].group === 'opex' || c === 'cogs');
+    const built = cats.map(c => { const vals = ex12.map(r => r.ts.filter(t => t.cat === c).reduce((s, t) => s + t.amount, 0)); return { c, vals, tot: vals.reduce((s, v) => s + v, 0) }; }).filter(x => x.tot > 0.5).sort((a, b) => b.tot - a.tot);
+    table = bkTable(['Kind'].concat(ex12.map(r => bkMon(r.mk))).concat(['Total']), built.map(x => [`<b>${esc(BK_CATS[x.c].label)}</b>`].concat(x.vals.map(v => v ? bk$(v) : '')).concat([`<b>${bk$(x.tot)}</b>`])), 'l' + 'r'.repeat(ex12.length + 1), 'bk-tight');
+  }
+  return `<div class="card">
+    <div class="bk-seg" role="group" aria-label="Which table">${views.map(([id, label]) => `<button type="button" class="${id === view ? 'on' : ''}" data-act="view" data-v="${id}" aria-pressed="${id === view}">${label}</button>`).join('')}</div>
+    ${bkHelpBtn('month-' + view, 'What do these columns mean?')}${bkWhy('month-' + view, help)}
+    ${table}
+  </div>`;
+}
 
-  // expenses by category (last 12 statement months)
-  const ex12 = M.byMonth.filter(r => r.hasBank).slice(-12), exMonths = ex12.map(r => r.mk);
-  const exCats = Object.keys(BK_CATS).filter(c => BK_CATS[c].group === 'opex' || c === 'cogs');
-  const exRows = exCats.map(c => {
-    const vals = ex12.map(r => r.ts.filter(t => t.cat === c).reduce((s, t) => s + t.amount, 0)), tot = vals.reduce((s, v) => s + v, 0);
-    return tot > 0.5 ? `<tr><td>${esc(BK_CATS[c].label)}</td>${vals.map(v => `<td>${v ? bk$(v) : ''}</td>`).join('')}<td><b>${bk$(tot)}</b></td></tr>` : '';
-  }).join('');
-
-  // partner money
-  const capRows = M.T.filter(t => BK_CATS[t.cat].group === 'capital');
-  let capRun = 0;
-  const capHtml = capRows.map(t => { capRun += t.kind === 'credit' ? t.amount : -t.amount; return `<tr><td>${bkD(t.date)}</td><td>${esc(t.desc)}</td><td>${t.kind === 'credit' ? bk$(t.amount) : ''}</td><td>${t.kind === 'debit' ? bk$(t.amount) : ''}</td><td>${bkS(capRun)}</td></tr>`; }).join('');
-
-  // transactions
+// ── Transactions ─────────────────────────────────────────────────────
+const bkCatFlow = cat => { const g = (BK_CATS[cat] || {}).group; return cat === 'capital-in' || ['payer', 'customer', 'rebate', 'other-in'].includes(g) ? 'in' : 'out'; };
+const bkKindName = cat => cat === 'all' ? 'All transactions' : cat === 'needs' ? 'Needs a kind' : cat === 'group:payer' ? 'All insurers and ODB' : (BK_CATS[cat] ? BK_CATS[cat].label : 'All transactions');
+function bkPaneTx(M) {
+  const u = _bkUi, win = M.byMonth.filter(r => r.ts.length).slice(-12), inWin = new Set(win.map(r => r.mk));
+  const totals = {};
+  let insTotal = 0;
+  M.T.forEach(t => {
+    if (!inWin.has(t.date.slice(0, 7))) return;
+    const x = totals[t.cat] || (totals[t.cat] = { in: 0, out: 0 });
+    if (t.kind === 'credit') { x.in += t.amount; if (t.group === 'payer') insTotal += t.amount; } else x.out += t.amount;
+  });
+  const needsN = M.T.filter(bkNeedsKind).length;
+  const row = (id, label, val, cls) => `<button type="button" class="bk-kind${u.cat === id ? ' on' : ''}${cls ? ' ' + cls : ''}" data-act="kind" data-v="${id}" aria-pressed="${u.cat === id}"><span>${esc(label)}</span><span>${val}</span></button>`;
+  const list = Object.keys(totals).filter(c => totals[c][u.dir] > 0.005).sort((a, b) => totals[b][u.dir] - totals[a][u.dir]);
+  const kindOptions = [['all', 'All transactions']].concat(needsN ? [['needs', `Needs a kind (${needsN})`]] : []).concat([['group:payer', 'All insurers and ODB']]).concat(Object.entries(BK_CATS).filter(([id]) => totals[id]).map(([id, c]) => [id, c.label]));
   const monthsOpt = [...new Set(M.T.map(t => t.date.slice(0, 7)))].sort().reverse();
-  const q = _bkUi.q.trim().toLowerCase();
-  const list = M.T.filter(t => (_bkUi.month === 'all' || t.date.slice(0, 7) === _bkUi.month) && (_bkUi.cat === 'all' || t.cat === _bkUi.cat || (_bkUi.cat === 'needs' && /unknown|cheque-deposit/.test(t.cat))) && (!q || t.desc.toLowerCase().includes(q))).reverse();
-  const shown = list.slice(0, 400);
-  const catOpts = sel => Object.entries(BK_CATS).map(([id, c]) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${esc(c.label)}</option>`).join('');
-  // A button per row; the dropdown is built only for the row being changed.
-  const txRows = shown.map(t => `<tr><td>${bkD(t.date)}</td><td>${esc(t.desc)}</td><td class="neg">${t.kind === 'debit' ? bkC(t.amount) : ''}</td><td class="pos">${t.kind === 'credit' ? bkC(t.amount) : ''}</td><td>${bkC(t.bal)}</td>
-      <td><button class="bk-catbtn${t.overridden ? ' ov' : ''}${/unknown|cheque-deposit/.test(t.cat) ? ' need' : ''}" data-key="${esc(t.key)}" data-cat="${t.cat}" title="Change category">${esc(BK_CATS[t.cat].label)}</button></td></tr>`).join('');
-
-  // files
-  const files = bankData.statements.map(s => [s.id, `TD ${bkD(s.from)} – ${bkD(s.to)}`, `${s.txns.length} txns`]).concat(bankData.kroll.map(k => [k.id, `Kroll ${bkD(k.from)} – ${bkD(k.to)}`, `${Object.keys(k.rows).length} plans`]));
-
-  el.innerHTML = `<div class="bk">
-    <div class="bk-head"><div><h2>Bank &amp; Collections</h2><p>${M.first ? `Bank ${bkD(M.first.from)} – ${bkD(M.asOf)}` : 'No statements yet'} · Kroll ${M.kMonths.length ? `${bkM(M.kMonths[0])} – ${bkM(M.kMonths[M.kMonths.length - 1])}` : 'none yet'}</p></div></div>
-    ${up}
-    <div class="bk-kpis">${kpis.map(([v, l, c]) => `<div class="bk-kpi ${c}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
-    ${flags.length ? `<div class="card"><div class="card-title">Needs a look</div>${flags.map(([c, h]) => `<div class="bk-flag ${c}">${h}</div>`).join('')}</div>` : ''}
-    <div class="card"><div class="card-title">Insurers &amp; ODB — billed vs paid</div>
-      <p class="bk-note">“Normal lag” is the part of “Still owed” that each payer's schedule says shouldn't have arrived by the last statement date (for TELUS, also the $0.10 a claim it keeps). Anything owed beyond that is flagged. Spreading a month's billing evenly by day makes this a ±few-hundred-dollar estimate; upload a Kroll report for a payer's exact claim window to check a payment to the cent.</p>
-      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Payer</th><th>Billed (Kroll)</th><th>Received</th><th>Still owed</th><th>Normal lag</th><th>Status</th><th>Last deposit</th><th>Next due</th></tr></thead><tbody>${payerRows}${otherRow}</tbody></table></div>
-      ${odbRows ? `<details class="bk-det"><summary>ODB, payment by payment</summary><div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Paid</th><th>Claims covered</th><th>Kroll billed</th><th>Deposited</th><th>Difference</th><th>Running</th></tr></thead><tbody>${odbRows}</tbody></table></div><p class="bk-note">ODB sends no remittance for online claims, so Kroll's total for the window <i>is</i> the check. Run the Plan Billing Summary for 23rd–8th or 9th–22nd and upload it to mark a payment “exact”.</p></details>` : ''}
-    </div>
-    <div class="card"><div class="card-title">Month by month</div>
-      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Month</th><th>Billed to plans</th><th>Deposited by plans</th><th>Patient-pay owed</th><th>Patient-pay banked</th><th>Not banked</th><th>Actual expenses</th><th>Budget (Monthly Data)</th><th>Budget − actual</th><th>McKesson</th><th>Rebates</th><th>Other in</th><th>Partner money</th><th>Operating cash</th><th>Balance</th></tr></thead><tbody>${monthRows}</tbody></table></div>
-      <p class="bk-note">Billed is by claim date; Deposited is what plans paid that month, mostly for earlier claims (ODB pays up to six weeks later), so the two don't line up month by month. The payer table above does the matching. Patient-pay owed = Kroll's <b>Cash</b> line (copays and cash prescriptions) + front-store sales from Monthly Data; in a month the statements end partway through, only the days that could have settled. Banked = card settlements + patient e-transfers + cash deposits (${cashDeps.length} cash deposit${cashDeps.length === 1 ? '' : 's'} in all, ${bk$(cashDeps.reduce((s, t) => s + t.amount, 0))}). Other in = cheques not yet assigned to a payer and other income. Operating cash = Deposited + Banked + Rebates + Other in − Actual expenses − McKesson; add Partner money to get the change in the balance.</p>
-    </div>
-    <div class="card"><div class="card-title">Where the money went</div>
-      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Category</th>${exMonths.map(mk => `<th>${bkM(mk)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${exRows}</tbody></table></div>
-    </div>
-    ${capHtml ? `<div class="card"><div class="card-title">Partner / owner money</div><div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Date</th><th>Description</th><th>In</th><th>Out</th><th>Net to date</th></tr></thead><tbody>${capHtml}</tbody></table></div></div>` : ''}
-    <div class="card"><div class="card-title">Transactions</div>
-      <div class="bk-filters">
-        <select id="bkMonth"><option value="all">All months</option>${monthsOpt.map(mk => `<option value="${mk}" ${mk === _bkUi.month ? 'selected' : ''}>${bkM(mk)}</option>`).join('')}</select>
-        <select id="bkCatF"><option value="all">All categories</option><option value="needs" ${_bkUi.cat === 'needs' ? 'selected' : ''}>Needs a category</option>${Object.entries(BK_CATS).map(([id, c]) => `<option value="${id}" ${id === _bkUi.cat ? 'selected' : ''}>${esc(c.label)}</option>`).join('')}</select>
-        <input id="bkQ" type="text" placeholder="Search descriptions" value="${esc(_bkUi.q)}">
-        <span class="bk-sub">${list.length} shown${list.length > shown.length ? ` (first ${shown.length})` : ''}</span>
+  return `<div class="bk-txgrid">
+    <section class="card bk-kinds" aria-label="Kinds of transaction">
+      <label class="bk-kindsel">Kind of transaction
+        <select id="bkKindSel">${kindOptions.map(([id, label]) => `<option value="${esc(id)}"${u.cat === id ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select>
+      </label>
+      <div class="bk-kindlist">
+        ${row('all', 'All transactions', M.T.length.toLocaleString('en-CA'))}
+        ${needsN || u.cat === 'needs' ? row('needs', 'Needs a kind', needsN, 'need') : ''}
+        <div class="bk-dirs" role="group" aria-label="Money in or out"><button type="button" class="${u.dir === 'out' ? 'on' : ''}" data-act="dir" data-v="out" aria-pressed="${u.dir === 'out'}">Money out</button><button type="button" class="${u.dir === 'in' ? 'on' : ''}" data-act="dir" data-v="in" aria-pressed="${u.dir === 'in'}">Money in</button></div>
+        ${u.dir === 'in' && insTotal > 0.005 ? row('group:payer', 'All insurers and ODB', bkCompact(insTotal)) : ''}
+        ${list.map(c => row(c, BK_CATS[c].label, bkCompact(totals[c][u.dir]))).join('')}
+        <p class="bk-sub bk-kindnote">Totals are for the last ${win.length === 1 ? 'month' : win.length + ' months'} of statements.</p>
       </div>
-      <div class="tbl-wrap"><table class="data-tbl bk-tbl"><thead><tr><th>Date</th><th>Description</th><th>Out</th><th>In</th><th>Balance</th><th>Category</th></tr></thead><tbody>${txRows}</tbody></table></div>
-      <p class="bk-note">Changing a category is saved for everyone with access. Pick the automatic one again to go back to it.</p>
-    </div>
-    <div class="card"><div class="card-title">Imported files</div>
-      ${files.map(([id, l, n]) => `<div class="bk-file"><span>${esc(l)}</span><span class="bk-sub">${n}</span><button class="btn btn-ghost btn-xs" data-rm="${esc(id)}">Remove</button></div>`).join('')}
+    </section>
+    <div class="bk-txmain">
+      <section class="card bk-find" aria-label="Find transactions">
+        <label class="grow">Search, and the graph shows what you find<input id="bkQ" type="text" placeholder="For example, Telus" value="${esc(u.q)}" autocomplete="off"></label>
+        <label>Month<select id="bkMonth"><option value="all">All months</option>${monthsOpt.map(mk => `<option value="${mk}" ${mk === u.month ? 'selected' : ''}>${bkM(mk)}</option>`).join('')}</select></label>
+      </section>
+      <div id="bkTxResults">${bkTxResults(M)}</div>
     </div>
   </div>`;
-  bkBindUpload();
-  const on = (id, ev, f) => { const x = document.getElementById(id); if (x) x.addEventListener(ev, f); };
-  on('bkMonth', 'change', e => { _bkUi.month = e.target.value; renderBank(); });
-  on('bkCatF', 'change', e => { _bkUi.cat = e.target.value; renderBank(); });
-  on('bkQ', 'change', e => { _bkUi.q = e.target.value; renderBank(); });
-  el.querySelectorAll('.bk-catbtn').forEach(b => b.addEventListener('click', () => {
+}
+// The graph and the list below the search box. Typing redraws only this part, so the box keeps its place and focus.
+function bkTxResults(M) {
+  const u = _bkUi, cat = u.cat, q = u.q.trim(), ql = q.toLowerCase();
+  const matchKind = t => cat === 'all' || (cat === 'needs' ? bkNeedsKind(t) : cat === 'group:payer' ? t.group === 'payer' : t.cat === cat);
+  const matchQ = t => !ql || t.desc.toLowerCase().includes(ql) || BK_CATS[t.cat].label.toLowerCase().includes(ql);
+  const found = M.T.filter(t => matchKind(t) && matchQ(t));
+  // A graph appears for a kind, or for a search of two letters or more. The list and the graph always show the same lines.
+  const canGraph = cat !== 'needs' && found.length > 0 && (cat !== 'all' || ql.length >= 2);
+  const showGraph = canGraph && !u.graphHidden;
+  // Money in and money out can't be added together, so a search that finds both graphs one side at a time.
+  const fIn = found.filter(t => t.kind === 'credit'), fOut = found.filter(t => t.kind !== 'credit');
+  const flow = showGraph && fIn.length && fOut.length ? (u.flow || (fIn.length >= fOut.length ? 'in' : 'out')) : null;
+  const scoped = flow ? (flow === 'in' ? fIn : fOut) : found;
+  const month = u.month === 'all' ? null : u.month;
+  const lines = scoped.filter(t => !month || t.date.slice(0, 7) === month).reverse();
+  const qText = esc('“' + q + '”'), kindName = esc(bkKindName(cat));
+  const flowWord = flow ? (flow === 'in' ? ', money in' : ', money out') : '';
+  const listName = (ql ? (cat === 'all' ? `Matching ${qText}` : `${kindName} matching ${qText}`) : kindName) + flowWord + (month ? `, ${bkM(month)}` : '');
+  const graphName = (ql ? (cat === 'all' ? qText : `${kindName} matching ${qText}`) : kindName) + flowWord;
+
+  let graph = '';
+  if (showGraph) {
+    const win = M.byMonth.filter(r => r.ts.length).slice(-12), n = win.length;
+    const vals = win.map(() => 0), idx = new Map(win.map((r, i) => [r.mk, i]));
+    scoped.forEach(t => { const i = idx.get(t.date.slice(0, 7)); if (i !== undefined) vals[i] += t.amount; });
+    const total = vals.reduce((s, v) => s + v, 0), avg = total / (n || 1);
+    const peak = Math.max(...vals, 1), st = bkNiceStep(peak * 1.12 / 3), yTop = Math.ceil(peak * 1.12 / st) * st, gs = bkNiceStep(yTop / 3);
+    const y = v => v / yTop * 100;
+    const gl = [];
+    for (let v = 0; v <= yTop + 0.01; v += gs) gl.push({ y: y(v), label: bkAxis(v) });
+    const hi = vals.indexOf(Math.max(...vals)), mi = month && idx.has(month) ? idx.get(month) : -1, focus = mi >= 0 ? mi : n - 1;
+    const changeOf = i => {
+      if (win[i].partial) return `Only to ${bkDs(M.asOf)} so far`;
+      if (i === 0) return 'First month shown';
+      const a = vals[i - 1], d = vals[i] - a;
+      if (Math.abs(d) < 0.5) return `Same as ${bkM(win[i - 1].mk)}`;
+      if (a < 0.5) return `Nothing in ${bkM(win[i - 1].mk)}`;
+      return `${d > 0 ? 'Up' : 'Down'} ${bk$(Math.abs(d))} (${Math.round(Math.abs(d) / a * 100)}%) from ${bkM(win[i - 1].mk)}`;
+    };
+    const bars = win.map((r, i) => {
+      const v = vals[i], on = mi === i, lab = i === focus || i === hi;
+      return `<button type="button" class="bk-col${bkEdge(i, n)}${mi >= 0 && !on ? ' dim' : ''}${i === focus ? ' foc' : ''}" data-act="gmonth" data-v="${r.mk}" aria-pressed="${on}" aria-label="${bkM(r.mk)}: ${bk$(v)}. ${changeOf(i)}. Show only this month.">
+        <i class="bk-vbar" style="height:${y(v).toFixed(2)}%"></i>
+        ${lab ? `<span class="bk-lab val" style="bottom:calc(${y(v).toFixed(2)}% + 4px)">${bkCompact(v)}</span>` : ''}
+        <span class="bk-tip" style="bottom:min(calc(${y(v).toFixed(2)}% + 22px),calc(100% - 44px))"><b>${bkM(r.mk)}: ${bk$(v)}</b><span>${changeOf(i)}</span></span>
+      </button>`;
+    }).join('');
+    const sl = bkFit(vals).slope;
+    const stats = [
+      [bkM(win[focus].mk), bk$(vals[focus]), changeOf(focus)],
+      ['Average a month', bk$(avg), `over the ${n === 1 ? 'month' : n + ' months'}`],
+      ['Highest month', bk$(vals[hi]), bkM(win[hi].mk)],
+      ['Trend', n < 3 ? '—' : Math.abs(sl) < 100 ? 'About flat' : `${sl < 0 ? 'Down' : 'Up'} ${bkPerMonth(sl)} a month`, n < 3 ? 'needs 3 months' : 'rounded, straight-line direction'],
+    ];
+    const flows = flow ? `<div class="bk-both"><span>Found both. Graph:</span><div class="bk-dirs" role="group" aria-label="Money in or out">${[['in', 'Money in', fIn], ['out', 'Money out', fOut]].map(([id, label, arr]) => `<button type="button" class="${flow === id ? 'on' : ''}" data-act="flow" data-v="${id}" aria-pressed="${flow === id}">${label}: ${bk$(arr.reduce((s, t) => s + t.amount, 0))}</button>`).join('')}</div></div>` : '';
+    const numbers = u.graphTable ? bkTable(['Month', 'Amount', 'Change from the month before'], win.map((r, i) => {
+      const a = i ? vals[i - 1] : null, d = i ? vals[i] - a : null;
+      return [`<b>${bkM(r.mk)}</b>${r.partial ? `<div class="bk-sub">to ${bkDs(M.asOf)}</div>` : ''}`, bkC(vals[i]), i ? bkS(d) + (a > 0.5 ? ` (${Math.round(Math.abs(d) / a * 100)}%)` : '') : ''];
+    }).reverse(), 'lrr') : '';
+    graph = `<section class="card bk-graph">
+      <div class="bk-cardhead"><div><h3>${graphName}, by month</h3><p class="bk-sub">${bk$(total)} over ${n === 1 ? 'the month' : n + ' months'}. Click a month to see only its transactions. The dashed line is the average.</p></div><button type="button" class="bk-btn" data-act="hidegraph">Hide graph</button></div>
+      ${flows}
+      <div class="bk-stats">${stats.map(([l, v, s]) => `<div><span>${l}</span><b>${v}</b><small>${s}</small></div>`).join('')}</div>
+      <div class="bk-plot">${bkGrid(gl.map(g => ({ y: g.y, label: g.label, zero: g.y === 0 })))}<div class="bk-cols">${bars}<div class="bk-avg" style="bottom:${y(avg).toFixed(2)}%"></div></div></div>
+      ${bkXAxis(win.map(r => r.mk))}
+      <button type="button" class="bk-link" data-act="gtable" aria-expanded="${!!u.graphTable}">${u.graphTable ? 'Hide the numbers' : 'Show the numbers'}</button>
+      ${numbers}
+    </section>`;
+  } else if (canGraph) {
+    graph = `<button type="button" class="bk-go bk-showgraph" data-act="showgraph">Show the monthly graph</button>`;
+  }
+
+  const shown = lines.slice(0, u.limit);
+  const rows = shown.map(t => {
+    const need = bkNeedsKind(t);
+    return `<tr><td>${bkD(t.date)}</td><td>${esc(t.desc)}</td><td class="r">${t.kind === 'debit' ? bkC(t.amount) : ''}</td><td class="r pos">${t.kind === 'credit' ? bkC(t.amount) : ''}</td><td class="r${t.bal < 0 ? ' neg' : ''}">${bkC(t.bal)}</td>
+      <td><button type="button" class="bk-catbtn${t.overridden ? ' ov' : ''}${need ? ' need' : ''}" data-key="${esc(t.key)}" data-cat="${t.cat}" title="Change the kind">${esc(BK_CATS[t.cat].label)}</button></td></tr>`;
+  }).join('');
+  const left = lines.length - shown.length;
+  return `${graph}<section class="card">
+    <div class="bk-cardhead"><div class="card-title">${listName}</div><span class="bk-sub">${lines.length ? `Showing ${shown.length.toLocaleString('en-CA')} of ${lines.length.toLocaleString('en-CA')}` : 'None'}</span></div>
+    ${lines.length ? `<div class="tbl-wrap"><table class="data-tbl bk-tbl bk-txtbl"><thead><tr><th>Date</th><th>Description</th><th class="r">Out</th><th class="r">In</th><th class="r">Balance</th><th>Kind</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="bk-note">Nothing matches. Try another month, kind or search.</p>'}
+    ${left > 0 ? `<div class="bk-more"><button type="button" class="bk-btn" data-act="more">Show ${Math.min(15, left)} more</button>${left > 15 && shown.length < 400 ? `<button type="button" class="bk-btn" data-act="showall">Show ${lines.length > 400 ? 'the first 400' : `all ${lines.length.toLocaleString('en-CA')}`}</button>` : ''}</div>` : ''}
+    <p class="bk-note">Press a kind to change it. The change is saved for everyone with access. Pick the automatic one again to go back to it.</p>
+  </section>`;
+}
+
+// ── Partner money ────────────────────────────────────────────────────
+function bkPanePartner(M) {
+  const rows = M.T.filter(t => BK_CATS[t.cat].group === 'capital');
+  if (!rows.length) return `<div class="card"><div class="card-title">Partner money</div><p class="bk-note">No partner money in these statements.</p></div>`;
+  let run = 0, inSum = 0, outSum = 0;
+  const built = rows.map(t => { const inn = t.kind === 'credit'; if (inn) inSum += t.amount; else outSum += t.amount; run += inn ? t.amount : -t.amount; return [`<b>${bkD(t.date)}</b>`, esc(t.desc), inn ? bk$(t.amount) : '', inn ? '' : bk$(t.amount), bkS(run)]; }).reverse();
+  return `<div class="card"><div class="card-title">Partner money</div>
+    <p class="bk-lead">Partners put in ${bk$(inSum)} and took out ${bk$(outSum)} in these statements, ${bk$(inSum - outSum)} net. It's shown apart because it isn't store income.</p>
+    ${bkTable(['Date', 'Description', 'Put in', 'Taken out', 'Total so far'], built, 'llrrr')}</div>`;
+}
+
+// ── Statements ───────────────────────────────────────────────────────
+function bkUploadHtml() {
+  return `<div class="bk-drop" id="bkDrop">
+      <div><b>Drop TD statements and Kroll Plan Billing Summary PDFs here</b><span>Several at once is fine. They're read in this browser and only the numbers are saved. Uploading a file again replaces it.</span></div>
+      <label class="btn btn-primary bk-choose">Choose PDFs<input type="file" accept="application/pdf" multiple style="display:none" id="bkFile"></label>
+    </div>
+    ${_bkUi.uploads.length ? `<div class="bk-uploads">${_bkUi.uploads.map(u => `<div class="bk-up ${u.state}"><span>${u.state === 'ok' ? '✓' : u.state === 'err' ? '✕' : '…'}</span><b>${esc(u.name)}</b> ${esc(u.msg || 'Reading…')}</div>`).join('')}</div>` : ''}`;
+}
+function bkPaneFiles(M, up) {
+  const list = (title, items, none) => `<div class="card"><div class="card-title">${title}</div>${items.length ? items.map(([id, l, n]) => `<div class="bk-file"><span>${esc(l)}</span><span class="bk-sub">${n}</span><button type="button" class="bk-link small" data-rm="${esc(id)}">Remove</button></div>`).join('') : `<p class="bk-note">${none}</p>`}</div>`;
+  return `${up}<div class="bk-2 narrow">
+    ${list('TD statements', bankData.statements.slice().reverse().map(s => [s.id, `TD ${bkD(s.from)} – ${bkD(s.to)}`, `${s.txns.length} lines`]), 'None yet.')}
+    ${list('Kroll reports', bankData.kroll.slice().reverse().map(k => [k.id, `Kroll ${bkD(k.from)} – ${bkD(k.to)}`, `${Object.keys(k.rows).length} plans`]), 'None yet.')}
+  </div>`;
+}
+
+// ── Clicks, typing and menus (one set of listeners on the page element) ──
+function bkWire(el) {
+  if (el._bkWired) return;
+  el._bkWired = true;
+  el.addEventListener('click', bkOnClick);
+  el.addEventListener('change', bkOnChange);
+  el.addEventListener('input', bkOnInput);
+}
+function bkPickKind(cat) {
+  Object.assign(_bkUi, { cat, month: 'all', q: '', flow: null, limit: 15, graphHidden: false });
+  if (BK_CATS[cat]) _bkUi.dir = bkCatFlow(cat);
+  if (cat === 'group:payer') _bkUi.dir = 'in';
+}
+function bkOnClick(e) {
+  const t = e.target;
+  const rm = t.closest('[data-rm]');
+  if (rm) { bkRemove(rm.dataset.rm); return; }
+  const cb = t.closest('.bk-catbtn');
+  if (cb) {
+    // A button per row; the dropdown is built only for the row being changed.
     const sel = document.createElement('select');
-    sel.className = 'bk-cat'; sel.innerHTML = catOpts(b.dataset.cat);
-    sel.addEventListener('change', () => bkSetCat(b.dataset.key, sel.value));
+    sel.className = 'bk-cat'; sel.setAttribute('aria-label', 'Change the kind');
+    sel.innerHTML = Object.entries(BK_CATS).map(([id, c]) => `<option value="${id}" ${id === cb.dataset.cat ? 'selected' : ''}>${esc(c.label)}</option>`).join('');
+    sel.addEventListener('change', () => bkSetCat(cb.dataset.key, sel.value));
     // Deferred: a change re-renders the page, which removes this dropdown and
     // fires blur mid-render. By the time this runs, a changed one is gone.
     sel.addEventListener('blur', () => setTimeout(() => { if (sel.isConnected) renderBank(); }, 0));
-    b.replaceWith(sel); sel.focus();
-  }));
-  el.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => bkRemove(b.dataset.rm)));
+    cb.replaceWith(sel); sel.focus();
+    return;
+  }
+  const w = t.closest('[data-why]');
+  if (w) {
+    const box = document.getElementById('bkw-' + w.dataset.why);
+    if (box) { box.hidden = !box.hidden; w.setAttribute('aria-expanded', String(!box.hidden)); }
+    return;
+  }
+  const b = t.closest('[data-act]');
+  if (!b) return;
+  const u = _bkUi, act = b.dataset.act, v = b.dataset.v;
+  if (act === 'tab') u.tab = v;
+  else if (act === 'go') {
+    u.tab = b.dataset.tab;
+    if (b.dataset.cat) bkPickKind(b.dataset.cat);
+    if (b.dataset.month) u.month = b.dataset.month;
+    if (b.dataset.view) u.monthView = b.dataset.view;
+  }
+  else if (act === 'baltable') u.balTable = !u.balTable;
+  else if (act === 'view') u.monthView = v;
+  else if (act === 'kind') bkPickKind(v);
+  else if (act === 'dir') u.dir = v;
+  else if (act === 'flow') Object.assign(u, { flow: v, month: 'all', limit: 15 });
+  else if (act === 'gmonth') Object.assign(u, { month: u.month === v ? 'all' : v, limit: 15 });
+  else if (act === 'hidegraph') u.graphHidden = true;
+  else if (act === 'showgraph') u.graphHidden = false;
+  else if (act === 'gtable') u.graphTable = !u.graphTable;
+  else if (act === 'more') u.limit += 15;
+  else if (act === 'showall') u.limit = 400;
+  else return;
+  renderBank();
+  // the page was redrawn, so put keyboard focus back on the same control
+  const again = act === 'go' ? '.bk-tab.on' : `[data-act="${act}"]${v ? `[data-v="${CSS.escape(v)}"]` : ''}`;
+  const target = document.getElementById('page-bank').querySelector(again);
+  if (target) target.focus({ preventScroll: true });
+}
+function bkOnChange(e) {
+  const id = e.target.id;
+  if (id === 'bkMonth') { Object.assign(_bkUi, { month: e.target.value, limit: 15 }); renderBank(); const m = document.getElementById('bkMonth'); if (m) m.focus({ preventScroll: true }); }
+  else if (id === 'bkKindSel') { bkPickKind(e.target.value); renderBank(); const s = document.getElementById('bkKindSel'); if (s) s.focus({ preventScroll: true }); }
+}
+let _bkTypeTimer = null;
+function bkOnInput(e) {
+  if (e.target.id !== 'bkQ') return;
+  Object.assign(_bkUi, { q: e.target.value, flow: null, limit: 15 });
+  clearTimeout(_bkTypeTimer);
+  _bkTypeTimer = setTimeout(() => {
+    const box = document.getElementById('bkTxResults');
+    if (box && currentPage === 'bank') box.innerHTML = bkTxResults(bkModel());
+  }, 120);
 }
 function bkBindUpload() {
   const drop = document.getElementById('bkDrop'), file = document.getElementById('bkFile');
