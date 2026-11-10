@@ -29,6 +29,7 @@ The owner's metrics app for an independent pharmacy. Read this before changing a
 - Three bands by how recent the data is: this week (Weekly Metrics, EHC), one month (Monthly Data, Bank) and the year (the last 12 months, plus the next 12 on the growth trend). Only the month band follows the ‹ › arrows.
 - Profit and projections come from `growthRows()` and `growthTrend()`. The Dashboard only reads the growth setting; it's changed on Projections.
 - The cash cushion and what insurers owe follow the Health page's rules, so the two pages always agree.
+- "From profit to the bank" (`dashBridge`) splits one month's profit-to-cash gap into the same parts as Health's waterfall. Each part is rounded to the dollar and "Other differences" takes what's left, so the rows add up exactly.
 - Bank figures show only when `bkCanSee()` is true. The week band needs Weekly Metrics or EHC access. Links show only for pages the person can open.
 - Light/Dark is one choice shared with Projections (`PJ_THEME_KEY`).
 

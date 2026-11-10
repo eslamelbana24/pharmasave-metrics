@@ -449,14 +449,21 @@ select.bk-cat{font-size:.8rem;min-height:40px;padding:0 6px;border:1.5px solid v
 .dh-mini b{color:var(--ink);font-weight:800}
 .dh-tdn{font-size:12px;line-height:1.5;color:var(--mut);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
 .dh-tdn b{color:var(--ink);font-weight:700}
-.dh-wf{display:flex;gap:4px;margin-top:30px}
-.dh-wfc{flex:1 1 0;min-width:0}
-.dh-wfa{position:relative;height:150px;border-radius:4px}
-.dh-wfa:hover{background:var(--soft)}
-.dh-wfa u{position:absolute;left:0;right:0;border-top:1px solid var(--line3);text-decoration:none}
-.dh-wfb{position:absolute;left:50%;transform:translateX(-50%);width:24px;min-height:2px;border-radius:4px}
-.dh-wfb span{position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);font-size:12.5px;font-weight:800;white-space:nowrap}
-.dh-wfn{font-size:11.5px;line-height:1.3;color:var(--mut);text-align:center;margin-top:7px}
+.dh-brs{container:dhbr/inline-size;margin-top:12px}
+.dh-br{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 84px;grid-template-areas:"l t v";gap:4px 14px;align-items:center;padding:6px 0}
+.dh-brl{grid-area:l;min-width:0;font-size:13px;font-weight:600;line-height:1.3}
+.dh-brl small{display:block;font-size:11.5px;font-weight:400;color:var(--mut);line-height:1.35;margin-top:1px}
+.dh-brt{grid-area:t;position:relative;height:16px}
+.dh-brt i{position:absolute;top:-6px;bottom:-6px;width:1px;background:var(--line3)}
+.dh-brt b{position:absolute;top:1px;height:14px;border-radius:4px}
+.dh-brv{grid-area:v;text-align:right;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dh-br.tot .dh-brl,.dh-br.tot .dh-brv{font-weight:800}
+.dh-br.end{border-top:1px solid var(--line);margin-top:4px;padding-top:10px}
+.dh-brh{padding:0;row-gap:0}
+.dh-brh .dh-brt{height:14px}
+.dh-brh span{position:absolute;bottom:0;transform:translateX(-50%);font-size:11px;color:var(--mut);white-space:nowrap}
+.dh-brn{font-size:12px;line-height:1.5;color:var(--mut);margin-top:8px}
+@container dhbr (max-width:560px){.dh-br{grid-template-columns:minmax(0,1fr) 84px;grid-template-areas:"l v" "t t";row-gap:6px}.dh-brt i{top:-3px;bottom:-3px}}
 .dh-cashr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .dh-cashr .v{font-size:21px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
 .dh-st{display:flex;align-items:flex-start;gap:6px;font-size:12px;font-weight:700;margin-top:5px;line-height:1.4}
@@ -2084,6 +2091,27 @@ function dashMonthBand(rows, bank) {
 }
 
 // From this month's profit to what the bank balance did, and where the cash stands.
+// Profit to cash for one month, split into the same parts as the Health page's
+// bridge (renderHealth), so the two pages agree. Each part is cash minus profit:
+// above zero, more reached the bank than profit counted. Parts are rounded to the
+// dollar and "Other differences" takes what's left, so the rows add up exactly.
+function dashBridge(br, r) {
+  const R = Math.round, m = months.find(x => x.monthKey === r.key), net = R(r.net), op = R(br.operating), parts = [];
+  const add = (key, v, up, down, note) => { v = R(v); if (v) parts.push({ key, v, name: v > 0 ? up : down, note }); };
+  if (m) {
+    const c = calcMonthData(m), sales = (parseFloat(m.rxSales) || 0) + (parseFloat(m.frontSales) || 0), sold = sales - (c.totalGP - c.rebate);
+    if (br.billedPlans !== null) add('ins', br.receivedPlans - br.billedPlans, 'Insurers paid more than you billed', 'Insurers paid less than you billed', `${bk$(br.billedPlans)} billed in Kroll, ${bk$(br.receivedPlans)} deposited`);
+    if (br.krollCash !== null && br.front !== null) add('pat', br.banked - br.krollCash - br.front, 'More deposited than patient-pay sales', 'Patient-pay not banked', `${bk$(br.krollCash + br.front)} in copays and front-store sales, ${bk$(br.banked)} deposited`);
+    add('stock', sold - br.cogs, 'Paid less for stock than the cost of what sold', 'Paid more for stock than the cost of what sold', `${bk$(br.cogs)} paid for stock, ${bk$(sold)} cost of what sold`);
+    add('exp', c.totalExp - br.opex, 'Expenses not paid from TD', 'TD paid more than the expenses entered', `${bk$(c.totalExp)} entered in Monthly Data, ${bk$(br.opex)} paid from TD`);
+    add('reb', br.rebates - c.rebate, 'More rebates deposited than entered', 'Fewer rebates deposited than entered', `${bk$(c.rebate)} entered, ${bk$(br.rebates)} deposited`);
+  }
+  add('oth', br.otherIn, 'Other money in', 'Other money in', 'Cheques not matched to an insurer, and other income');
+  const rest = op - net - parts.reduce((s, p) => s + p.v, 0);
+  if (rest) parts.push({ key: 'rest', v: rest, name: 'Other differences', note: br.billedPlans === null ? `Includes insurer and patient-pay timing, because ${dashMonthName(r.key)}'s Kroll report isn't uploaded` : 'Mostly Kroll vs Monthly Data sales' });
+  return { net, op, partner: R(br.capIn - br.capOut), parts };
+}
+
 function dashCashCard(r, isLast, bank) {
   const title = `<h3 class="dh-ct">From profit to the bank</h3>`;
   if (bank.state === 'loading') return `<div class="dh-c">${title}<p class="dh-none" style="margin-top:8px">Loading bank data…</p></div>`;
@@ -2092,24 +2120,28 @@ function dashCashCard(r, isLast, bank) {
   const M = bank.M, br = M.byMonth.find(x => x.mk === r.key && x.hasBank);
   if (!br) return `<div class="dh-c">${title}<p class="dh-none" style="margin-top:8px">There's no full TD statement for ${monthKeyToFull(r.key)} yet. ${dashLink('bank', 'Open the Bank page', 'files')}</p></div>`;
 
-  const op = br.operating, partner = br.capIn - br.capOut, change = op + partner, net = r.net;
-  const f = br.ts[0], open = f.bal - (f.kind === 'credit' ? f.amount : -f.amount);
-  const steps = [
-    { name: 'Net profit', from: 0, to: net, total: true, tip: 'From Monthly Data' },
-    { name: 'Stock, insurers and other differences', from: net, to: op, tip: 'Everything that makes cash differ from profit this month' },
-    { name: op < 0 ? 'Cash the store lost' : 'Cash the store made', from: 0, to: op, total: true, tip: "All money in minus all money out through TD, including owners' pay. Partner money isn't counted." },
-  ];
-  if (Math.abs(partner) >= 1) steps.push({ name: 'Partner money', from: op, to: change, tip: `${bk$(br.capIn)} put in, ${bk$(br.capOut)} taken out` });
-  steps.push({ name: 'Change in the bank', from: 0, to: change, total: true, tip: `${bk$(open)} to ${bk$(br.endBal)}` });
-  const all = steps.flatMap(s => [s.from, s.to]), hi = Math.max(0, ...all), lo = Math.min(0, ...all), span = (hi - lo) || 1, y = v => (hi - v) / span * 100;
-  const cols = steps.map(s => {
-    const a = y(Math.max(s.from, s.to)), b = y(Math.min(s.from, s.to)), v = s.to - s.from;
-    return `<div class="dh-wfc">
-      <div class="dh-wfa" data-tip="${dashTip(s.name, bkS(v), s.tip)}"><u style="top:${y(0).toFixed(2)}%"></u><div class="dh-wfb" style="top:${a.toFixed(2)}%;height:${(b - a).toFixed(2)}%;background:var(${s.total ? '--total' : v >= 0 ? '--s1' : '--down'})"><span>${bkS(v)}</span></div></div>
-      <div class="dh-wfn">${s.name}</div>
+  const B = dashBridge(br, r), change = B.op + B.partner, mon = dashMonthName(r.key), made = B.op < 0 ? 'lost' : 'made';
+  const f = br.ts[0], open = f.bal - (f.kind === 'credit' ? f.amount : -f.amount), moved = `From ${bk$(open)} to ${bk$(br.endBal)}`;
+  const steps = [{ name: 'Net profit', note: 'From Monthly Data', from: 0, to: B.net, total: true }];
+  let run = B.net;
+  B.parts.forEach(p => { steps.push({ name: p.name, note: p.note, from: run, to: run + p.v }); run += p.v; });
+  if (B.partner) steps.push(
+    { name: `Cash the store ${made}`, note: "All money in minus all money out through TD, owners' pay included", from: 0, to: B.op, total: true, end: true },
+    { name: 'Partner money', note: `${bk$(br.capIn)} put in, ${bk$(br.capOut)} taken out`, from: B.op, to: change },
+    { name: 'Change in the bank', note: moved, from: 0, to: change, total: true, end: true });
+  else steps.push({ name: 'Change in the bank', note: `${moved}. No partner money moved, so this is the cash the store ${made}`, from: 0, to: change, total: true, end: true });
+  // one row per step: the bar starts where the last step ended, and totals start at $0
+  const all = steps.flatMap(s => [s.from, s.to]), lo = Math.min(0, ...all), hi = Math.max(0, ...all), pos = v => (v - lo) / ((hi - lo) || 1) * 100, z = pos(0).toFixed(2);
+  const bars = steps.map(s => {
+    const v = s.to - s.from, a = pos(Math.min(s.from, s.to)), w = pos(Math.max(s.from, s.to)) - a;
+    return `<div class="dh-br${s.total ? ' tot' : ''}${s.end ? ' end' : ''}">
+      <div class="dh-brl">${s.name}<small>${s.note}</small></div>
+      <div class="dh-brt" aria-hidden="true"><i style="left:${z}%"></i><b style="left:${a.toFixed(2)}%;width:${Math.max(0.6, w).toFixed(2)}%;background:var(${s.total ? '--total' : v >= 0 ? '--s1' : '--down'})"></b></div>
+      <div class="dh-brv">${bkS(v)}</div>
     </div>`;
   }).join('');
-  const label = steps.map(s => `${s.name} ${bkS(s.to - s.from)}`).join(', ');
+  const head = `<div class="dh-br dh-brh" aria-hidden="true"><div></div><div class="dh-brt"><span style="left:${z}%">$0</span></div><div></div></div>`;
+  const cut = br.partial ? `<p class="dh-brn">The TD statement ends ${bkDs(M.asOf)}. Money paid in or out later in ${mon} isn't in it yet, so it shows up in the lines above.</p>` : '';
 
   const balDate = M.asOf && M.asOf.slice(0, 7) === r.key ? M.asOf : `${r.key}-${String(bkDim(r.key)).padStart(2, '0')}`;
   const c = dashCushion(M, bank.md, r.key, br.endBal);
@@ -2125,8 +2157,8 @@ function dashCashCard(r, isLast, bank) {
   }
   return `<div class="dh-c">
     ${title}
-    <p class="dh-cs">Why ${dashMonthName(r.key)}'s profit isn't the same as what the bank balance did.</p>
-    <div class="dh-wf" role="img" aria-label="${esc(label)}">${cols}</div>
+    <p class="dh-cs">Why ${mon}'s profit isn't the same as what the bank balance did. Profit counts sales and costs when they happen. The bank only sees money when it actually moves.</p>
+    <div class="dh-brs">${head}${bars}</div>${cut}
     <div class="dh-cashr">${tiles.join('')}</div>
     ${dashLink('health', 'See 12 months on the Health page')}
   </div>`;
