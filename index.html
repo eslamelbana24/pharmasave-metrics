@@ -313,7 +313,8 @@ select.bk-cat{font-size:.8rem;min-height:40px;padding:0 6px;border:1.5px solid v
 .bk-avg{position:absolute;left:0;right:0;border-top:2px dashed var(--text);pointer-events:none}
 .bk-xaxis{display:flex;margin:6px 0 0 52px}.bk-xaxis>div{flex:1 1 0;min-width:0;text-align:center;font-size:11px;color:var(--light);line-height:1.25}.bk-xaxis .yr{min-height:14px}
 .bk-xaxis i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--navy);margin-top:2px}
-.bk-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px;margin-bottom:20px}
+.bk-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:12px;margin-bottom:20px}
+.bk-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:8px 12px;align-items:end;margin:6px 0 4px}.bk-form label{font-size:.78rem;color:var(--light);display:flex;flex-direction:column;gap:2px}.bk-form input{font:inherit;font-size:.88rem;min-height:44px;width:100%;padding:0 10px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text)}.bk-form .bk-go{width:100%}.bk-formnote{margin:0 0 8px}.bk-formmsg{font-size:.8rem;color:#12795a;min-height:1.2em;margin-bottom:6px}.bk-formmsg.bad{color:#b83232}.bk-entries td:first-child{min-width:0}.hl-cc{margin-top:22px;padding-top:16px;border-top:1px solid var(--border)}
 .bk-tile{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;min-width:0}.bk-tile>b{display:block;font-size:1.35rem;font-weight:800;color:var(--navy);margin-top:6px}.bk-tile small{display:block;font-size:.78rem;color:var(--light);margin-top:2px}
 .bk-tile.t-neg>b{color:#b83232}.bk-tile.t-pos>b{color:#12795a}.bk-tile.t-warn>b{color:#8a5a10}
 .bk-tilehead{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;font-size:.84rem;font-weight:600}.bk-tile .bk-why{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--border)}
@@ -2896,7 +2897,7 @@ function saveExpenses() {
 // rule restricts to users whose pages include 'Bank'.
 const FS_BANK = 'bank';
 const BK_PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
-let bankData = { loaded: false, loading: null, error: null, statements: [], kroll: [], overrides: {}, ver: 0 };
+let bankData = { loaded: false, loading: null, error: null, statements: [], kroll: [], mck: [], stock: [], overrides: {}, ver: 0 };
 let _bkUi = { tab: 'summary', month: 'all', cat: 'all', dir: 'out', flow: null, q: '', limit: 15, graphHidden: false, graphTable: false, balTable: false, monthView: 'cash', uploads: [], busy: false };
 
 // Payers, how they pay, and which Kroll plans they cover. ODB and TELUS
@@ -3109,15 +3110,18 @@ async function loadBank() {
   bankData.loading = (async () => {
     try {
       const snap = await db.collection(FS_BANK).get();
-      const st = [], kr = []; let ov = {};
+      const st = [], kr = [], mck = [], stock = []; let ov = {};
       snap.docs.forEach(d => {
         const v = d.data() || {};
         if (v.type === 'td' && Array.isArray(v.txns)) st.push(Object.assign({ id: d.id }, v));
         else if (v.type === 'kroll' && v.rows) kr.push(Object.assign({ id: d.id }, v));
+        else if (v.type === 'mck' && v.date) mck.push(Object.assign({ id: d.id }, v));
+        else if (v.type === 'stock' && v.date) stock.push(Object.assign({ id: d.id }, v));
         else if (d.id === 'config') ov = (v.overrides && typeof v.overrides === 'object') ? v.overrides : {};
       });
       st.sort((a, b) => a.from.localeCompare(b.from)); kr.sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
-      Object.assign(bankData, { loaded: true, error: null, statements: st, kroll: kr, overrides: ov, ver: bankData.ver + 1 });
+      mck.sort((a, b) => a.date.localeCompare(b.date)); stock.sort((a, b) => a.date.localeCompare(b.date));
+      Object.assign(bankData, { loaded: true, error: null, statements: st, kroll: kr, mck, stock, overrides: ov, ver: bankData.ver + 1 });
     } catch (e) {
       console.warn('[Bank] load failed:', e.code || e.message);
       Object.assign(bankData, { loaded: true, error: e.code || e.message });
@@ -3325,7 +3329,7 @@ async function bkHandleFiles(fileList) {
   renderBank();
 }
 async function bkRemove(id) {
-  if (!confirm('Remove this imported file from the Bank page? The PDF itself is not affected.')) return;
+  if (!confirm(/^(mck|stock)-/.test(id) ? 'Remove this entry?' : 'Remove this imported file from the Bank page? The PDF itself is not affected.')) return;
   try { await db.collection(FS_BANK).doc(id).delete(); } catch (e) { alert('Could not remove it: ' + (e.code || e.message)); return; }
   bankData.loaded = false; await loadBank(); renderBank();
 }
@@ -3341,6 +3345,130 @@ async function bkSetCat(key, cat) {
     else { alert('Could not save the kind: ' + (e.code || e.message)); }
   }
   renderBank();
+}
+
+// ── McKesson statements and stock values (typed in on the Statements tab) ──
+// McKesson sends a statement on the 1st and the 16th. About two weeks later it takes
+// that statement's Debit Advice from TD; the rest of the total stays owing.
+function bkToday() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+const bkMoneyIn = s => { const v = parseFloat(String(s || '').replace(/[$,\s]/g, '')); return isFinite(v) ? Math.round(v * 100) / 100 : NaN; };
+const bkNextMk = mk => { let [y, m] = mk.split('-').map(Number); m++; if (m > 12) { m = 1; y++; } return y + '-' + String(m).padStart(2, '0'); };
+// the entry nearest a date, within a few calendar days
+const bkNear = (list, d, days) => { for (let k = 0; k <= days; k++) for (const x of [bkAdd(d, -k), bkAdd(d, k)]) { const hit = list.find(e => e.date === x); if (hit) return hit; } return null; };
+// Each statement with the TD line that paid its Debit Advice. "pending" means the
+// TD statements don't reach far enough yet; "missing" means they do, with no match.
+function bkMckRows(M) {
+  const pulls = M.T.filter(t => t.cat === 'cogs' && t.kind === 'debit');
+  return bankData.mck.map(s => {
+    const paid = pulls.find(t => t.date >= s.date && t.date <= bkAdd(s.date, 25) && Math.abs(t.amount - s.debit) < 0.01) || null;
+    const covered = !!M.asOf && M.asOf >= bkAdd(s.date, 25);
+    return Object.assign({}, s, { due: bkAdd(s.date, 14), paid, state: paid ? 'paid' : covered ? 'missing' : 'pending' });
+  });
+}
+// Insurer deposits due after the last statement day and up to a date, going by
+// each insurer's schedule and the size of its last deposit.
+function bkExpectedIn(M, until) {
+  const step = { odb: 15, telus: 15, weekly: 7, biweekly: 14, monthly: 30 };
+  let tot = 0;
+  M.payers.forEach(p => {
+    if (!p.next || !p.lastDep || p.status === 'none') return;
+    for (let d = p.next; d <= until; d = bkAdd(d, step[p.schedule] || 30)) if (d > M.asOf) tot += p.lastDep.amount;
+  });
+  return tot;
+}
+// What the stock you sold really cost between two dates, from McKesson's statements,
+// the TD pulls and two stock values, next to Monthly Data's figure. Needs a statement
+// within 3 days and a stock value within 5 days of each date, TD statements that reach
+// the end, and Monthly Data for every month in between. `from` and `to` are 1sts of months.
+function bkCostCheck(from, to) {
+  const sA = bkNear(bankData.mck, from, 3), sB = bkNear(bankData.mck, to, 3), kA = bkNear(bankData.stock, from, 5), kB = bkNear(bankData.stock, to, 5);
+  if (!sA || !sB || !kA || !kB || sA === sB || kA === kB) return null;
+  const M = bkModel();
+  if (!M.asOf || M.asOf < bkAdd(sB.date, -1)) return null;
+  let implied = 0;
+  for (let mk = from.slice(0, 7); mk < to.slice(0, 7); mk = bkNextMk(mk)) {
+    const md = months.find(m => m.monthKey === mk);
+    if (!md) return null;
+    const c = calcMonthData(md);
+    implied += (parseFloat(md.rxSales) || 0) + (parseFloat(md.frontSales) || 0) - (c.totalGP - c.rebate);
+  }
+  const pulls = M.T.filter(t => t.cat === 'cogs' && t.kind === 'debit' && t.date >= sA.date && t.date < sB.date).reduce((s, t) => s + t.amount, 0);
+  const stockA = (kA.rx || 0) + (kA.front || 0), stockB = (kB.rx || 0) + (kB.front || 0), bought = pulls + sB.total - sA.total, real = bought - (stockB - stockA);
+  return { from, to, pulls, bought, real, implied, diff: real - implied, owedA: sA.total, owedB: sB.total, owedDateA: sA.date, owedDateB: sB.date, stockA, stockB, stockDateA: kA.date, stockDateB: kB.date };
+}
+// a stock date counts for a month when it's within 5 days of that month's 1st
+const bkSnap1st = d => { const day = Number(d.slice(8)), mk = d.slice(0, 7); return day <= 5 ? mk + '-01' : day >= bkDim(mk) - 4 ? bkNextMk(mk) + '-01' : null; };
+// Health: one row per stretch between stock values, and the whole span
+function bkCostCheckHtml() {
+  if (!bankData.stock.length && !bankData.mck.length) return '';
+  const dates = [...new Set(bankData.stock.map(k => bkSnap1st(k.date)).filter(Boolean))].sort();
+  const periods = [];
+  for (let i = 1; i < dates.length; i++) { const c = bkCostCheck(dates[i - 1], dates[i]); if (c) periods.push(c); }
+  const whole = dates.length > 2 ? bkCostCheck(dates[0], dates[dates.length - 1]) : null;
+  const span = c => `${bkM(c.from.slice(0, 7))} – ${bkM(bkAdd(c.to, -1).slice(0, 7))}`;
+  const row = (c, tot) => ({ tot, cells: [tot ? `Whole span, ${span(c)}` : `<b>${span(c)}</b>`, bk$(c.bought), bkS(c.stockB - c.stockA), bk$(c.real), bk$(c.implied), bkS(c.diff)] });
+  const help = `<p class="bk-note">Bought from McKesson is what TD paid plus the change in what McKesson's statements say you owe. Take away the change in stock and you have what the goods you sold really cost. A minus difference means Monthly Data's costs were higher than that; a plus means they were lower, so profit was overstated.</p>`;
+  return `<div class="hl-cc"><div class="card-title">Cost of goods check</div>${periods.length
+    ? bkTable(['Months', 'Bought from McKesson', 'Stock change', 'Real cost of goods', 'Monthly Data', 'Difference'], periods.map(c => row(c, false)).concat(whole ? [row(whole, true)] : []), 'lrrrrr') + help
+    : '<p class="bk-note">This needs two stock values, each on or near the 1st of a month, with McKesson statements on the same days, TD statements up to the later one, and Monthly Data for the months between. Add them on the Bank page\'s Statements tab.</p>'}</div>`;
+}
+// Summary tile
+function bkMckTile(M) {
+  const why = "What McKesson's latest statement says you owe. About two weeks after each statement, McKesson takes that statement's Debit Advice from TD. The rest stays owing and comes out in later pulls.";
+  const rows = bkMckRows(M), L = rows[rows.length - 1];
+  if (!L) return ['mck', 'You owe McKesson', '—', 'Type in McKesson\'s statements on the Statements tab', '', why];
+  const lastBal = M.T.length ? M.T[M.T.length - 1].bal : 0, next = rows.find(r => r.state === 'pending');
+  const sub = `on the ${bkDs(L.date)} statement · ` + (L.state === 'paid' ? `${bk$(L.debit)} taken ${bkDs(L.paid.date)}` : L.state === 'pending' ? `${bk$(L.debit)} due around ${bkDs(L.due)}` : `${bk$(L.debit)} not found in TD`);
+  return ['mck', 'You owe McKesson', bk$(L.total), sub, next && next.debit > lastBal ? 'warn' : '', why];
+}
+// Statements tab: the two forms and what's been entered
+function bkEntryForms(M) {
+  const today = bkToday(), ym = today.slice(0, 7), lastStmt = Number(today.slice(8)) >= 16 ? ym + '-16' : ym + '-01';
+  const field = (name, label, type, value) => `<label>${label}<input name="${name}" type="${type}"${type === 'text' ? ' inputmode="decimal" autocomplete="off" placeholder="$"' : ''} value="${value || ''}" required></label>`;
+  const rm = id => `<button type="button" class="bk-link small" data-rm="${esc(id)}">Remove</button>`;
+  const taken = r => r.state === 'paid' ? `taken ${bkDs(r.paid.date)}` : r.state === 'pending' ? `due around ${bkDs(r.due)}` : '<span class="bk-chip amber">not in TD</span>';
+  const mrows = bkMckRows(M).reverse(), krows = bankData.stock.slice().reverse();
+  return `<div class="bk-2 narrow">
+    <div class="card"><div class="card-title">McKesson statements</div>
+      <p class="bk-note bk-formnote">From McKesson's site: each statement's date, its total and its Debit Advice. They come on the 1st and 16th. Saving the same date again replaces it.</p>
+      <form class="bk-form" data-form="mck">${field('date', 'Statement date', 'date', lastStmt)}${field('total', 'Total owing', 'text')}${field('debit', 'Debit Advice', 'text')}<button type="submit" class="bk-go">Save</button></form>
+      <div class="bk-formmsg" id="bkMsg-mck" role="status"></div>
+      ${mrows.length ? bkTable(['Statement', 'Total owing', 'Debit Advice', 'From TD', ''], mrows.map(r => [`<b>${bkD(r.date)}</b>`, bkC(r.total), bkC(r.debit), taken(r), rm(r.id)]), 'lrrll', 'bk-entries') : '<p class="bk-note">None yet.</p>'}
+    </div>
+    <div class="card"><div class="card-title">Stock value</div>
+      <p class="bk-note bk-formnote">Once a month: Kroll's Rx inventory value and the front-store value. The 1st of the month works best, since McKesson's statement is on that day too.</p>
+      <form class="bk-form" data-form="stock">${field('date', 'Counted on', 'date', ym + '-01')}${field('rx', 'Rx inventory', 'text')}${field('front', 'Front store', 'text')}<button type="submit" class="bk-go">Save</button></form>
+      <div class="bk-formmsg" id="bkMsg-stock" role="status"></div>
+      ${krows.length ? bkTable(['Counted on', 'Rx', 'Front store', 'Total', ''], krows.map(k => [`<b>${bkD(k.date)}</b>`, bkC(k.rx), bkC(k.front), bkC((k.rx || 0) + (k.front || 0)), rm(k.id)]), 'lrrrl', 'bk-entries') : '<p class="bk-note">None yet.</p>'}
+    </div>
+  </div>`;
+}
+async function bkOnSubmit(e) {
+  const f = e.target.closest('form[data-form]');
+  if (!f) return;
+  e.preventDefault();
+  const kind = f.dataset.form, val = n => f.elements[n].value, say = (t, bad) => { const m = document.getElementById('bkMsg-' + kind); if (m) { m.textContent = t; m.className = 'bk-formmsg' + (bad ? ' bad' : ''); } };
+  const date = val('date');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { say('Pick a date.', true); return; }
+  let id, doc;
+  if (kind === 'mck') {
+    const total = bkMoneyIn(val('total')), debit = bkMoneyIn(val('debit'));
+    if (!(total >= 0) || !(debit >= 0)) { say('Type the total and the Debit Advice as amounts, like 12,345.67.', true); return; }
+    if (debit > total) { say("The Debit Advice can't be more than the total owing.", true); return; }
+    id = 'mck-' + date; doc = { type: 'mck', date, total, debit };
+  } else {
+    const rx = bkMoneyIn(val('rx')), front = bkMoneyIn(val('front'));
+    if (!(rx >= 0) || !(front >= 0)) { say('Type both values as amounts, like 12,345.', true); return; }
+    id = 'stock-' + date; doc = { type: 'stock', date, rx, front };
+  }
+  const btn = f.querySelector('button[type="submit"]');
+  btn.disabled = true; say('Saving…');
+  try {
+    await db.collection(FS_BANK).doc(id).set(Object.assign(doc, { enteredAt: new Date().toISOString(), enteredBy: (auth.currentUser && auth.currentUser.email) || '' }));
+  } catch (err) { btn.disabled = false; say('Could not save it: ' + (err.code === 'permission-denied' ? 'Firestore refused (see the Bank rule)' : (err.code || err.message)), true); return; }
+  bankData.loaded = false; await loadBank(); renderBank();
+  const m = document.getElementById('bkMsg-' + kind);
+  if (m) m.textContent = 'Saved.';
 }
 
 // ── Rendering ────────────────────────────────────────────────────────
@@ -3554,6 +3682,14 @@ function bkAlerts(M, P, last3) {
     const a = bankData.statements[i - 1], b = bankData.statements[i];
     if (Math.abs((a.closing || 0) - (b.opening || 0)) > 0.005 || bkAdd(a.to, 3) < b.from) A.push({ id: 'gapst-' + i, red: true, text: `A statement may be missing around ${bkD(a.to)}.`, why: `${bkD(a.to)} closes at ${bk$(a.closing)} but the next statement (${bkD(b.from)}) opens at ${bk$(b.opening)}.`, act: { label: 'See statements', tab: 'files' } });
   }
+  // McKesson: warn before a pull that's bigger than the last balance, and flag a Debit Advice TD never showed
+  const mrows = bkMckRows(M), lastBal = M.T.length ? M.T[M.T.length - 1].bal : null;
+  const pend = mrows.filter(r => r.state === 'pending' && r.due >= bkAdd(bkToday(), -3));
+  if (pend.length && lastBal !== null && pend[0].debit > lastBal) {
+    const n = pend[0], exp = bkExpectedIn(M, n.due), short = n.debit - lastBal - exp, more = pend.slice(1);
+    A.push({ id: 'mckpull', red: short > 0, text: `McKesson takes ${bk$(n.debit)} around ${bkDs(n.due)}.`, why: `In the bank on ${bkD(M.asOf)}: ${bk$(lastBal)}. Insurer deposits expected by then: about ${bk$(exp)}, going by each insurer's schedule and last deposit.${short > 0 ? ` That's ${bk$(short)} short, before card sales.` : ' Card sales and other deposits add to that.'}${more.length ? ` After that: ${more.map(r => `${bk$(r.debit)} around ${bkDs(r.due)}`).join(', ')}.` : ''}`, act: { label: 'See McKesson', tab: 'files' } });
+  }
+  mrows.filter(r => r.state === 'missing').forEach(r => A.push({ id: 'mckmiss-' + r.date, text: `McKesson's ${bkDs(r.date)} Debit Advice (${bkC(r.debit)}) isn't in the TD statements.`, why: 'Check the amount typed in, or whether it was taken from another account.', act: { label: 'See McKesson', tab: 'files' } }));
   const missingK = M.byMonth.filter(r => r.hasBank && !r.hasKroll).map(r => bkM(r.mk));
   if (missingK.length) A.push({ id: 'nok', text: `No Kroll report for ${missingK.join(', ')}.`, why: "Billing for those months can't be checked yet.", act: { label: 'See statements', tab: 'files' } });
   const aheadK = M.byMonth.filter(r => r.hasKroll && !r.hasBank).map(r => bkM(r.mk));
@@ -3580,6 +3716,7 @@ function bkPaneSummary(M) {
     ['partner', 'Partner money put in', bk$(capNet), `put in minus taken out, ${nLabel}`, '',
       "Money the partners put in, minus what they took back. It isn't store income."],
   ];
+  tiles.splice(1, 0, bkMckTile(M));
   const alerts = bkAlerts(M, P, last3);
   // This month vs last: only months the statements fully cover, so a part-month isn't compared to a whole one.
   let vs = `<p class="bk-note">This appears once two full months of statements are in.</p>`, vsTitle = 'This month vs last month';
@@ -3860,7 +3997,8 @@ function bkPaneFiles(M, up) {
   return `${up}<div class="bk-2 narrow">
     ${list('TD statements', bankData.statements.slice().reverse().map(s => [s.id, `TD ${bkD(s.from)} – ${bkD(s.to)}`, `${s.txns.length} lines`]), 'None yet.')}
     ${list('Kroll reports', bankData.kroll.slice().reverse().map(k => [k.id, `Kroll ${bkD(k.from)} – ${bkD(k.to)}`, `${Object.keys(k.rows).length} plans`]), 'None yet.')}
-  </div>`;
+  </div>
+  ${bkEntryForms(M)}`;
 }
 
 // ── Clicks, typing and menus (one set of listeners on the page element) ──
@@ -3870,6 +4008,7 @@ function bkWire(el) {
   el.addEventListener('click', bkOnClick);
   el.addEventListener('change', bkOnChange);
   el.addEventListener('input', bkOnInput);
+  el.addEventListener('submit', bkOnSubmit);
 }
 function bkPickKind(cat) {
   Object.assign(_bkUi, { cat, month: 'all', q: '', flow: null, limit: 15, graphHidden: false });
@@ -4142,6 +4281,13 @@ function renderHealth() {
     : elsewhere > 0 ? `${bk$(elsewhere)} of the expenses entered over ${span} didn't go through TD: paid from other accounts, or not drawn yet.${tdOver.length ? ` TD paid more than was entered in ${overTxt}.` : ''}`
     : `TD paid ${bk$(-elsewhere)} more than the expenses entered over ${span}, owners' pay included. Check Monthly Data for missing costs${tdOver.length ? `, starting with ${overTxt}` : ''}.`]);
   if (!hstSeen) sc.push(['HST', 'warn', `No HST payments or refunds in the statements. Prescriptions are zero-rated, so the pharmacy can usually claim back the HST it pays${rentHst > 100 ? `: rent alone carried ≈ ${bk$(rentHst)} over ${span}` : ''}.`]);
+  // McKesson, next to the cash cushion (the cushion itself is unchanged, so the Dashboard still agrees)
+  const mckRows = bkMckRows(M), mckL = mckRows[mckRows.length - 1];
+  if (mckL) {
+    const pend = mckRows.find(r => r.state === 'pending');
+    sc.splice(sc.findIndex(s => s[0] === 'Cash cushion') + 1, 0, ['McKesson', pend && pend.debit > bal ? 'warn' : 'info',
+      `${bk$(mckL.total)} owed on McKesson's ${bkD(mckL.date)} statement. About two weeks after each statement it takes the Debit Advice from TD${pend ? `: ${bk$(pend.debit)} around ${bkD(pend.due)}${pend.debit > bal ? `, more than the ${bk$(bal)} in the bank on ${bkD(end)}` : ''}` : ''}. The rest, about ${bk$(mckL.total - mckL.debit)}, stays owing.`]);
+  }
   const stHtml = s => `<span class="hl-st ${s}"><i>${HL_ST[s][0]}</i>${HL_ST[s][1]}</span>`;
 
   // profit → cash bridge (closes by construction: what's left over is shown)
@@ -4156,6 +4302,17 @@ function renderHealth() {
     { label: 'Rebates received vs entered', value: sum(x => x.r.rebates - x.rebate) },
     { label: 'Other money in', value: sum(x => x.r.otherIn), note: 'Cheques not assigned to a payer, other income' },
   ];
+  // With McKesson statements and stock values at both ends, "Stock bought vs sold" splits into
+  // more stock, more owed to McKesson, and the rest: what the goods sold really cost vs Monthly Data.
+  const split = bkCostCheck(start, bkNextMk(last.mk) + '-01');
+  if (split) {
+    const i = steps.findIndex(s => s.label === 'Stock bought vs sold'), whole = steps[i].value;
+    const more = -(split.stockB - split.stockA), credit = split.owedB - split.owedA, rest = whole - more - credit;
+    steps.splice(i, 1,
+      { label: 'More stock on the shelves', value: more, note: `${bk$(split.stockA)} on ${bkD(split.stockDateA)} → ${bk$(split.stockB)} on ${bkD(split.stockDateB)}` },
+      { label: 'More owed to McKesson', value: credit, note: `Statements: ${bk$(split.owedA)} on ${bkD(split.owedDateA)} → ${bk$(split.owedB)} on ${bkD(split.owedDateB)}` },
+      { label: 'Cost of goods vs Monthly Data', value: rest, note: rest <= 0 ? 'What you sold cost more than Monthly Data shows' : 'What you sold cost less than Monthly Data shows' });
+  }
   const opTot = sum(x => x.r.operating), rest = opTot - steps.reduce((s, x) => s + x.value, 0);
   if (Math.abs(rest) >= 1) steps.push({ label: 'Other differences', value: rest, note: 'Mostly Kroll vs Monthly Data sales' });
   steps.push({ label: 'Operating cash (TD)', value: opTot, total: true, note: "Everything in minus everything out, owners' pay included, without partner money" },
@@ -4185,7 +4342,7 @@ function renderHealth() {
     </div>
     <div class="card"><div class="card-title">Bank balance, end of each day</div><div class="hl-ch" id="hlBal"></div></div>
     <div class="card"><div class="card-title">Why profit and cash differ, ${span}</div>
-      ${lg([['--hl-up', 'Adds cash'], ['--hl-down', 'Uses cash'], ['--hl-total', 'Total']])}${hlWaterfall(steps)}</div>
+      ${lg([['--hl-up', 'Adds cash'], ['--hl-down', 'Uses cash'], ['--hl-total', 'Total']])}${hlWaterfall(steps)}${bkCostCheckHtml()}</div>
     <div class="card"><div class="card-title">Each month, by the 5th</div>
       <ol class="bk-list"><li>Upload the TD statement and the Kroll Plan Billing Summary on the Bank page.</li><li>Enter Monthly Data, including costs paid from other accounts.</li><li>Clear the Bank page's “Needs a look” list.</li><li>Check the cash cushion before drawing owners' pay or repaying partners.</li><li>File HST when due.</li></ol></div>
   </div>`;
@@ -6581,7 +6738,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const handleUser = async (user, gen) => {
     if (!user) {
       userRecord = null;
-      bankData = { loaded: false, loading: null, error: null, statements: [], kroll: [], overrides: {}, ver: bankData.ver + 1 };
+      bankData = { loaded: false, loading: null, error: null, statements: [], kroll: [], mck: [], stock: [], overrides: {}, ver: bankData.ver + 1 };
       document.getElementById('mainNav').innerHTML            = '';
       document.getElementById('authGate').style.display      = 'flex';
       document.getElementById('signInBtn').style.display     = 'flex';
