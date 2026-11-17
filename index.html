@@ -1043,11 +1043,14 @@ function calcMonthData(m) {
   const rebate   = settings.rebateMethod === 'pct'
     ? (parseFloat(m.rxSales)||0) * (parseFloat(settings.rebatePct)||0) / 100
     : parseFloat(m.rebate) || 0;
-  const totalGP  = rxGP + frontGP + rebate;
+  // What the goods sold really cost beyond Kroll's markup and the front-store margin
+  // (stock written off, McKesson charges, price differences), typed in Monthly Data.
+  const costAdj  = parseFloat(m.costAdj) || 0;
+  const totalGP  = rxGP + frontGP + rebate - costAdj;
   const totalExp = parseFloat(m.expenses) || 0;
   const netProfit = totalGP - totalExp;
 
-  return { rxGP, frontGP, rebate, totalGP, totalExp, netProfit };
+  return { rxGP, frontGP, rebate, costAdj, totalGP, totalExp, netProfit };
 }
 
 // ================================================================
@@ -2033,6 +2036,7 @@ function dashMonthBand(rows, bank) {
       ${tr('Profit on prescriptions', bk$(d.rxGP), d.rxGP, pd && pd.rxGP)}
       ${tr('Rebates', bk$(d.rebate), d.rebate, pd && pd.rebate)}
       ${tr('Front store', bk$(d.frontGP), d.frontGP, pd && pd.frontGP)}
+      ${d.costAdj || (pd && pd.costAdj) ? tr('Cost adjustment', d.costAdj > 0 ? '−' + bk$(d.costAdj) : d.costAdj < 0 ? '+' + bk$(-d.costAdj) : '$0', -d.costAdj, pd && -pd.costAdj) : ''}
       ${tr('Gross profit', bk$(r.gp), r.gp, prev && prev.gp, 'sum')}
       ${tr('Expenses', '−' + bk$(r.exp), r.exp, prev && prev.exp)}
       ${tr('Net profit', bkS(r.net), r.net, prev && prev.net, 'net')}
@@ -2344,7 +2348,7 @@ function renderInsights() {
     return {
       key: m.monthKey, label: monthKeyToLabel(m.monthKey), rx, cnt,
       dispGP: d.rxGP + d.frontGP,
-      rxGP: d.rxGP, frontGP: d.frontGP, rebate: d.rebate,
+      rxGP: d.rxGP, frontGP: d.frontGP, rebate: d.rebate, costAdj: d.costAdj,
       gp: d.totalGP, exp: d.totalExp, net: d.netProfit,
       cogs: rx - d.rxGP,                                   // drug acquisition cost
       perRx:     cnt > 0 ? rx / cnt : null,                // revenue per script
@@ -2365,6 +2369,7 @@ function renderInsights() {
   const dDisp = last.dispGP - prev.dispGP;
   const dReb  = last.rebate - prev.rebate;
   const dExp  = -(last.exp - prev.exp);   // sign flipped: higher expenses hurt net
+  const dAdj  = -(last.costAdj - prev.costAdj);   // more cost adjustment lowers net
   const dNet  = last.net - prev.net;
 
   // ── Marginal economics ────────────────────────────────────────
@@ -2452,6 +2457,7 @@ function renderInsights() {
     const causes = [];
     if (dExp < 0) causes.push(`higher expenses (${iSign(dExp)})`);
     if (dReb < 0) causes.push(`a weaker rebate (${iSign(dReb)})`);
+    if (dAdj < 0) causes.push(`a cost adjustment (${iSign(dAdj)})`);
     bullets.push({icon:'⚠️', text:`Net slipped ${iSign(dNet)} in ${last.label} — but the core dispensing business gained ${iSign(dDisp)}${causes.length ? '. The regression came from ' + causes.join(' and ') : ''}.`});
   } else {
     bullets.push({icon:'🔻', text:`Net declined ${iSign(dNet)} in ${last.label}, including a drop in core dispensing GP (${iSign(dDisp)}).`});
@@ -2600,6 +2606,7 @@ function renderInsights() {
         <div class="gp-summary" style="margin-top:0">
           ${decompRow('Core dispensing GP', dDisp, '(fee + markup + front store)')}
           ${decompRow('Rebate', dReb, '')}
+          ${last.costAdj || prev.costAdj ? decompRow('Cost adjustment', dAdj, '(negative = more cost entered)') : ''}
           ${decompRow('Expenses', dExp, '(negative = costs went up)')}
           <div class="gp-divider"></div>
           <div class="gp-row gp-total"><span>Net change</span><span class="${Math.round(dNet) === 0 ? '' : dNet > 0 ? 'pos' : 'neg'}">${iSign(dNet)}</span></div>
@@ -2704,7 +2711,7 @@ function renderMonthly() {
         <td>${Number(m.rxCount) ? Number(m.rxCount).toLocaleString('en-CA') : '—'}</td>
         <td>${fmt(m.frontSales)}</td>
         <td>${fmt(m.rebate)}</td>
-        <td>${fmt(d.totalGP)}</td>
+        <td>${fmt(d.totalGP)}${d.costAdj ? `<div style="font-size:.7rem;color:var(--light)">after ${d.costAdj > 0 ? '−' : '+'}${fmt(Math.abs(d.costAdj))} cost adjustment</div>` : ''}</td>
         ${momCell(momMap[m.monthKey])}
         <td>${fmt(d.totalExp)}</td>
         ${bkOn ? (a => `<td title="Paid from the bank account this month">${a === null ? '<span style="color:var(--light)">—</span>' : fmt(a) + `<div style="font-size:.7rem;color:${a > d.totalExp ? 'var(--red)' : 'var(--light)'}">${a > d.totalExp ? '+' : '−'}${fmt(Math.abs(a - d.totalExp))} vs entered</div>`}</td>`)(bkActualExpenses(m.monthKey)) : ''}
@@ -2777,10 +2784,10 @@ function deleteMonth(id) {
 
 function downloadCSV() {
   const sorted = [...months].sort((a,b) => a.monthKey.localeCompare(b.monthKey));
-  const headers = ['Month','Rx Sales','Rx Count','Front Store Sales','Rebate','Total GP','Expenses','Net Profit'];
+  const headers = ['Month','Rx Sales','Rx Count','Front Store Sales','Rebate','Cost Adjustment','Total GP','Expenses','Net Profit'];
   const rows = sorted.map(m => {
     const d = calcMonthData(m);
-    return [monthKeyToLabel(m.monthKey), m.rxSales, (m.rxCount||0), m.frontSales, m.rebate, d.totalGP.toFixed(2), d.totalExp.toFixed(2), d.netProfit.toFixed(2)];
+    return [monthKeyToLabel(m.monthKey), m.rxSales, (m.rxCount||0), m.frontSales, m.rebate, d.costAdj.toFixed(2), d.totalGP.toFixed(2), d.totalExp.toFixed(2), d.netProfit.toFixed(2)];
   });
   const csv = [headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
   const a = document.createElement('a');
@@ -3407,7 +3414,7 @@ function bkCostCheckHtml() {
   const whole = dates.length > 2 ? bkCostCheck(dates[0], dates[dates.length - 1]) : null;
   const span = c => `${bkM(c.from.slice(0, 7))} – ${bkM(bkAdd(c.to, -1).slice(0, 7))}`;
   const row = (c, tot) => ({ tot, cells: [tot ? `Whole span, ${span(c)}` : `<b>${span(c)}</b>`, bk$(c.bought), bkS(c.stockB - c.stockA), bk$(c.real), bk$(c.implied), bkS(c.diff)] });
-  const help = `<p class="bk-note">Bought from McKesson is what TD paid plus the change in what McKesson's statements say you owe. Take away the change in stock and you have what the goods you sold really cost. A minus difference means Monthly Data's costs were higher than that; a plus means they were lower, so profit was overstated.</p>`;
+  const help = `<p class="bk-note">Bought from McKesson is what TD paid plus the change in what McKesson's statements say you owe. Take away the change in stock and you have what the goods you sold really cost. A minus difference means Monthly Data's costs were higher than that; a plus means they were lower, so profit was overstated. Monthly Data's figure includes any Cost Adjustment already entered; to bring a difference into profit, enter it as that month's Cost Adjustment in Monthly Data.</p>`;
   return `<div class="hl-cc"><div class="card-title">Cost of goods check</div>${periods.length
     ? bkTable(['Months', 'Bought from McKesson', 'Stock change', 'Real cost of goods', 'Monthly Data', 'Difference'], periods.map(c => row(c, false)).concat(whole ? [row(whole, true)] : []), 'lrrrrr') + help
     : '<p class="bk-note">This needs two stock values, each on or near the 1st of a month, with McKesson statements on the same days, TD statements up to the later one, and Monthly Data for the months between. Add them on the Bank page\'s Statements tab.</p>'}</div>`;
@@ -4736,6 +4743,7 @@ function openAddModal() {
     frontGP_pct:  settings.frontGPPct,
     frontGP_actual: 0,
     rebate:       defaultRebate,
+    costAdj:      0,
     expenses:     defaultExp,
     _isNew:       true,
   };
@@ -4883,6 +4891,16 @@ function renderModal(m) {
       </div>
 
       <hr class="section-divider">
+      <div class="font-bold text-sm mb-8" style="color:var(--navy)">Cost adjustment</div>
+      <div class="form-row">
+        <label>Cost Adjustment ($) <span class="text-xs text-light">(optional)</span></label>
+        <div class="input-prefix"><span>$</span>
+          <input type="text" id="mCostAdj" class="dollar-input" value="${numFmt(m.costAdj)}" oninput="modalUpdate()">
+        </div>
+        <div class="hint">What the goods sold really cost beyond Kroll's markup and the front-store margin: stock written off, McKesson charges, price differences. The Health page's Cost of goods check shows the figure. It comes off gross profit. Leave it blank if there's nothing to add, or type a minus if costs were lower.</div>
+      </div>
+
+      <hr class="section-divider">
       <div class="font-bold text-sm mb-8" style="color:var(--navy)">Expenses</div>
       <div class="form-row">
         <label>Total Monthly Expenses ($) <span class="text-xs text-light">(${settings.expenseMethod === 'lump' ? 'from lump sum setting' : 'from itemized total'})</span></label>
@@ -4896,6 +4914,7 @@ function renderModal(m) {
         <div class="gp-row"><span>Rx Gross Profit</span><span id="sumRxGP">${fmt(d.rxGP)}</span></div>
         <div class="gp-row"><span>Front Store Gross Profit</span><span id="sumFrontGP">${fmt(d.frontGP)}</span></div>
         <div class="gp-row"><span>Rebates</span><span id="sumRebate">${fmt(d.rebate)}</span></div>
+        <div class="gp-row" id="sumCostAdjRow"${d.costAdj ? '' : ' style="display:none"'}><span>Cost adjustment</span><span id="sumCostAdj">${(d.costAdj > 0 ? '−' : d.costAdj < 0 ? '+' : '') + fmt(Math.abs(d.costAdj))}</span></div>
         <div class="gp-divider"></div>
         <div class="gp-row gp-total"><span>Total Gross Profit</span><span id="sumTotalGP">${fmt(d.totalGP)}</span></div>
         <div class="gp-row"><span style="color:var(--light)">Total Expenses</span><span id="sumExp" style="color:var(--red)">${fmt(d.totalExp)}</span></div>
@@ -4931,6 +4950,7 @@ function collectModal() {
     frontGP_pct:   parseFloat(get('mFrontPct'))    || settings.frontGPPct,
     frontGP_actual: parseDollar(get('mFrontActual')),
     rebate:        parseDollar(get('mRebate')),
+    costAdj:       parseDollar(get('mCostAdj')),
     expenses:      parseDollar(get('mExpenses')),
     _isNew:        true,
   };
@@ -4955,6 +4975,9 @@ function modalUpdate() {
   set('sumRxGP',    fmt(d.rxGP));
   set('sumFrontGP', fmt(d.frontGP));
   set('sumRebate',  fmt(d.rebate));
+  set('sumCostAdj', (d.costAdj > 0 ? '−' : d.costAdj < 0 ? '+' : '') + fmt(Math.abs(d.costAdj)));
+  const adjRow = document.getElementById('sumCostAdjRow');
+  if (adjRow) adjRow.style.display = d.costAdj ? '' : 'none';
   set('sumTotalGP', fmt(d.totalGP));
   set('sumExp',     fmt(d.totalExp));
   set('sumNP',      fmt(d.netProfit));
@@ -4979,6 +5002,7 @@ function saveModal(id, isNew) {
     frontGP_pct:    m.frontGP_pct,
     frontGP_actual: m.frontGP_actual,
     rebate:         m.rebate,
+    costAdj:        m.costAdj,
     expenses:       m.expenses,
   };
 
