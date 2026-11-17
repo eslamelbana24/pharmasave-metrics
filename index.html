@@ -4257,6 +4257,7 @@ function renderHealth() {
   const capNet = sum(x => x.r.capIn - x.r.capOut), capIn = sum(x => x.r.capIn), capOut = sum(x => x.r.capOut);
   const P = M.payers.filter(p => p.status !== 'none'), owed = P.reduce((s, p) => s + p.owed, 0), lag = P.reduce((s, p) => s + p.lagPart, 0), beyond = owed - lag;
   const shortP = P.filter(p => p.status === 'short');
+  const beyondTxt = beyond >= 0 ? `${bk$(beyond)} past due` : `${bk$(-beyond)} paid early or extra`;
   const gapRows = rows.filter(x => x.r.gap !== null), gapOwed = sum(x => x.r.owedByCustomers, gapRows), gapPct = gapOwed ? sum(x => x.r.gap, gapRows) / gapOwed : null;
   const growth = P3 && sum(x => x.cnt, P3) ? sum(x => x.cnt, L3) / sum(x => x.cnt, P3) - 1 : null;
   const gpRx = last.cnt ? last.gp / last.cnt : null;
@@ -4274,8 +4275,8 @@ function renderHealth() {
   const cushSt = bal < 0 ? 'critical' : days < 10 ? 'serious' : days < 14 ? 'warn' : 'good', cushGap = target - bal, cushPct = target > 0 ? Math.max(0, Math.min(100, bal / target * 100)) : 0;
   sc.push(['Cash cushion', cushSt, `${bk$(bal)} on ${bkD(end)}${days !== null ? `, about ${Math.max(0, Math.round(days))} days of outgoings (≈ ${bk$(outDay)} a day over ${l3span})` : ''}. Target: two weeks, ≈ ${bk$(target)}. ${target > 0 ? (cushGap > 0 ? `<b>${bk$(cushGap)} short of the target.</b>` : `<b>${bk$(-cushGap)} above the target.</b>`) : ''}${loc ? ` Line of credit ${bk$(loc)}.` : ''}`
     + (target > 0 ? `<div class="hl-meter ${cushSt}" role="img" aria-label="Cash cushion ${Math.round(cushPct)}% of target"><div style="width:${cushPct}%"></div></div><small class="hl-meter-l"><span>$0</span><span>${Math.round(Math.max(0, bal / target * 100))}% of target</span><span>${bk$(target)}</span></small>` : '')]);
-  sc.push(['Collections', beyond < 1000 ? 'good' : beyond < 5000 ? 'warn' : 'serious', `${bk$(owed)} owed by insurers & ODB; ${bk$(lag)} is normal lag, ${bk$(beyond)} beyond it${shortP.length ? ` (${shortP.map(p => `${esc(p.name)} ${bk$(p.unexplained)}`).join(', ')})` : ''}.`]);
-  if (gapPct !== null) sc.push(['Patient-pay banked', gapPct < 0.05 ? 'good' : gapPct < 0.12 ? 'warn' : 'serious', `${bk$(sum(x => x.r.gap, gapRows))} (${Math.round(gapPct * 100)}%) of copays, cash Rx and front-store sales didn't reach the bank over ${span}. Target under 5%.`]);
+  sc.push(['Collections', beyond < 1000 ? 'good' : beyond < 5000 ? 'warn' : 'serious', `Insurers still owe you ${bk$(owed)}: ${bk$(lag)} not due yet, ${beyondTxt}${shortP.length ? ` (${shortP.map(p => `${esc(p.name)} short by ${bk$(p.unexplained)}`).join(', ')})` : ''}.`]);
+  if (gapPct !== null) sc.push(['Patient payments not banked', gapPct < 0.05 ? 'good' : gapPct < 0.12 ? 'warn' : 'serious', `${bk$(sum(x => x.r.gap, gapRows))} (${Math.round(gapPct * 100)}%) of copays, cash Rx and front-store sales didn't reach the bank over ${span}. Target under 5%.`]);
   sc.push(['Expenses', expClose ? 'good' : elsewhere > 0 ? 'info' : 'warn', expClose
     ? `TD paid ${bk$(expTot - elsewhere)} over ${span}, owners' pay included, against ${bk$(expTot)} entered in Monthly Data.${tdOver.length ? ` Single months swing with when pay is drawn (TD was higher in ${overTxt}).` : ''}`
     : elsewhere > 0 ? `${bk$(elsewhere)} of the expenses entered over ${span} didn't go through TD: paid from other accounts, or not drawn yet.${tdOver.length ? ` TD paid more than was entered in ${overTxt}.` : ''}`
@@ -4296,8 +4297,8 @@ function renderHealth() {
     { label: 'Net profit (Monthly Data)', value: sum(x => x.np), total: true },
     elsewhere >= 0 ? { label: 'Expenses not paid from TD', value: elsewhere, note: 'Entered in Monthly Data but paid from other accounts, or not drawn yet' }
       : { label: 'Paid from TD beyond expenses entered', value: elsewhere, note: "Owners' pay drawn ahead of what's entered, or costs missing from Monthly Data" },
-    { label: 'Insurers & ODB still to pay', value: sum(x => x.r.receivedPlans - x.r.billedPlans, kr), note: `${bk$(lag)} of what's owed now is normal lag` },
-    { label: 'Patient-pay not banked', value: sum(x => x.r.banked - x.r.krollCash - x.r.front, kr), note: 'Copays and front-store sales minus deposits' },
+    { label: 'Insurers & ODB still to pay', value: sum(x => x.r.receivedPlans - x.r.billedPlans, kr), note: `${bk$(lag)} of what's owed now is not due yet` },
+    { label: 'Patient payments not banked', value: sum(x => x.r.banked - x.r.krollCash - x.r.front, kr), note: 'Copays and front-store sales minus deposits' },
     { label: 'Stock bought vs sold', value: -sum(x => x.r.cogs - x.cogsImpl), note: 'McKesson payments minus cost of goods sold' },
     { label: 'Rebates received vs entered', value: sum(x => x.r.rebates - x.rebate) },
     { label: 'Other money in', value: sum(x => x.r.otherIn), note: 'Cheques not assigned to a payer, other income' },
@@ -4325,7 +4326,7 @@ function renderHealth() {
     ['Cash from operations, last 3 months', bkS(op3) + '/mo', "Through TD, after owners' pay, excluding partner money"],
     [`In the bank, ${bkD(end).replace(/, \d{4}/, '')}`, bk$(bal), days !== null ? `≈ ${Math.max(0, Math.round(days))} days of outgoings${loc ? ` · line of credit ${bk$(loc)}` : ''}` : ''],
     [`Partner money in, net, ${span}`, bk$(capNet), `${bk$(capIn)} in · ${bk$(capOut)} out`],
-    ['Owed by insurers & ODB', bk$(owed), `${bk$(lag)} normal lag · ${bk$(beyond)} beyond it`],
+    ['Insurers still owe you', bk$(owed), `${bk$(lag)} not due yet · ${beyondTxt}`],
   ];
   const lg = items => `<div class="hl-lg">${items.map(([c, n, ln]) => `<span><b class="${ln ? 'ln' : ''}" style="background:var(${c})"></b>${n}</span>`).join('')}</div>`;
 
@@ -4344,7 +4345,7 @@ function renderHealth() {
     <div class="card"><div class="card-title">Why profit and cash differ, ${span}</div>
       ${lg([['--hl-up', 'Adds cash'], ['--hl-down', 'Uses cash'], ['--hl-total', 'Total']])}${hlWaterfall(steps)}${bkCostCheckHtml()}</div>
     <div class="card"><div class="card-title">Each month, by the 5th</div>
-      <ol class="bk-list"><li>Upload the TD statement and the Kroll Plan Billing Summary on the Bank page.</li><li>Enter Monthly Data, including costs paid from other accounts.</li><li>Clear the Bank page's “Needs a look” list.</li><li>Check the cash cushion before drawing owners' pay or repaying partners.</li><li>File HST when due.</li></ol></div>
+      <ol class="bk-list"><li>Upload the TD statement and the Kroll Plan Billing Summary on the Bank page.</li><li>Enter Monthly Data, including costs paid from other accounts.</li><li>Clear the Bank page's “Needs your attention” list.</li><li>Check the cash cushion before drawing owners' pay or repaying partners.</li><li>File HST when due.</li></ol></div>
   </div>`;
 
   hlCols(document.getElementById('hlRev'), labels, longs, [{ name: 'Prescriptions', color: '--hl-s1', values: rows.map(x => x.rx) }, { name: 'Front store', color: '--hl-s2', values: rows.map(x => x.front) }],
